@@ -4,6 +4,8 @@ import { getSupabase, isMissingTable } from "./supabase";
 
 export type CloudStatus = "ok" | "missing-table" | "error" | "off";
 
+export type IssueBaseline = { buy: number; sell: number };
+
 export type CloudAccount = {
   id: string;
   kakaoId: string | null;
@@ -12,8 +14,8 @@ export type CloudAccount = {
   loginAt: number | null;
   plans: Plan[];
   trades: Trade[];
-  issuedCards?: IssuedCard[];
-  issueBaseline?: { buy: number; sell: number };
+  issuedCards: IssuedCard[];
+  issueBaseline: IssueBaseline;
 };
 
 function toIso(ms: number | null) {
@@ -25,6 +27,11 @@ function fromIso(iso: string | null | undefined, fallback = Date.now()) {
   if (!iso) return fallback;
   const t = Date.parse(iso);
   return Number.isNaN(t) ? fallback : t;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(String);
 }
 
 function rowToPlan(row: Record<string, unknown>): Plan {
@@ -66,6 +73,87 @@ function rowToTrade(row: Record<string, unknown>): Trade {
   });
 }
 
+function rowToCard(row: Record<string, unknown>): IssuedCard {
+  return {
+    id: String(row.id),
+    side: row.side === "sell" ? "sell" : "buy",
+    issuedAt: fromIso(row.issued_at as string),
+    dateKey: String(row.date_key).slice(0, 10),
+    moodMeta: String(row.mood_meta ?? ""),
+    moodLabel: String(row.mood_label ?? ""),
+    reasonLevel: row.reason_level === "group" ? "group" : "sub",
+    reasonGroup: String(row.reason_group ?? ""),
+    reasonMeta: String(row.reason_meta ?? ""),
+    reasonLabels: asStringArray(row.reason_labels),
+    count: Number(row.match_count ?? 0),
+    windowSize: Number(row.window_size ?? 0),
+    score: Number(row.score ?? 0),
+    narrative1: String(row.narrative1 ?? ""),
+    narrative2: String(row.narrative2 ?? ""),
+    relatedTradeIds: asStringArray(row.related_trade_ids),
+    read: Boolean(row.read),
+  };
+}
+
+function cardToRow(accountId: string, card: IssuedCard) {
+  return {
+    id: card.id,
+    account_id: accountId,
+    side: card.side,
+    issued_at: toIso(card.issuedAt),
+    date_key: card.dateKey,
+    mood_meta: card.moodMeta,
+    mood_label: card.moodLabel,
+    reason_level: card.reasonLevel,
+    reason_group: card.reasonGroup,
+    reason_meta: card.reasonMeta,
+    reason_labels: card.reasonLabels,
+    match_count: card.count,
+    window_size: card.windowSize,
+    score: card.score,
+    narrative1: card.narrative1,
+    narrative2: card.narrative2,
+    related_trade_ids: card.relatedTradeIds,
+    read: card.read,
+    read_at: card.read ? toIso(Date.now()) : null,
+  };
+}
+
+export function mergeIssuedCards(local: IssuedCard[], remote: IssuedCard[]): IssuedCard[] {
+  const map = new Map<string, IssuedCard>();
+  for (const card of remote) map.set(card.id, { ...card });
+  for (const card of local) {
+    const prev = map.get(card.id);
+    if (!prev) {
+      map.set(card.id, card);
+      continue;
+    }
+    map.set(card.id, { ...prev, read: prev.read || card.read });
+  }
+  return [...map.values()].sort((a, b) => a.issuedAt - b.issuedAt);
+}
+
+export function mergeIssueBaseline(local: IssueBaseline, remote?: IssueBaseline): IssueBaseline {
+  return {
+    buy: Math.max(local.buy, remote?.buy ?? 0),
+    sell: Math.max(local.sell, remote?.sell ?? 0),
+  };
+}
+
+function emptyCloud(accountId: string): CloudAccount {
+  return {
+    id: accountId,
+    kakaoId: null,
+    nickname: "회원",
+    onboarded: false,
+    loginAt: null,
+    plans: [],
+    trades: [],
+    issuedCards: [],
+    issueBaseline: { buy: 0, sell: 0 },
+  };
+}
+
 export async function pullAccount(accountId: string): Promise<{
   status: CloudStatus;
   data?: CloudAccount;
@@ -76,7 +164,7 @@ export async function pullAccount(accountId: string): Promise<{
 
   const accountRes = await sb
     .from("accounts")
-    .select("id, kakao_id, nickname, onboarded, login_at")
+    .select("id, kakao_id, nickname, onboarded, login_at, issue_baseline_buy, issue_baseline_sell")
     .eq("id", accountId)
     .maybeSingle();
   if (accountRes.error) {
@@ -84,25 +172,15 @@ export async function pullAccount(accountId: string): Promise<{
     return { status: "error", message: accountRes.error.message };
   }
   if (!accountRes.data) {
-    return {
-      status: "ok",
-      data: {
-        id: accountId,
-        kakaoId: null,
-        nickname: "회원",
-        onboarded: false,
-        loginAt: null,
-        plans: [],
-        trades: [],
-      },
-    };
+    return { status: "ok", data: emptyCloud(accountId) };
   }
 
-  const [planRes, tradeRes] = await Promise.all([
+  const [planRes, tradeRes, cardRes] = await Promise.all([
     sb.from("plans").select("*").eq("account_id", accountId),
     sb.from("trades").select("*").eq("account_id", accountId),
+    sb.from("insight_cards").select("*").eq("account_id", accountId),
   ]);
-  for (const res of [planRes, tradeRes]) {
+  for (const res of [planRes, tradeRes, cardRes]) {
     if (res.error) {
       if (isMissingTable(res.error)) return { status: "missing-table" };
       return { status: "error", message: res.error.message };
@@ -119,6 +197,11 @@ export async function pullAccount(accountId: string): Promise<{
       loginAt: accountRes.data.login_at ? fromIso(accountRes.data.login_at) : null,
       plans: (planRes.data ?? []).map(rowToPlan),
       trades: (tradeRes.data ?? []).map(rowToTrade),
+      issuedCards: (cardRes.data ?? []).map(rowToCard),
+      issueBaseline: {
+        buy: Number(accountRes.data.issue_baseline_buy ?? 0),
+        sell: Number(accountRes.data.issue_baseline_sell ?? 0),
+      },
     },
   };
 }
@@ -134,6 +217,8 @@ export async function pushAccount(state: AppState): Promise<CloudStatus> {
     nickname: state.nickname,
     onboarded: state.onboarded,
     login_at: toIso(state.loginAt),
+    issue_baseline_buy: state.issueBaseline.buy,
+    issue_baseline_sell: state.issueBaseline.sell,
     updated_at: new Date().toISOString(),
   });
   if (acc.error) {
@@ -204,6 +289,31 @@ export async function pushAccount(state: AppState): Promise<CloudStatus> {
     );
     if (tradeUpsert.error) {
       if (isMissingTable(tradeUpsert.error)) return "missing-table";
+      return "error";
+    }
+  }
+
+  if (state.issuedCards.length) {
+    const cardInsert = await sb.from("insight_cards").upsert(
+      state.issuedCards.map((c) => cardToRow(state.accountId, c)),
+      { onConflict: "id", ignoreDuplicates: true }
+    );
+    if (cardInsert.error) {
+      if (isMissingTable(cardInsert.error)) return "missing-table";
+      return "error";
+    }
+  }
+
+  const readIds = state.issuedCards.filter((c) => c.read).map((c) => c.id);
+  if (readIds.length) {
+    const readUpdate = await sb
+      .from("insight_cards")
+      .update({ read: true, read_at: new Date().toISOString() })
+      .in("id", readIds)
+      .eq("account_id", state.accountId)
+      .eq("read", false);
+    if (readUpdate.error) {
+      if (isMissingTable(readUpdate.error)) return "missing-table";
       return "error";
     }
   }

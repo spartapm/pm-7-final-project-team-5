@@ -27,7 +27,7 @@
 
 - 종목 CSV → `data/stocks.json` (KOSPI+KOSDAQ+NAS+NYS)
 - 선택값 CSV → `data/categories.json` (판단근거 21, 당시상태 매수 7 / 매도 7)
-- Supabase: `accounts`, `plans`, `trades` (`traded_time` 컬럼 포함)
+- Supabase: `accounts` (발행 baseline 포함), `plans`, `trades` (`traded_time` 포함), `insight_cards` (insert-only)
 
 ## 의도적으로 넣지 않은 것
 

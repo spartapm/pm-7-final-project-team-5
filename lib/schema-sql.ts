@@ -1,4 +1,4 @@
--- 패턴노트: 계정 / 매매계획 / 매매기록 / 인사이트 카드
+export const SCHEMA_SQL = `-- 패턴노트: 계정 / 매매계획 / 매매기록 / 인사이트 카드
 -- Dashboard SQL Editor에 붙여넣고 Run 해도 됩니다.
 
 create table if not exists public.accounts (
@@ -102,3 +102,4 @@ grant all on public.accounts to anon, authenticated, service_role;
 grant all on public.plans to anon, authenticated, service_role;
 grant all on public.trades to anon, authenticated, service_role;
 grant all on public.insight_cards to anon, authenticated, service_role;
+`;

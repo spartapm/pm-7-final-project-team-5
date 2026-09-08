@@ -10,7 +10,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { deleteAccount, pullAccount, pushAccount, type CloudStatus } from "./cloud";
+import {
+  deleteAccount,
+  mergeIssueBaseline,
+  mergeIssuedCards,
+  pullAccount,
+  pushAccount,
+  type CloudStatus,
+} from "./cloud";
 import { uid, todayKey } from "./format";
 import {
   candidateToCard,
@@ -196,8 +203,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       loginAt: remote.loginAt ?? s.loginAt,
       trades: hasRemote ? remote.trades : s.trades,
       plans: hasRemote ? remote.plans : s.plans,
-      issuedCards: remote.issuedCards?.length ? remote.issuedCards : s.issuedCards,
-      issueBaseline: remote.issueBaseline ?? s.issueBaseline,
+      issuedCards: mergeIssuedCards(s.issuedCards, remote.issuedCards),
+      issueBaseline: mergeIssueBaseline(s.issueBaseline, remote.issueBaseline),
     }));
   }, []);
 

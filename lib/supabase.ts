@@ -19,5 +19,10 @@ export function getSupabase(): SupabaseClient | null {
 
 export function isMissingTable(error: { code?: string; message?: string } | null) {
   if (!error) return false;
-  return error.code === "PGRST205" || /could not find the table/i.test(error.message ?? "");
+  return (
+    error.code === "PGRST205" ||
+    error.code === "PGRST204" ||
+    /could not find the table/i.test(error.message ?? "") ||
+    /could not find .* column/i.test(error.message ?? "")
+  );
 }
