@@ -253,6 +253,9 @@ export async function pushAccount(state: AppState): Promise<CloudStatus> {
         stock_code: p.stockCode,
         stock_name: p.stockName,
         market: p.market,
+        side: p.side,
+        buy_min: p.buyMin,
+        buy_max: p.buyMax,
         target_buy: p.buyMin,
         stop_loss: p.stopLoss,
         take_profit: p.takeProfit,
@@ -284,6 +287,8 @@ export async function pushAccount(state: AppState): Promise<CloudStatus> {
         reasons: t.reasons,
         moods: t.moods,
         is_practice: t.isPractice,
+        plan_snapshot: t.planSnapshot,
+        hidden_plan: t.hiddenPlan ?? {},
         created_at: toIso(t.createdAt),
       }))
     );

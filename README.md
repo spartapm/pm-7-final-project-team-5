@@ -26,7 +26,7 @@ npm run dev
 
 - 종목: `dataset`의 KOSPI/KOSDAQ/미국 목록을 `data/stocks.json`으로 넣었습니다. 검색은 국내/해외 탭과 최근 검색 5건을 지원합니다.
 - 선택값: `data/categories.json` (판단 근거 대분류·칩, 매수/매도 당시 상태).
-- 로그인·계획·기록·인사이트 카드는 이 브라우저 `localStorage`에 캐시되고, Supabase `accounts` / `plans` / `trades` / `insight_cards`에 동기화됩니다. 인사이트 카드는 insert-only입니다(내러티브 수정·행 삭제 없음).
+- 로그인·계획·기록·인사이트 카드는 이 브라우저 `localStorage`에 캐시되고, Supabase `accounts` / `plans` / `trades` / `insight_cards`에 동기화됩니다. 계획은 매수/매도·희망 구간까지 저장하고, 인사이트 카드는 insert-only입니다.
 
 ## 환경변수
 

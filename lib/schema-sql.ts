@@ -29,6 +29,11 @@ create table if not exists public.plans (
 
 create index if not exists plans_account_id_idx on public.plans (account_id);
 
+alter table public.plans add column if not exists side text not null default 'buy';
+alter table public.plans add column if not exists buy_min numeric;
+alter table public.plans add column if not exists buy_max numeric;
+create index if not exists plans_account_side_idx on public.plans (account_id, side);
+
 create table if not exists public.trades (
   id text primary key,
   account_id text not null references public.accounts(id) on delete cascade,
@@ -47,6 +52,8 @@ create table if not exists public.trades (
 );
 
 alter table public.trades add column if not exists traded_time text;
+alter table public.trades add column if not exists plan_snapshot jsonb;
+alter table public.trades add column if not exists hidden_plan jsonb not null default '{}'::jsonb;
 
 create index if not exists trades_account_id_idx on public.trades (account_id);
 create index if not exists trades_account_side_idx on public.trades (account_id, side);
