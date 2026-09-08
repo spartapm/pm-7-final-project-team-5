@@ -1,22 +1,19 @@
 "use client";
 
 import { Suspense } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PhoneShell } from "@/components/ui";
-import { formatPrice, initials, sideLabel } from "@/lib/format";
-import { INSIGHT_THRESHOLD, summarizeInsights } from "@/lib/insights";
+import { TradeRow } from "@/components/TradeRow";
+import { reasonChip } from "@/lib/insights";
 import { useStore } from "@/lib/store";
 
 function RelatedInner() {
   const params = useSearchParams();
-  const key = params.get("key") || "";
+  const id = params.get("id") || params.get("key") || "";
   const router = useRouter();
-  const { hydrated, trades, insightCopy } = useStore();
-  const summary = summarizeInsights(trades);
-  const combo = summary.combos.find((c) => c.key === key);
-  const related = combo ? summary.realTrades.filter((t) => combo.tradeIds.includes(t.id)) : [];
-  const copy = insightCopy[key];
+  const { hydrated, trades, issuedCards } = useStore();
+  const card = issuedCards.find((c) => c.id === id);
+  const related = card ? trades.filter((t) => card.relatedTradeIds.includes(t.id)) : [];
 
   if (!hydrated) return <div className="shell" />;
 
@@ -27,52 +24,35 @@ function RelatedInner() {
           ‹
         </button>
         <h1 className="h1">관련 기록</h1>
-        <span />
+        <button className="skip" type="button" onClick={() => router.push("/record")}>
+          + 새 기록
+        </button>
       </div>
       <div className="scroll">
-        {!combo ? (
-          <div className="empty compact">
-            <h3>인사이트를 찾을 수 없어요</h3>
-            <p>기록이 바뀌었거나 아직 카드가 발행되지 않았어요.</p>
-            <Link href="/insights" className="btn btn-ghost" style={{ marginTop: 16 }}>
-              인사이트로
-            </Link>
-          </div>
-        ) : (
+        {card ? (
           <>
-            <div className="card insight-card">
-              <span className="badge">
-                {sideLabel(combo.side)} · {combo.count}건 반복
-              </span>
-              <h3>{copy?.observation ?? combo.observation}</h3>
-              <p>{copy?.interpretation ?? combo.interpretation}</p>
-              <p className="sub" style={{ marginTop: 8 }}>
-                최근 {summary.realTrades.length}건 중 {combo.count}건
-                {combo.count < INSIGHT_THRESHOLD ? ` · ${INSIGHT_THRESHOLD}건부터 카드 발행` : ""}
-              </p>
-            </div>
-            <div className="section-head">
-              <h2>이 조합의 기록</h2>
-            </div>
-            {related.length === 0 ? (
-              <p className="sub">연결된 기록이 없어요.</p>
-            ) : (
-              related.map((t) => (
-                <button key={t.id} className="trade-row" type="button" onClick={() => router.push(`/records/${t.id}`)}>
-                  <div className={`avatar ${t.side}`}>{initials(t.stockName)}</div>
-                  <div>
-                    <div className="name">{t.stockName}</div>
-                    <div className={t.side === "buy" ? "side-buy" : "side-sell"}>{sideLabel(t.side)}</div>
-                  </div>
-                  <div className="right">
-                    <div className="price">{formatPrice(t.price, t.market)}</div>
-                    <div className="meta">{t.tradedAt.slice(5).replace("-", ".")}</div>
-                  </div>
-                  <span className="chev">›</span>
-                </button>
-              ))
-            )}
+            <span className="badge">{reasonChip(card)}</span>
+            <p className="sub">관련 기록을 매매일 최신순으로 보여 드려요.</p>
+            {related.map((t) => (
+              <div key={t.id} className="card" style={{ marginTop: 10 }}>
+                <TradeRow trade={t} showQty showReason onClick={() => router.push(`/records/${t.id}`)} />
+                <div className="sub stack-lines" style={{ marginTop: 8 }}>
+                  <b>매매이유</b>
+                  {t.reasons.map((r) => (
+                    <span key={r.label}>
+                      {r.group} · {r.label}
+                    </span>
+                  ))}
+                  <b>그때 마음</b>
+                  {t.moods.map((m) => (
+                    <span key={m.label}>{m.label}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </>
+        ) : (
+          <p className="sub">연결된 인사이트를 찾을 수 없어요.</p>
         )}
       </div>
     </PhoneShell>

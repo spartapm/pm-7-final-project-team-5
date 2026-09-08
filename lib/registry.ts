@@ -1,0 +1,47 @@
+const KEY = "patternnote:registry";
+
+export type RegistryAccount = {
+  id: string;
+  kakaoId?: string;
+  email?: string;
+  password?: string;
+  nickname: string;
+};
+
+function load(): RegistryAccount[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? (JSON.parse(raw) as RegistryAccount[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function save(rows: RegistryAccount[]) {
+  localStorage.setItem(KEY, JSON.stringify(rows));
+}
+
+export function findByKakao(kakaoId: string) {
+  return load().find((a) => a.kakaoId === kakaoId) ?? null;
+}
+
+export function findByEmail(email: string) {
+  return load().find((a) => a.email?.toLowerCase() === email.trim().toLowerCase()) ?? null;
+}
+
+export function upsertRegistry(row: RegistryAccount) {
+  const rows = load().filter((a) => a.id !== row.id && a.kakaoId !== row.kakaoId && a.email !== row.email);
+  rows.push(row);
+  save(rows);
+}
+
+export function passwordValid(pw: string) {
+  if (pw.length < 10 || /\s/.test(pw)) return false;
+  const kinds = [/[A-Za-z]/, /\d/, /[^A-Za-z0-9\s]/].filter((r) => r.test(pw)).length;
+  return kinds >= 2;
+}
+
+export function emailValid(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}

@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { BrandMark } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
+import { takeNext } from "@/lib/next-path";
 import { useStore } from "@/lib/store";
 
 export default function WelcomePage() {
@@ -10,14 +12,14 @@ export default function WelcomePage() {
 
   function start() {
     markWelcomeSeen();
-    router.replace("/home");
+    router.replace(takeNext("/home"));
   }
 
   return (
     <PhoneShell>
       <div className="hero">
         <div className="blob">
-          <div style={{ fontWeight: 900, fontSize: 40, color: "var(--navy)" }}>P</div>
+          <BrandMark size={64} />
         </div>
         <h1>패턴노트로<br />기록을 이어가요</h1>
         <p>

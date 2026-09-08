@@ -1,22 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PhoneShell } from "@/components/ui";
 import { afterAuthPath } from "@/lib/format";
+import { takeNext } from "@/lib/next-path";
+import { kakaoRedirectUri } from "@/lib/kakao";
+import { findByKakao } from "@/lib/registry";
 import { useStore } from "@/lib/store";
-import { Suspense } from "react";
 
 function CallbackInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const { login, seenWelcome } = useStore();
+  const { login, loggedIn, nickname, seenWelcome, querying } = useStore();
   const [hint, setHint] = useState("카카오 로그인 확인 중...");
+  const [done, setDone] = useState(false);
+  const once = useRef(false);
 
   useEffect(() => {
+    if (once.current) return;
+    const err = params.get("error");
+    if (err === "access_denied") {
+      setHint("카카오 로그인을 취소했어요.");
+      return;
+    }
+    if (err) {
+      setHint("로그인에 실패했어요. 다시 시도해 주세요.");
+      return;
+    }
     const code = params.get("code");
     const state = params.get("state");
     const saved = sessionStorage.getItem("kakao_oauth_state");
+    const redirectUri = sessionStorage.getItem("kakao_oauth_redirect") || kakaoRedirectUri();
     if (!code) {
       setHint("로그인에 실패했어요. 다시 시도해 주세요.");
       return;
@@ -25,21 +40,44 @@ function CallbackInner() {
       setHint("로그인 상태가 만료됐어요. 다시 시도해 주세요.");
       return;
     }
+    once.current = true;
     (async () => {
       const res = await fetch("/api/kakao/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, redirectUri }),
       });
-      const data = (await res.json()) as { ok?: boolean; kakaoId?: string; nickname?: string; error?: string };
+      const data = (await res.json()) as { ok?: boolean; kakaoId?: string; error?: string };
+      sessionStorage.removeItem("kakao_oauth_state");
+      sessionStorage.removeItem("kakao_oauth_redirect");
       if (!res.ok || !data.ok || !data.kakaoId) {
         setHint(data.error || "카카오 로그인에 실패했어요.");
+        once.current = false;
         return;
       }
-      login({ kakaoId: data.kakaoId, nickname: data.nickname || "회원" });
-      router.replace(afterAuthPath(data.nickname || "회원", seenWelcome));
+      const intent = sessionStorage.getItem("kakao_intent") || "login";
+      sessionStorage.removeItem("kakao_intent");
+      const existing = findByKakao(data.kakaoId);
+      if (intent === "signup" && existing) {
+        router.replace("/login?exists=1");
+        return;
+      }
+      if (!existing) {
+        sessionStorage.setItem("signup_kakao_id", data.kakaoId);
+        sessionStorage.setItem("signup_kind", "kakao");
+        router.replace("/signup/nickname");
+        return;
+      }
+      login({ kakaoId: data.kakaoId, nickname: existing.nickname, accountId: existing.id });
+      setDone(true);
     })();
-  }, [params, login, router, seenWelcome]);
+  }, [params, login, router]);
+
+  useEffect(() => {
+    if (!done || !loggedIn || querying) return;
+    const dest = afterAuthPath(nickname, seenWelcome);
+    router.replace(dest === "/home" ? takeNext("/home") : dest);
+  }, [done, loggedIn, querying, nickname, seenWelcome, router]);
 
   return (
     <PhoneShell>

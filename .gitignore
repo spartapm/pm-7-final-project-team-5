@@ -6,5 +6,7 @@ out
 *.tsbuildinfo
 .env*
 !.env.example
+.vercel
 docs/kakao_claude_API_key.md
 public/figma-check
+.vercel

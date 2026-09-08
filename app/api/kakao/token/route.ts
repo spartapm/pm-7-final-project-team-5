@@ -1,10 +1,27 @@
 import { NextResponse } from "next/server";
 
+function allowedRedirect(uri: string) {
+  try {
+    const u = new URL(uri);
+    if (u.pathname !== "/auth/kakao/callback") return false;
+    if (u.protocol === "http:" && u.hostname === "localhost" && u.port === "3005") return true;
+    if (u.protocol === "https:" && u.hostname === "pattern-note.vercel.app") return true;
+    const env = process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI;
+    return Boolean(env && uri === env);
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: Request) {
-  const { code } = (await req.json()) as { code?: string };
+  const { code, redirectUri } = (await req.json()) as { code?: string; redirectUri?: string };
   const rest = process.env.NEXT_PUBLIC_KAKAO_REST_KEY;
   const secret = process.env.KAKAO_CLIENT_SECRET;
-  const redirect = process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI || "http://localhost:3005/auth/kakao/callback";
+  const redirect =
+    (redirectUri && allowedRedirect(redirectUri) && redirectUri) ||
+    process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI ||
+    "http://localhost:3005/auth/kakao/callback";
+
   if (!code || !rest) {
     return NextResponse.json({ ok: false, error: "설정이 부족해요" }, { status: 400 });
   }
@@ -30,10 +47,7 @@ export async function POST(req: Request) {
   const meRes = await fetch("https://kapi.kakao.com/v2/user/me", {
     headers: { Authorization: `Bearer ${token.access_token}` },
   });
-  const me = (await meRes.json()) as {
-    id?: number;
-    kakao_account?: { email?: string; profile?: { nickname?: string } };
-  };
+  const me = (await meRes.json()) as { id?: number };
   if (!me.id) {
     return NextResponse.json({ ok: false, error: "사용자 정보를 가져오지 못했어요" }, { status: 400 });
   }
@@ -41,6 +55,5 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     kakaoId: String(me.id),
-    nickname: me.kakao_account?.profile?.nickname || "회원",
   });
 }

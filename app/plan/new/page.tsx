@@ -1,109 +1,246 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PhoneShell } from "@/components/ui";
 import { StockSearch } from "@/components/StockSearch";
 import { isOverseas, priceUnit } from "@/lib/markets";
+import { parseNum } from "@/lib/money";
+import { NumPad, PadField } from "@/components/NumPad";
+import { findPlan } from "@/lib/plans";
+import { findStock } from "@/lib/stocks";
 import { useStore } from "@/lib/store";
-import type { Stock } from "@/lib/types";
+import type { Side, Stock } from "@/lib/types";
+import { Suspense } from "react";
 
-export default function NewPlanPage() {
+function NewPlanInner() {
   const router = useRouter();
-  const { addPlan } = useStore();
+  const params = useSearchParams();
+  const returnTo = params.get("return");
+  const lockSide = params.get("side") === "sell" ? "sell" : params.get("side") === "buy" ? "buy" : null;
+  const { plans, addPlan, updatePlan, showToast } = useStore();
   const [stock, setStock] = useState<Stock | null>(null);
-  const [targetBuy, setTargetBuy] = useState("");
-  const [stopLoss, setStopLoss] = useState("");
-  const [takeProfit, setTakeProfit] = useState("");
-  const [memo, setMemo] = useState("");
+  const [side, setSide] = useState<Side | null>(lockSide);
+  const [askType, setAskType] = useState(false);
+  const [askDup, setAskDup] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [buyMin, setBuyMin] = useState("0");
+  const [buyMax, setBuyMax] = useState("0");
+  const [stopLoss, setStopLoss] = useState("0");
+  const [takeProfit, setTakeProfit] = useState("0");
+  const [pad, setPad] = useState<"buyMin" | "buyMax" | "stopLoss" | "takeProfit" | null>(null);
   const overseas = stock ? isOverseas(stock.market) : false;
   const unit = stock ? priceUnit(stock.market) : "원";
 
-  function num(v: string) {
-    const n = Number(v.replace(/,/g, ""));
-    return Number.isFinite(n) && n > 0 ? n : null;
+  useEffect(() => {
+    const code = params.get("code");
+    const market = params.get("market") || undefined;
+    if (code && !stock) {
+      const found = findStock(code, market);
+      if (found) setStock(found);
+    }
+  }, [params, stock]);
+
+  useEffect(() => {
+    if (stock && lockSide && !side) chooseSide(lockSide);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stock, lockSide]);
+
+  function chooseSide(next: Side) {
+    if (!stock) return;
+    const found = findPlan(plans, stock.code, stock.market, next);
+    setSide(next);
+    setAskType(false);
+    if (found) {
+      setAskDup(true);
+      setEditingId(found.id);
+      setBuyMin(found.buyMin != null ? String(found.buyMin) : "0");
+      setBuyMax(found.buyMax != null ? String(found.buyMax) : "0");
+      setStopLoss(found.stopLoss != null ? String(found.stopLoss) : "0");
+      setTakeProfit(found.takeProfit != null ? String(found.takeProfit) : "0");
+    } else {
+      setAskDup(false);
+      setEditingId(null);
+    }
   }
+
+  function save() {
+    if (!stock || !side) return;
+    if (side === "buy") {
+      const min = parseNum(buyMin);
+      const max = parseNum(buyMax);
+      if (!(min > 0) || !(max > 0) || min > max) {
+        showToast("희망 매수 구간을 확인해 주세요", "err");
+        return;
+      }
+      const payload = {
+        side,
+        stockCode: stock.code,
+        stockName: stock.name,
+        market: stock.market,
+        buyMin: min,
+        buyMax: max,
+        stopLoss: null,
+        takeProfit: null,
+        memo: "",
+      };
+      if (editingId) updatePlan(editingId, payload);
+      else addPlan(payload);
+    } else {
+      const stop = parseNum(stopLoss);
+      const take = parseNum(takeProfit);
+      if (!(stop > 0) || !(take > 0) || take < stop) {
+        showToast("목표가와 손절가를 확인해 주세요", "err");
+        return;
+      }
+      const payload = {
+        side,
+        stockCode: stock.code,
+        stockName: stock.name,
+        market: stock.market,
+        buyMin: null,
+        buyMax: null,
+        stopLoss: stop,
+        takeProfit: take,
+        memo: "",
+      };
+      if (editingId) updatePlan(editingId, payload);
+      else addPlan(payload);
+    }
+    router.replace(returnTo || "/plan");
+  }
+
+  const formReady = Boolean(stock && side && !askDup);
 
   return (
     <PhoneShell>
       <div className="topbar">
-        <button className="icon-btn" type="button" onClick={() => (stock ? setStock(null) : router.back())}>
+        <button
+          className="icon-btn"
+          type="button"
+          onClick={() => {
+            if (formReady) {
+              setSide(lockSide);
+              setEditingId(null);
+              return;
+            }
+            if (stock) {
+              setStock(null);
+              setSide(lockSide);
+              return;
+            }
+            router.back();
+          }}
+        >
           ‹
         </button>
-        <h1 className="h1">{overseas ? "해외 종목 계획" : "계획 등록"}</h1>
+        <h1 className="h1">{overseas ? "해외 종목 계획" : side === "sell" ? "매도 계획" : side === "buy" ? "매수 계획" : "계획 등록"}</h1>
         <span />
       </div>
       <div className="scroll">
-        {!stock ? (
+        {!stock || (!side && !askType && !askDup) ? (
           <>
             <div className="step-kicker">계획 등록</div>
             <h1 className="step-title">종목 검색</h1>
-            <StockSearch heading="계획을 남길 종목을 먼저 선택해 주세요." onPick={setStock} />
+            <StockSearch
+              heading="계획을 남길 종목을 선택해 주세요."
+              emptyText="검색 결과가 없어요"
+              selected={stock}
+              onPick={setStock}
+            />
           </>
-        ) : (
+        ) : formReady ? (
           <>
             <p className="sub">
-              {stock.name} · {stock.code} · {stock.marketName}
+              {stock!.name} · {stock!.code} · {stock!.marketName}
             </p>
-            {overseas ? (
-              <p className="overseas-hint">해외 종목은 가격을 달러(USD)로 입력하고, 소수점도 쓸 수 있어요.</p>
-            ) : null}
-            <div className="field" style={{ marginTop: 16 }}>
-              <label>희망 매수가 ({unit}, 선택)</label>
-              <input
-                inputMode="decimal"
-                value={targetBuy}
-                onChange={(e) => setTargetBuy(e.target.value)}
-                placeholder={overseas ? "0.00" : "0"}
-              />
-            </div>
-            <div className="field">
-              <label className="danger">손절가 ({unit}, 선택)</label>
-              <input
-                inputMode="decimal"
-                value={stopLoss}
-                onChange={(e) => setStopLoss(e.target.value)}
-                placeholder={overseas ? "0.00" : "0"}
-              />
-            </div>
-            <div className="field">
-              <label>목표가 ({unit}, 선택)</label>
-              <input
-                inputMode="decimal"
-                value={takeProfit}
-                onChange={(e) => setTakeProfit(e.target.value)}
-                placeholder={overseas ? "0.00" : "0"}
-              />
-            </div>
-            <div className="field">
-              <label>메모 (선택)</label>
-              <textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="이 종목을 보는 이유" />
-            </div>
+            {overseas ? <p className="overseas-hint">해외 종목은 가격을 달러(USD)로 입력하고, 소수점도 쓸 수 있어요.</p> : null}
+            {side === "buy" ? (
+              <>
+                <PadField label={`최소 희망가 (${unit})`} value={buyMin} onOpen={() => setPad("buyMin")} />
+                <PadField label={`최대 희망가 (${unit})`} value={buyMax} onOpen={() => setPad("buyMax")} />
+              </>
+            ) : (
+              <>
+                <PadField label={`손절가 (${unit})`} value={stopLoss} onOpen={() => setPad("stopLoss")} />
+                <PadField label={`목표가 (${unit})`} value={takeProfit} onOpen={() => setPad("takeProfit")} />
+              </>
+            )}
           </>
+        ) : (
+          <p className="sub">{stock?.name} 종목이 선택됐어요.</p>
         )}
       </div>
-      {stock ? (
+      {stock && !side ? (
         <div className="footer-cta">
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={() => {
-              addPlan({
-                stockCode: stock.code,
-                stockName: stock.name,
-                market: stock.market,
-                targetBuy: num(targetBuy),
-                stopLoss: num(stopLoss),
-                takeProfit: num(takeProfit),
-                memo,
-              });
-              router.replace("/plan");
-            }}
-          >
-            계획 저장
+          <button className="btn btn-primary" type="button" onClick={() => setAskType(true)}>
+            다음
           </button>
         </div>
       ) : null}
+      {formReady ? (
+        <div className="footer-cta">
+          <button className="btn btn-primary" type="button" onClick={save}>
+            저장
+          </button>
+        </div>
+      ) : null}
+      {askType ? (
+        <div className="modal-back">
+          <div className="modal">
+            <h3>어떤 매매 계획인가요?</h3>
+            <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={() => chooseSide("buy")}>
+              매수 계획
+            </button>
+            <button className="btn btn-primary" type="button" style={{ marginBottom: 8, background: "#f07a3a" }} onClick={() => chooseSide("sell")}>
+              매도 계획
+            </button>
+            <button className="btn btn-ghost" type="button" onClick={() => setAskType(false)}>
+              닫기
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {askDup ? (
+        <div className="modal-back">
+          <div className="modal">
+            <h3>이미 등록된 계획이 있어요. 계획을 수정하시겠어요?</h3>
+            <button
+              className="btn btn-primary"
+              type="button"
+              style={{ marginBottom: 8 }}
+              onClick={() => setAskDup(false)}
+            >
+              수정하기
+            </button>
+            <button className="btn btn-ghost" type="button" onClick={() => { setAskDup(false); setSide(null); }}>
+              취소
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {pad && stock ? (
+        <NumPad
+          kind="price"
+          value={pad === "buyMin" ? buyMin : pad === "buyMax" ? buyMax : pad === "stopLoss" ? stopLoss : takeProfit}
+          market={stock.market}
+          onCommit={(next) => {
+            if (pad === "buyMin") setBuyMin(next);
+            else if (pad === "buyMax") setBuyMax(next);
+            else if (pad === "stopLoss") setStopLoss(next);
+            else setTakeProfit(next);
+          }}
+          onClose={() => setPad(null)}
+        />
+      ) : null}
     </PhoneShell>
+  );
+}
+
+export default function NewPlanPage() {
+  return (
+    <Suspense fallback={<div className="shell" />}>
+      <NewPlanInner />
+    </Suspense>
   );
 }

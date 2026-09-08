@@ -33,14 +33,14 @@ export function featuredStocks(region: StockRegion = "all"): Stock[] {
 }
 
 export function searchStocks(query: string, limit = 20, region: StockRegion = "all"): Stock[] {
-  const q = query.trim().toLowerCase();
+  const q = query.trim().toLowerCase().replace(/\s+/g, "");
   const pool = all.filter((s) => inRegion(s, region));
   if (!q) return featuredStocks(region).slice(0, limit);
   const starts: Stock[] = [];
   const contains: Stock[] = [];
   for (const s of pool) {
-    const name = s.name.toLowerCase();
-    const code = s.code.toLowerCase();
+    const name = s.name.toLowerCase().replace(/\s+/g, "");
+    const code = s.code.toLowerCase().replace(/\s+/g, "");
     if (name.startsWith(q) || code.startsWith(q)) starts.push(s);
     else if (name.includes(q) || code.includes(q)) contains.push(s);
     if (starts.length >= limit) break;

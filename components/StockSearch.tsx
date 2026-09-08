@@ -21,9 +21,13 @@ function inRegion(s: Stock, region: StockRegion) {
 export function StockSearch({
   onPick,
   heading,
+  emptyText,
+  selected,
 }: {
   onPick: (stock: Stock) => void;
   heading?: string;
+  emptyText?: string;
+  selected?: Stock | null;
 }) {
   const { recentSearches, rememberSearch } = useStore();
   const [q, setQ] = useState("");
@@ -68,24 +72,24 @@ export function StockSearch({
             <h2>최근 검색</h2>
           </div>
           {recents.map((s) => (
-            <StockRow key={`recent-${s.market}-${s.code}`} stock={s} onPick={pick} />
+            <StockRow key={`recent-${s.market}-${s.code}`} stock={s} onPick={pick} selected={selected} />
           ))}
         </>
       ) : null}
-      {!q ? (
-        <div className="section-head">
-          <h2>{region === "us" ? "해외 주요 종목" : region === "kr" ? "국내 주요 종목" : "많이 찾는 종목"}</h2>
-        </div>
-      ) : (
-        <div className="section-head">
-          <h2>검색 결과</h2>
-        </div>
-      )}
-      {results.length === 0 ? (
-        <p className="sub">맞는 종목이 없어요. 코드나 이름을 다시 입력해 주세요.</p>
-      ) : (
-        results.map((s) => <StockRow key={`${s.market}-${s.code}`} stock={s} onPick={pick} />)
-      )}
+      {q ? (
+        <>
+          <div className="section-head">
+            <h2>검색 결과</h2>
+          </div>
+          {results.length === 0 ? (
+            <p className="sub">{emptyText ?? "맞는 종목이 없어요. 코드나 이름을 다시 입력해 주세요."}</p>
+          ) : (
+            results.map((s) => <StockRow key={`${s.market}-${s.code}`} stock={s} onPick={pick} selected={selected} />)
+          )}
+        </>
+      ) : recents.length === 0 ? (
+        <p className="sub">종목명을 입력해 검색해 주세요.</p>
+      ) : null}
     </>
   );
 }
@@ -99,10 +103,11 @@ function SearchIcon() {
   );
 }
 
-function StockRow({ stock, onPick }: { stock: Stock; onPick: (s: Stock) => void }) {
+function StockRow({ stock, onPick, selected }: { stock: Stock; onPick: (s: Stock) => void; selected?: Stock | null }) {
   const overseas = isOverseas(stock.market);
+  const on = selected?.code === stock.code && selected?.market === stock.market;
   return (
-    <button className="search-item" type="button" onClick={() => onPick(stock)}>
+    <button className={`search-item ${on ? "on" : ""}`} type="button" onClick={() => onPick(stock)}>
       <span>
         <b>{stock.name}</b>
         <div className="code">

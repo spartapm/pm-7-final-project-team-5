@@ -15,6 +15,11 @@ export type CategoryPick = {
   meta: string;
 };
 
+export type PlanSnapshot = {
+  buy?: { min: number; max: number };
+  sell?: { stopLoss: number; takeProfit: number };
+};
+
 export type Trade = {
   id: string;
   planId: string | null;
@@ -30,14 +35,18 @@ export type Trade = {
   moods: CategoryPick[];
   isPractice: boolean;
   createdAt: number;
+  planSnapshot: PlanSnapshot | null;
+  hiddenPlan: { buy?: boolean; sell?: boolean };
 };
 
 export type Plan = {
   id: string;
+  side: Side;
   stockCode: string;
   stockName: string;
   market: string;
-  targetBuy: number | null;
+  buyMin: number | null;
+  buyMax: number | null;
   stopLoss: number | null;
   takeProfit: number | null;
   memo: string;
@@ -58,6 +67,26 @@ export type DraftTrade = {
   isPractice: boolean;
 };
 
+export type IssuedCard = {
+  id: string;
+  side: Side;
+  issuedAt: number;
+  dateKey: string;
+  moodMeta: string;
+  moodLabel: string;
+  reasonLevel: "sub" | "group";
+  reasonGroup: string;
+  reasonMeta: string;
+  reasonLabels: string[];
+  count: number;
+  windowSize: number;
+  score: number;
+  narrative1: string;
+  narrative2: string;
+  relatedTradeIds: string[];
+  read: boolean;
+};
+
 export type InsightCopy = {
   observation: string;
   interpretation: string;
@@ -66,14 +95,19 @@ export type InsightCopy = {
 export type AppState = {
   accountId: string;
   kakaoId: string | null;
+  email: string | null;
   nickname: string;
   loggedIn: boolean;
   loginAt: number | null;
   onboarded: boolean;
   seenOnboarding: boolean;
   termsAccepted: boolean;
+  termsVersion: string;
+  termsAcceptedAt: number | null;
   trades: Trade[];
   plans: Plan[];
+  issuedCards: IssuedCard[];
+  issueBaseline: { buy: number; sell: number };
   recentSearches: Stock[];
   insightCopy: Record<string, InsightCopy>;
   seenInsightKeys: string[];
@@ -86,3 +120,5 @@ export const PRACTICE_STOCK: Stock = {
   market: "KOSPI",
   marketName: "코스피",
 };
+
+export const TERMS_VERSION = "2026-09-01";

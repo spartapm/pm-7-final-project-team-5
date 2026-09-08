@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
-import { issuedInsights } from "@/lib/insights";
+import { HomeIcon, InsightIcon, PlanIcon, RecordIcon } from "@/components/icons";
 
 export function PhoneShell({ children }: { children: ReactNode }) {
   return (
@@ -19,19 +19,14 @@ export function PhoneShell({ children }: { children: ReactNode }) {
 
 export function TabBar() {
   const path = usePathname();
-  const { trades, seenInsightKeys, markInsightsSeen } = useStore();
-  const unread = issuedInsights(trades).some((c) => !seenInsightKeys.includes(c.key));
+  const { issuedCards } = useStore();
+  const unread = issuedCards.some((c) => !c.read);
   const onInsights = path.startsWith("/insights");
   useEffect(() => {
     document.querySelectorAll(".scroll").forEach((el) => {
       (el as HTMLElement).scrollTop = 0;
     });
   }, [path]);
-  useEffect(() => {
-    if (!onInsights) return;
-    const keys = issuedInsights(trades).map((c) => c.key);
-    if (keys.length) markInsightsSeen(keys);
-  }, [onInsights, trades, markInsightsSeen]);
   const tabs = [
     { href: "/home", label: "홈", icon: HomeIcon },
     { href: "/plan", label: "계획", icon: PlanIcon },
@@ -56,37 +51,6 @@ export function TabBar() {
         );
       })}
     </nav>
-  );
-}
-
-function HomeIcon({ on }: { on: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" fill={on ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
-      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" />
-    </svg>
-  );
-}
-function PlanIcon({ on }: { on: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={on ? 2.2 : 1.8}>
-      <rect x="5" y="4" width="14" height="16" rx="2" />
-      <path d="M9 2.5v3M15 2.5v3M8 11h8M8 15h5" />
-    </svg>
-  );
-}
-function RecordIcon({ on }: { on: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={on ? 2.2 : 1.8}>
-      <path d="M6 4h9l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" />
-      <path d="M14 4v6h6M8 13h8M8 17h5" />
-    </svg>
-  );
-}
-function InsightIcon({ on }: { on: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={on ? 2.2 : 1.8}>
-      <path d="M5 16V9M10 16V6M15 16v-4M20 16V8" />
-    </svg>
   );
 }
 
@@ -122,7 +86,7 @@ export function Toast({
   onDone: () => void;
 }) {
   useEffect(() => {
-    const t = setTimeout(onDone, 2200);
+    const t = setTimeout(onDone, 5000);
     return () => clearTimeout(t);
   }, [message, onDone]);
   return <div className={`toast ${kind}`}>{message}</div>;
@@ -167,3 +131,21 @@ export function Modal({
 
 export const LEGAL =
   "패턴노트는 투자자문업자 또는 유사투자자문업자가 아니며, 이용자가 입력한 기록을 계산해 지난 매매의 경향을 보여줍니다. 특정 종목의 매매를 권유하지 않으며, 투자 판단과 그 결과에 대한 책임은 이용자 본인에게 있습니다.";
+
+export function LegalFooter() {
+  return (
+    <div className="legal-block">
+      <p className="legal">{LEGAL}</p>
+      <div className="legal-links">
+        <a href="/legal/terms" target="_blank" rel="noreferrer">
+          이용약관
+        </a>
+        <a href="/legal/privacy" target="_blank" rel="noreferrer">
+          개인정보
+        </a>
+        <a href="mailto:hello@patternnote.app">문의하기</a>
+      </div>
+      <p className="copy">© 2026 패턴노트</p>
+    </div>
+  );
+}

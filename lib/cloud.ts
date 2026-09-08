@@ -1,4 +1,5 @@
-import type { AppState, Plan, Trade } from "./types";
+import { migratePlan, migrateTrade } from "./plans";
+import type { AppState, IssuedCard, Plan, Trade } from "./types";
 import { getSupabase, isMissingTable } from "./supabase";
 
 export type CloudStatus = "ok" | "missing-table" | "error" | "off";
@@ -11,6 +12,8 @@ export type CloudAccount = {
   loginAt: number | null;
   plans: Plan[];
   trades: Trade[];
+  issuedCards?: IssuedCard[];
+  issueBaseline?: { buy: number; sell: number };
 };
 
 function toIso(ms: number | null) {
@@ -25,37 +28,42 @@ function fromIso(iso: string | null | undefined, fallback = Date.now()) {
 }
 
 function rowToPlan(row: Record<string, unknown>): Plan {
-  return {
-    id: String(row.id),
-    stockCode: String(row.stock_code),
-    stockName: String(row.stock_name),
-    market: String(row.market),
-    targetBuy: row.target_buy == null ? null : Number(row.target_buy),
-    stopLoss: row.stop_loss == null ? null : Number(row.stop_loss),
-    takeProfit: row.take_profit == null ? null : Number(row.take_profit),
-    memo: String(row.memo ?? ""),
+  return migratePlan({
+    id: row.id,
+    side: row.side,
+    stockCode: row.stock_code,
+    stockName: row.stock_name,
+    market: row.market,
+    targetBuy: row.target_buy,
+    buyMin: row.buy_min ?? row.target_buy,
+    buyMax: row.buy_max,
+    stopLoss: row.stop_loss,
+    takeProfit: row.take_profit,
+    memo: row.memo,
     createdAt: fromIso(row.created_at as string),
     updatedAt: fromIso(row.updated_at as string),
-  };
+  });
 }
 
 function rowToTrade(row: Record<string, unknown>): Trade {
-  return {
-    id: String(row.id),
-    planId: row.plan_id ? String(row.plan_id) : null,
-    side: row.side === "sell" ? "sell" : "buy",
-    stockCode: String(row.stock_code),
-    stockName: String(row.stock_name),
-    market: String(row.market),
-    price: Number(row.price),
-    qty: Number(row.qty),
+  return migrateTrade({
+    id: row.id,
+    planId: row.plan_id,
+    side: row.side,
+    stockCode: row.stock_code,
+    stockName: row.stock_name,
+    market: row.market,
+    price: row.price,
+    qty: row.qty,
     tradedAt: String(row.traded_at).slice(0, 10),
-    tradedTime: String(row.traded_time ?? ""),
-    reasons: Array.isArray(row.reasons) ? (row.reasons as Trade["reasons"]) : [],
-    moods: Array.isArray(row.moods) ? (row.moods as Trade["moods"]) : [],
-    isPractice: Boolean(row.is_practice),
+    tradedTime: row.traded_time,
+    reasons: row.reasons,
+    moods: row.moods,
+    isPractice: row.is_practice,
     createdAt: fromIso(row.created_at as string),
-  };
+    planSnapshot: row.plan_snapshot,
+    hiddenPlan: row.hidden_plan,
+  });
 }
 
 export async function pullAccount(accountId: string): Promise<{
@@ -160,7 +168,7 @@ export async function pushAccount(state: AppState): Promise<CloudStatus> {
         stock_code: p.stockCode,
         stock_name: p.stockName,
         market: p.market,
-        target_buy: p.targetBuy,
+        target_buy: p.buyMin,
         stop_loss: p.stopLoss,
         take_profit: p.takeProfit,
         memo: p.memo,

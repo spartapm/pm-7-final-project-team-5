@@ -37,7 +37,7 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_URL` | 앱 실행 | Supabase Project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 앱 실행 | Publishable key |
 | `NEXT_PUBLIC_KAKAO_REST_KEY` | 실제 카카오 로그인 | REST API 키. 없으면 데모 로그인 |
-| `NEXT_PUBLIC_KAKAO_REDIRECT_URI` | 실제 카카오 로그인 | 예: `http://localhost:3005/auth/kakao/callback` — 카카오 콘솔 Redirect URI에도 동일하게 등록 |
+| `NEXT_PUBLIC_KAKAO_REDIRECT_URI` | 실제 카카오 로그인 | 폴백용. 실제 요청은 현재 도메인의 `/auth/kakao/callback`. 카카오 콘솔에 로컬·배포 URI를 모두 등록 |
 | `KAKAO_CLIENT_SECRET` | 실제 카카오 로그인 | 서버에서만 사용 |
 | `ANTHROPIC_API_KEY` | 인사이트 문장 | 없으면 템플릿 관찰/해석 문장 |
 | `DATABASE_URL` | 스키마 적용 시에만 | `postgresql://postgres:[DB-PASSWORD]@db.xxxx.supabase.co:5432/postgres` |
@@ -52,4 +52,9 @@ npm run db:schema
 
 또는 [SQL Editor](https://supabase.com/dashboard/project/cwvbkmiawjruzlxdbmfq/sql/new)에 `supabase/schema.sql`을 붙여넣고 Run 합니다.
 
-카카오 로그인이 동작하려면 [카카오 개발자](https://developers.kakao.com)에서 Redirect URI를 등록해야 합니다. 등록 전에는 로그인 화면의 **카카오 없이 둘러보기**로 전 기능을 확인할 수 있습니다.
+카카오 로그인은 **회원번호만**으로 사용자를 식별합니다. 이메일은 요청하지 않습니다(비즈 앱 등록 없이 운영).
+
+카카오 디벨로퍼스 Redirect URI에 아래를 **둘 다** 등록하세요.
+
+- `http://localhost:3005/auth/kakao/callback`
+- `https://pattern-note.vercel.app/auth/kakao/callback`

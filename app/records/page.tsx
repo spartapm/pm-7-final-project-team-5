@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PhoneShell, TabBar } from "@/components/ui";
-import { formatPrice, initials, sideLabel } from "@/lib/format";
+import { TradeRow } from "@/components/TradeRow";
 import { useStore } from "@/lib/store";
 import type { Side } from "@/lib/types";
 
@@ -12,7 +12,7 @@ export default function RecordsPage() {
   const { hydrated, trades } = useStore();
   const [filter, setFilter] = useState<"all" | Side>("all");
   const list = useMemo(() => {
-    const real = trades.filter((t) => !t.isPractice);
+    const real = trades.filter((t) => !t.isPractice).sort((a, b) => (a.tradedAt < b.tradedAt ? 1 : a.tradedAt > b.tradedAt ? -1 : b.createdAt - a.createdAt));
     if (filter === "all") return real;
     return real.filter((t) => t.side === filter);
   }, [trades, filter]);
@@ -44,18 +44,7 @@ export default function RecordsPage() {
           </div>
         ) : (
           list.map((t) => (
-            <button key={t.id} className="trade-row" type="button" onClick={() => router.push(`/records/${t.id}`)}>
-              <div className={`avatar ${t.side}`}>{initials(t.stockName)}</div>
-              <div>
-                <div className="name">{t.stockName}</div>
-                <div className={t.side === "buy" ? "side-buy" : "side-sell"}>{sideLabel(t.side)}</div>
-              </div>
-              <div className="right">
-                <div className="price">{formatPrice(t.price, t.market)}</div>
-                <div className="meta">{t.tradedAt}{t.tradedTime ? ` · ${t.tradedTime}` : ""}</div>
-              </div>
-              <span className="chev">›</span>
-            </button>
+            <TradeRow key={t.id} trade={t} showQty onClick={() => router.push(`/records/${t.id}`)} />
           ))
         )}
       </div>
