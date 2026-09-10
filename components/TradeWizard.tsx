@@ -24,7 +24,7 @@ export function TradeWizard({
 }) {
   const { showToast } = useStore();
   const [step, setStep] = useState(1);
-  const [open, setOpen] = useState("차트를 보고");
+  const [open, setOpen] = useState<Set<string>>(new Set(["차트를 보고"]));
   const [ask, setAsk] = useState(false);
   const [pad, setPad] = useState<PadKind | null>(null);
   const groups = reasonGroups();
@@ -108,13 +108,27 @@ export function TradeWizard({
             <h1 className="step-title">이번 {side}는 무엇을 보고 결정하셨어요?</h1>
             <p className="sub">최대 3개까지 고를 수 있어요. ({draft.reasons.length}/3)</p>
             <div className="acc" style={{ marginTop: 16 }}>
-              {groups.map((g) => (
-                <div className="acc-item" key={g.group}>
-                  <button className={open === g.group ? "acc-h open" : "acc-h"} type="button" onClick={() => setOpen(open === g.group ? "" : g.group)}>
+              {groups.map((g) => {
+                const picked = draft.reasons.some((r) => r.group === g.group);
+                const shown = open.has(g.group) || picked;
+                return (
+                <div className={`acc-item ${picked ? "has" : ""}`} key={g.group}>
+                  <button
+                    className={shown ? "acc-h open" : "acc-h"}
+                    type="button"
+                    onClick={() => {
+                      setOpen((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(g.group)) next.delete(g.group);
+                        else next.add(g.group);
+                        return next;
+                      });
+                    }}
+                  >
                     {g.group}
-                    <span>{open === g.group ? "▾" : "▸"}</span>
+                    <span>{shown ? "▾" : "▸"}</span>
                   </button>
-                  {open === g.group && (
+                  {shown && (
                     <div className="acc-body">
                       {g.items.map((item) => {
                         const on = draft.reasons.some((r) => r.label === item.label);
@@ -127,7 +141,8 @@ export function TradeWizard({
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}

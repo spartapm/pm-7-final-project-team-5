@@ -273,6 +273,8 @@ img { display: block; max-width: 100%; }
   display: flex; justify-content: space-between; align-items: center;
 }
 .acc-h.open { color: var(--blue); }
+.acc-item.has { background: var(--blue-soft); }
+.plan-guide { margin: 16px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .acc-body { background: var(--blue-soft); padding: 4px 16px 16px; display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
   border-radius: 99px; padding: 8px 12px; font-size: 13px; background: #fff;

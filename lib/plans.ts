@@ -20,11 +20,11 @@ export function planSummary(plan: Plan) {
   if (plan.side === "buy") {
     const min = plan.buyMin != null ? formatPrice(plan.buyMin, plan.market) : "-";
     const max = plan.buyMax != null ? formatPrice(plan.buyMax, plan.market) : "-";
-    return `희망 ${min} ~ ${max}`;
+    return `희망가 ${min}~${max}`;
   }
   const stop = plan.stopLoss != null ? formatPrice(plan.stopLoss, plan.market) : "-";
   const take = plan.takeProfit != null ? formatPrice(plan.takeProfit, plan.market) : "-";
-  return `손절 ${stop} · 목표 ${take}`;
+  return `목표가 ${take} 손절가 ${stop}`;
 }
 
 export function buyCaption(actual: number, min: number, max: number) {

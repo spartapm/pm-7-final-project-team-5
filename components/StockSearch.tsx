@@ -82,7 +82,7 @@ export function StockSearch({
             <h2>검색 결과</h2>
           </div>
           {results.length === 0 ? (
-            <p className="sub">{emptyText ?? "맞는 종목이 없어요. 코드나 이름을 다시 입력해 주세요."}</p>
+            <p className="sub">{emptyText ?? "종목을 찾지 못했어요, 입력한 내용을 다시 확인해 주세요"}</p>
           ) : (
             results.map((s) => <StockRow key={`${s.market}-${s.code}`} stock={s} onPick={pick} selected={selected} />)
           )}

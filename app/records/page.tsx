@@ -44,7 +44,7 @@ export default function RecordsPage() {
           </div>
         ) : (
           list.map((t) => (
-            <TradeRow key={t.id} trade={t} showQty onClick={() => router.push(`/records/${t.id}`)} />
+            <TradeRow key={t.id} trade={t} showQty showReason onClick={() => router.push(`/records/${t.id}`)} />
           ))
         )}
       </div>

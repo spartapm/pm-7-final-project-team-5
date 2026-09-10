@@ -168,7 +168,8 @@ function TrendList({ groups }: { groups: [string, IssuedCard[]][] }) {
   return (
     <>
       <div className="card">
-        <p className="sub">기록 3개가 쌓일 때마다 반복된 판단을 카드로 보여 드려요. 매수와 매도는 따로 집계돼요.</p>
+        <p className="sub">기록 3개가 쌓일 때마다 새 카드 발행을 시도해요</p>
+        <p className="sub">뚜렷한 경향이 안 보이면 이번엔 카드가 발행되지 않을 수 있어요</p>
       </div>
       {groups.map(([date, cards]) => {
         const buy = cards.filter((c) => c.side === "buy").sort((a, b) => b.issuedAt - a.issuedAt)[0];
@@ -177,7 +178,7 @@ function TrendList({ groups }: { groups: [string, IssuedCard[]][] }) {
         return (
           <div className="date-group" key={date}>
             <div className="date-group-h">
-              <b>{date.slice(5).replace("-", ".")}</b>
+              <b>{date}</b>
               <a href={dateHref(date)}>이 날짜의 카드 전체보기</a>
             </div>
             {shown.map((c) => (

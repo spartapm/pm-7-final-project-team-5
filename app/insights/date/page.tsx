@@ -25,12 +25,12 @@ function DateInner() {
         <span />
       </div>
       <div className="scroll">
-        <p className="sub">발행 시각이 늦은 카드부터 보여 드려요.</p>
+        <p className="sub">발행시간 최신순 정렬</p>
         {cards.map((c) => (
           <InsightCard key={c.id} card={c} />
         ))}
         <p className="sub" style={{ marginTop: 16 }}>
-          이미 발행된 카드는 이후 기록을 지워도 그대로 남아요.
+          카드 내용은 발행 당시 그대로 보존돼요. 메인 화면(경향해석 탭)에는 매수·매도 슬롯당 최신 카드 1장만 노출돼요.
         </p>
       </div>
     </PhoneShell>

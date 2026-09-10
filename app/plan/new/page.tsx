@@ -70,7 +70,7 @@ function NewPlanInner() {
       const min = parseNum(buyMin);
       const max = parseNum(buyMax);
       if (!(min > 0) || !(max > 0) || min > max) {
-        showToast("희망 매수 구간을 확인해 주세요", "err");
+        showToast("최소 희망가는 최대 희망가보다 작거나 같아야해요", "err");
         return;
       }
       const payload = {
@@ -90,7 +90,7 @@ function NewPlanInner() {
       const stop = parseNum(stopLoss);
       const take = parseNum(takeProfit);
       if (!(stop > 0) || !(take > 0) || take < stop) {
-        showToast("목표가와 손절가를 확인해 주세요", "err");
+        showToast("손절가는 목표가보다 낮거나 같아야해요", "err");
         return;
       }
       const payload = {
@@ -144,7 +144,7 @@ function NewPlanInner() {
             <h1 className="step-title">종목 검색</h1>
             <StockSearch
               heading="계획을 남길 종목을 선택해 주세요."
-              emptyText="검색 결과가 없어요"
+              emptyText="종목을 찾지 못했어요, 입력한 내용을 다시 확인해 주세요"
               selected={stock}
               onPick={setStock}
             />
@@ -211,10 +211,10 @@ function NewPlanInner() {
               style={{ marginBottom: 8 }}
               onClick={() => setAskDup(false)}
             >
-              수정하기
+              네
             </button>
             <button className="btn btn-ghost" type="button" onClick={() => { setAskDup(false); setSide(null); }}>
-              취소
+              아니요
             </button>
           </div>
         </div>

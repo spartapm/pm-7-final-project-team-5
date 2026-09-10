@@ -13,7 +13,9 @@ function RelatedInner() {
   const router = useRouter();
   const { hydrated, trades, issuedCards } = useStore();
   const card = issuedCards.find((c) => c.id === id);
-  const related = card ? trades.filter((t) => card.relatedTradeIds.includes(t.id)) : [];
+  const related = card
+    ? trades.filter((t) => card.relatedTradeIds.includes(t.id)).sort((a, b) => (a.tradedAt < b.tradedAt ? 1 : a.tradedAt > b.tradedAt ? -1 : b.createdAt - a.createdAt))
+    : [];
 
   if (!hydrated) return <div className="shell" />;
 
@@ -23,7 +25,7 @@ function RelatedInner() {
         <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
           ‹
         </button>
-        <h1 className="h1">관련 기록</h1>
+        <h1 className="h1">기록</h1>
         <button className="skip" type="button" onClick={() => router.push("/record")}>
           + 새 기록
         </button>
@@ -32,7 +34,7 @@ function RelatedInner() {
         {card ? (
           <>
             <span className="badge">{reasonChip(card)}</span>
-            <p className="sub">관련 기록을 매매일 최신순으로 보여 드려요.</p>
+            <p className="sub">기록일시 최신순 정렬</p>
             {related.map((t) => (
               <div key={t.id} className="card" style={{ marginTop: 10 }}>
                 <TradeRow trade={t} showQty showReason onClick={() => router.push(`/records/${t.id}`)} />

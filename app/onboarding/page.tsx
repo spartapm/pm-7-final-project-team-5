@@ -212,7 +212,14 @@ export default function OnboardingPage() {
                               className={on ? "chip on" : "chip"}
                               onClick={() => {
                                 const pick = toPick(item);
-                                setReasons((s) => (on ? s.filter((r) => r.label !== item.label) : [...s, pick].slice(0, 3)));
+                                setReasons((s) => {
+                                  if (on) return s.filter((r) => r.label !== item.label);
+                                  if (s.length >= 3) {
+                                    showToast("이 옵션을 선택하려면 하나를 해제해주세요", "info");
+                                    return s;
+                                  }
+                                  return [...s, pick];
+                                });
                               }}
                             >
                               {item.label}
