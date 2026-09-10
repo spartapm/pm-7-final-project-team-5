@@ -13,6 +13,7 @@ create table if not exists public.accounts (
 alter table public.accounts add column if not exists issue_baseline_buy integer not null default 0;
 alter table public.accounts add column if not exists issue_baseline_sell integer not null default 0;
 alter table public.accounts add column if not exists email text;
+create unique index if not exists accounts_email_lower_idx on public.accounts (lower(email)) where email is not null;
 alter table public.accounts add column if not exists terms_version text;
 alter table public.accounts add column if not exists terms_accepted_at timestamptz;
 
