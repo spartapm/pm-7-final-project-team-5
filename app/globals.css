@@ -326,6 +326,25 @@ img { display: block; max-width: 100%; }
 .hbar { display: grid; grid-template-columns: 110px 1fr auto; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; }
 .hbar .track { height: 8px; background: #eef1f6; border-radius: 99px; overflow: hidden; }
 .hbar .track > i { display: block; height: 100%; background: var(--navy); }
+.hbar-stack { margin-top: 12px; }
+.hbar-top { font-size: 13px; font-weight: 700; }
+.hbar-bottom { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.hbar-bottom .track { flex: 1; height: 8px; background: #eef1f6; border-radius: 99px; overflow: hidden; }
+.hbar-bottom .track > i { display: block; height: 100%; background: var(--navy); }
+.chart-range { display: flex; align-items: center; gap: 8px; }
+.chart-range button { width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 8px; font-weight: 700; }
+.insight-cta { text-align: right; margin-top: 12px; }
+.or-line { text-align: center; color: var(--muted); font-size: 12px; margin: 16px 0; }
+.pad-label { display: flex; justify-content: space-between; }
+.pad-unit { color: var(--muted); font-weight: 600; }
+.cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+.cal-dow { color: var(--muted); font-size: 11px; margin-bottom: 6px; }
+.cal-grid button { height: 36px; border-radius: 8px; }
+.cal-grid button.on { background: var(--navy); color: #fff; }
+.cal-grid button:disabled { opacity: 0.3; }
+.time-wheel { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 0; }
+.time-wheel select { font-size: 22px; font-weight: 700; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
 
 .pie-wrap { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center; }
 .pie-legend { font-size: 13px; display: flex; flex-direction: column; gap: 6px; }

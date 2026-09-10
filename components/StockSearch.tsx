@@ -20,37 +20,33 @@ function inRegion(s: Stock, region: StockRegion) {
 
 export function StockSearch({
   onPick,
-  heading,
   emptyText,
   selected,
+  placeholder = "종목명 혹은 종목코드를 입력하세요",
 }: {
   onPick: (stock: Stock) => void;
-  heading?: string;
   emptyText?: string;
   selected?: Stock | null;
+  placeholder?: string;
 }) {
   const { recentSearches, rememberSearch } = useStore();
   const [q, setQ] = useState("");
   const [region, setRegion] = useState<StockRegion>("all");
   const results = useMemo(() => searchStocks(q, 20, region), [q, region]);
   const recents = recentSearches.filter((s) => inRegion(s, region)).slice(0, 5);
+  const hideList = Boolean(selected && !q);
 
   function pick(stock: Stock) {
     rememberSearch(stock);
+    setQ("");
     onPick(stock);
   }
 
   return (
     <>
-      {heading ? <p className="sub">{heading}</p> : null}
       <div className="seg seg-3" style={{ marginTop: 16 }}>
         {REGIONS.map((r) => (
-          <button
-            key={r.id}
-            type="button"
-            className={region === r.id ? "on" : ""}
-            onClick={() => setRegion(r.id)}
-          >
+          <button key={r.id} type="button" className={region === r.id ? "on" : ""} onClick={() => setRegion(r.id)}>
             {r.label}
           </button>
         ))}
@@ -60,13 +56,16 @@ export function StockSearch({
           <SearchIcon />
           <input
             className="search-input"
-            value={q}
+            value={q || (selected && !q ? selected.name : "")}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="종목명을 입력하세요"
+            placeholder={placeholder}
+            onFocus={() => {
+              if (selected) setQ(selected.name);
+            }}
           />
         </div>
       </div>
-      {!q && recents.length > 0 ? (
+      {hideList ? null : !q && recents.length > 0 ? (
         <>
           <div className="section-head">
             <h2>최근 검색</h2>
@@ -75,8 +74,7 @@ export function StockSearch({
             <StockRow key={`recent-${s.market}-${s.code}`} stock={s} onPick={pick} selected={selected} />
           ))}
         </>
-      ) : null}
-      {q ? (
+      ) : q ? (
         <>
           <div className="section-head">
             <h2>검색 결과</h2>
@@ -87,8 +85,6 @@ export function StockSearch({
             results.map((s) => <StockRow key={`${s.market}-${s.code}`} stock={s} onPick={pick} selected={selected} />)
           )}
         </>
-      ) : recents.length === 0 ? (
-        <p className="sub">종목명을 입력해 검색해 주세요.</p>
       ) : null}
     </>
   );

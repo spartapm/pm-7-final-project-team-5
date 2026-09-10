@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { moodOptions, reasonGroups, toPick } from "@/lib/categories";
 import { formatPrice, formatQty, formatWhen, sideLabel, todayKey } from "@/lib/format";
-import { isOverseas, priceUnit } from "@/lib/markets";
+import { priceUnit } from "@/lib/markets";
 import { bumpQty, parseNum, pricePlaceholder } from "@/lib/money";
 import { NumPad, PadField, type PadKind } from "@/components/NumPad";
 import { useStore } from "@/lib/store";
@@ -24,13 +24,12 @@ export function TradeWizard({
 }) {
   const { showToast } = useStore();
   const [step, setStep] = useState(1);
-  const [open, setOpen] = useState<Set<string>>(new Set(["차트를 보고"]));
+  const [open, setOpen] = useState<Set<string>>(new Set());
   const [ask, setAsk] = useState(false);
   const [pad, setPad] = useState<PadKind | null>(null);
   const groups = reasonGroups();
   const moods = moodOptions(draft.side);
   const side = sideLabel(draft.side);
-  const overseas = draft.stock ? isOverseas(draft.stock.market) : false;
   const unit = draft.stock ? priceUnit(draft.stock.market) : "원";
   const market = draft.stock?.market || "KOSPI";
   const canInfo = Boolean(draft.stock) && parseNum(draft.price) > 0 && parseNum(draft.qty) > 0 && Boolean(draft.tradedAt);
@@ -60,7 +59,7 @@ export function TradeWizard({
           ‹
         </button>
         <span className="h1" style={{ fontSize: 16 }}>
-          {side} 기록 {step}/3 단계
+          {side} 기록
         </span>
         <span />
       </div>
@@ -70,15 +69,14 @@ export function TradeWizard({
       <div className="scroll">
         {step === 1 && (
           <>
-            <h1 className="step-title">{draft.stock?.name}</h1>
-            <p className="sub">
-              {draft.stock?.code} · {draft.stock?.marketName}
-              {overseas ? " · USD, 소수점 둘째 자리" : ""}
-            </p>
+            <h1 className="step-title">
+              {draft.stock?.name} <span className="sub">{draft.stock?.code} · {draft.stock?.marketName}</span>
+            </h1>
             <div className="field-row">
               <div style={{ flex: 1 }}>
                 <PadField
-                  label={`${draft.side === "buy" ? "매수가" : "매도가"} (${unit})`}
+                  label={draft.side === "buy" ? "매수가" : "매도가"}
+                  unit={unit}
                   value={draft.price}
                   placeholder={pricePlaceholder(market)}
                   onOpen={() => setPad("price")}
@@ -99,8 +97,14 @@ export function TradeWizard({
                 </div>
               </div>
             </div>
-            <PadField label="매매일자" value={draft.tradedAt} onOpen={() => setPad("date")} />
-            <PadField label="매매 시각 (선택)" value={draft.tradedTime || "생략"} onOpen={() => setPad("time")} />
+            <div className="field-row">
+              <div style={{ flex: 1 }}>
+                <PadField label="매매일자" value={draft.tradedAt} onOpen={() => setPad("date")} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <PadField label="매매 시각" value={draft.tradedTime} placeholder="00:00" onOpen={() => setPad("time")} />
+              </div>
+            </div>
           </>
         )}
         {step === 2 && (
@@ -182,13 +186,13 @@ export function TradeWizard({
       {ask ? (
         <div className="modal-back">
           <div className="modal">
-            <h3>이 내용으로 저장할까요?</h3>
-            <p>저장하면 기록 상세에서 확인할 수 있어요.</p>
+            <h3>이 매매를 기록할까요?</h3>
+            <p>저장한 기록은 상세에서 다시 확인할 수 있어요.</p>
             <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={onSave}>
-              네
+              저장하기
             </button>
             <button className="btn btn-ghost" type="button" onClick={() => setAsk(false)}>
-              아니요
+              취소
             </button>
           </div>
         </div>

@@ -52,12 +52,12 @@ function NewPlanInner() {
     setSide(next);
     setAskType(false);
     if (found) {
-      setAskDup(true);
       setEditingId(found.id);
       setBuyMin(found.buyMin != null ? String(found.buyMin) : "0");
       setBuyMax(found.buyMax != null ? String(found.buyMax) : "0");
       setStopLoss(found.stopLoss != null ? String(found.stopLoss) : "0");
       setTakeProfit(found.takeProfit != null ? String(found.takeProfit) : "0");
+      setAskDup(!returnTo);
     } else {
       setAskDup(false);
       setEditingId(null);
@@ -119,6 +119,10 @@ function NewPlanInner() {
           className="icon-btn"
           type="button"
           onClick={() => {
+            if (returnTo) {
+              router.replace(returnTo);
+              return;
+            }
             if (formReady) {
               setSide(lockSide);
               setEditingId(null);
@@ -143,7 +147,6 @@ function NewPlanInner() {
             <div className="step-kicker">계획 등록</div>
             <h1 className="step-title">종목 검색</h1>
             <StockSearch
-              heading="계획을 남길 종목을 선택해 주세요."
               emptyText="종목을 찾지 못했어요, 입력한 내용을 다시 확인해 주세요"
               selected={stock}
               onPick={setStock}

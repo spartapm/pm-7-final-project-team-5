@@ -29,12 +29,15 @@ export function TradeRow({
       <div>
         <div className="name">{trade.stockName}</div>
         <div className={trade.side === "buy" ? "side-buy" : "side-sell"}>{sideLabel(trade.side)}</div>
-        {showReason && trade.reasons.length ? (
+        {showReason ? (
           <div className="meta stack-lines">
             {trade.reasons.map((r) => (
               <span key={r.label}>
                 {r.group} · {r.label}
               </span>
+            ))}
+            {trade.moods.map((m) => (
+              <span key={m.label}>{m.label}</span>
             ))}
           </div>
         ) : null}

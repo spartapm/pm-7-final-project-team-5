@@ -9,27 +9,48 @@ export function formatGrouped(intPart: string) {
   return intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+export function capPriceRaw(raw: string, market: string) {
+  const overseas = isOverseas(market);
+  const trailingDot = overseas && raw.replace(/,/g, "").endsWith(".");
+  const cleaned = stripNum(raw);
+  const [intRaw = "", fracRaw = ""] = cleaned.split(".");
+  const intPart = (intRaw || "").replace(/\D/g, "").slice(0, overseas ? 6 : 10);
+  if (!overseas) return intPart || "0";
+  const frac = fracRaw.replace(/\D/g, "").slice(0, 2);
+  if (trailingDot && !frac) return `${intPart || "0"}.`;
+  return cleaned.includes(".") ? `${intPart || "0"}.${frac}` : intPart || "0";
+}
+
+export function capQtyRaw(raw: string) {
+  const trailingDot = raw.replace(/,/g, "").endsWith(".");
+  const cleaned = stripNum(raw);
+  const [intRaw = "", fracRaw = ""] = cleaned.split(".");
+  const intPart = (intRaw || "").replace(/\D/g, "").slice(0, 5);
+  const frac = fracRaw.replace(/\D/g, "").slice(0, 3);
+  if (trailingDot && !frac) return `${intPart || "0"}.`;
+  return cleaned.includes(".") ? `${intPart || "0"}.${frac}` : intPart || "0";
+}
+
 export function sanitizePrice(raw: string, market: string) {
   const overseas = isOverseas(market);
-  const cleaned = stripNum(raw);
-  if (!cleaned) return overseas ? "0.00" : "0";
-  const [intRaw, fracRaw = ""] = cleaned.split(".");
-  const intPart = (intRaw || "0").replace(/^0+(?=\d)/, "").slice(0, overseas ? 6 : 10);
-  if (!overseas) return formatGrouped(intPart || "0");
-  const frac = fracRaw.slice(0, 2).padEnd(Math.min(fracRaw.length, 2), "");
-  const shown = fracRaw.length ? `${intPart || "0"}.${frac.slice(0, 2)}` : intPart || "0";
-  const [a, b] = shown.split(".");
-  return b != null ? `${formatGrouped(a || "0")}.${b}` : formatGrouped(a || "0");
+  const capped = capPriceRaw(raw, market);
+  if (!capped || capped === ".") return overseas ? "0." : "0";
+  const [intRaw, fracRaw] = capped.split(".");
+  const intPart = (intRaw || "0").replace(/^0+(?=\d)/, "") || "0";
+  if (!overseas) return formatGrouped(intPart);
+  if (capped.endsWith(".") && fracRaw == null) return `${formatGrouped(intPart)}.`;
+  if (fracRaw != null) return `${formatGrouped(intPart)}.${fracRaw.slice(0, 2)}`;
+  return formatGrouped(intPart);
 }
 
 export function sanitizeQty(raw: string) {
-  const cleaned = stripNum(raw);
-  if (!cleaned) return "0";
-  const [intRaw, fracRaw = ""] = cleaned.split(".");
-  const intPart = (intRaw || "0").replace(/^0+(?=\d)/, "").slice(0, 5);
-  if (!raw.includes(".") && !cleaned.includes(".")) return formatGrouped(intPart || "0");
-  const frac = fracRaw.slice(0, 3);
-  return frac.length ? `${formatGrouped(intPart || "0")}.${frac}` : formatGrouped(intPart || "0");
+  const capped = capQtyRaw(raw);
+  if (!capped || capped === ".") return "0";
+  const [intRaw, fracRaw] = capped.split(".");
+  const intPart = (intRaw || "0").replace(/^0+(?=\d)/, "") || "0";
+  if (capped.endsWith(".") && fracRaw == null) return `${formatGrouped(intPart)}.`;
+  if (fracRaw != null) return `${formatGrouped(intPart)}.${fracRaw.slice(0, 3)}`;
+  return formatGrouped(intPart);
 }
 
 export function parseNum(v: string) {

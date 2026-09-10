@@ -6,7 +6,8 @@ import { PhoneShell } from "@/components/ui";
 import { afterAuthPath } from "@/lib/format";
 import { takeNext } from "@/lib/next-path";
 import { kakaoRedirectUri } from "@/lib/kakao";
-import { findByKakao } from "@/lib/registry";
+import { findAccountByKakao } from "@/lib/cloud";
+import { findByKakao, upsertRegistry } from "@/lib/registry";
 import { useStore } from "@/lib/store";
 
 function CallbackInner() {
@@ -57,7 +58,14 @@ function CallbackInner() {
       }
       const intent = sessionStorage.getItem("kakao_intent") || "login";
       sessionStorage.removeItem("kakao_intent");
-      const existing = findByKakao(data.kakaoId);
+      let existing = findByKakao(data.kakaoId);
+      if (!existing) {
+        const remote = await findAccountByKakao(data.kakaoId);
+        if (remote) {
+          existing = { id: remote.id, kakaoId: remote.kakaoId, nickname: remote.nickname };
+          upsertRegistry(existing);
+        }
+      }
       if (intent === "signup" && existing) {
         router.replace("/login?exists=1");
         return;

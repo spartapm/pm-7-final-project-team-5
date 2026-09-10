@@ -7,7 +7,6 @@ import { PhoneShell } from "@/components/ui";
 import { reasonGroups, toPick } from "@/lib/categories";
 import { moodOptions } from "@/lib/categories";
 import { PRACTICE, SAMPLE_INSIGHT } from "@/lib/onboarding-data";
-import { touchRevisitCookie } from "@/lib/visit";
 import { useStore } from "@/lib/store";
 import type { CategoryPick } from "@/lib/types";
 
@@ -34,12 +33,10 @@ export default function OnboardingPage() {
 
   function goSignup() {
     skipOnboarding();
-    touchRevisitCookie();
     router.push("/signup");
   }
   function goLogin() {
     skipOnboarding();
-    touchRevisitCookie();
     router.push("/login");
   }
   function toReplay() {
@@ -54,7 +51,7 @@ export default function OnboardingPage() {
       <PhoneShell>
         <div className="scroll">
           <div className="step-kicker">연습 기록 3건 기준</div>
-          <h1 className="step-title">연습으로 본 인사이트</h1>
+          <h1 className="step-title">첫 인사이트 리포트</h1>
           <div className="tabs">
             <button type="button" className={tab === "dash" ? "on" : ""} onClick={() => setTab("dash")}>
               대시보드
@@ -131,17 +128,20 @@ export default function OnboardingPage() {
     return (
       <PhoneShell>
         <div className="topbar">
-          <span />
+          <span className="h1" style={{ fontSize: 16 }}>
+            연습 기록 3건 완료
+          </span>
           <span />
         </div>
         <div className="scroll">
-          <h1 className="step-title">연습 기록 3건 완료</h1>
+          <h1 className="step-title">3건을 이렇게 기록했어요</h1>
+          <p className="sub">기록이 쌓이면 이렇게 다시 볼 수 있어요</p>
           {cards.map((c) => (
             <div key={c.code} className={`card ${c.highlight ? "highlight-card" : ""}`}>
               <div className="replay-head">
                 <b>{c.name}</b>
                 <span className="badge">{c.side}</span>
-                <span className="sub">{c.n}/3</span>
+                <span className="sub">{c.n === 3 ? "3번째 · 방금" : `${c.n}번째`}</span>
               </div>
               <p className="sub">
                 {c.price} · {c.qty}
@@ -186,22 +186,19 @@ export default function OnboardingPage() {
           {stage === "reason" ? (
             <>
               <h1 className="step-title">이번 매수는 무엇을 보고 결정하셨어요?</h1>
-              <p className="sub">연습에서는 ‘차트를 보고’만 선택할 수 있어요.</p>
+              <p className="sub">매수할 때 참고한 내용을 선택해 주세요. 최대 3개까지 고를 수 있어요. ({reasons.length}/3)</p>
               <div className="acc" style={{ marginTop: 16 }}>
                 {groups.map((g) => (
                   <div className="acc-item" key={g.group}>
                     <button
                       className={open === g.group ? "acc-h open" : "acc-h"}
                       type="button"
-                      onClick={() => {
-                        if (g.group !== "차트를 보고") return;
-                        setOpen(open === g.group ? "" : g.group);
-                      }}
+                      onClick={() => setOpen(open === g.group ? "" : g.group)}
                     >
                       {g.group}
-                      <span>{g.group === "차트를 보고" ? (open === g.group ? "▾" : "▸") : ""}</span>
+                      <span>{open === g.group ? "▾" : "▸"}</span>
                     </button>
-                    {open === g.group && g.group === "차트를 보고" && (
+                    {open === g.group && (
                       <div className="acc-body">
                         {g.items.map((item) => {
                           const on = reasons.some((r) => r.label === item.label);
@@ -276,56 +273,52 @@ export default function OnboardingPage() {
 
   if (stage === "ex1" || stage === "ex2" || stage === "ex3") {
     const data = stage === "ex1" ? PRACTICE.samsung : stage === "ex2" ? PRACTICE.kakao : PRACTICE.naver;
-    const kicker = stage === "ex1" ? "연습 매매 · 1/3" : stage === "ex2" ? "연습 매매 · 2/3" : "연습 매매 · 3/3";
+    const kicker = stage === "ex3" ? "연습 매매 · 3/3" : stage === "ex2" ? "예시 과거 기록 · 2/3" : "예시 과거 기록 · 1/3";
     const next = () => setStage(stage === "ex1" ? "ex2" : stage === "ex2" ? "ex3" : "reason");
+    const title = stage === "ex3" ? "이번 연습 매매 정보예요" : "이렇게 기록했어요";
+    const situation = "situation" in data ? data.situation : "";
     return (
       <PhoneShell>
         <div className="topbar">
-          <button className="icon-btn" type="button" onClick={() => setStage(stage === "ex1" ? "intro" : stage === "ex2" ? "ex1" : "ex2")}>
-            ‹
-          </button>
+          <span className="h1" style={{ fontSize: 14 }}>
+            {kicker}
+          </span>
           <button className="skip" type="button" onClick={toReplay}>
             건너뛰기
           </button>
         </div>
         <div className="scroll">
-          <div className="step-kicker">{kicker} · 건너뛰기</div>
-          <h1 className="step-title">이렇게 남겨 볼까요?</h1>
+          <h1 className="step-title">{title}</h1>
+          {situation ? (
+            <div className="card">
+              <span className="badge">가상 상황</span>
+              <p style={{ marginTop: 8 }}>{situation}</p>
+            </div>
+          ) : null}
           <div className="card">
-            {stage === "ex3" ? (
-              <dl className="detail-kv">
-                <dt>종목</dt>
-                <dd>{data.name}</dd>
-                <dt>구분</dt>
-                <dd className="side-buy">{data.side}</dd>
-                <dt>가격</dt>
-                <dd>{data.price}</dd>
-                <dt>수량</dt>
-                <dd>{data.qty}</dd>
-              </dl>
-            ) : (
+            <dl className="detail-kv trade-mini">
+              <dt>종목·구분</dt>
+              <dd>
+                {data.name} · {data.side}
+              </dd>
+              <dt>가격·수량</dt>
+              <dd>
+                {data.price} · {data.qty}
+              </dd>
+            </dl>
+            {stage === "ex3" ? <p className="sub">예시로 고정된 정보예요</p> : null}
+            {"reasons" in data ? (
               <>
-                <div className="replay-head">
-                  <b>{data.name}</b>
-                  <span className="badge">{data.side}</span>
+                <div className="sub" style={{ marginTop: 12 }}>
+                  매매 이유
+                  <Lines items={data.reasons} />
                 </div>
-                <p>
-                  {data.price} · {data.qty}
-                </p>
-                {"reasons" in data ? (
-                  <>
-                    <div className="sub" style={{ marginTop: 12 }}>
-                      매매 이유
-                      <Lines items={data.reasons} />
-                    </div>
-                    <div className="sub" style={{ marginTop: 8 }}>
-                      그때 마음
-                      <Lines items={data.moods} />
-                    </div>
-                  </>
-                ) : null}
+                <div className="sub" style={{ marginTop: 8 }}>
+                  그때 마음
+                  <Lines items={data.moods} />
+                </div>
               </>
-            )}
+            ) : null}
           </div>
         </div>
         <div className="footer-cta">

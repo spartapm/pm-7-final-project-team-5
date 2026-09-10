@@ -37,7 +37,7 @@ export function PlanCards({
           onHide={() => onHide(opposite)}
         />
       ) : null}
-      {!oppSnap && !hideOpp ? (
+      {!oppSnap || hideOpp ? (
         <button className="card induce" type="button" onClick={() => onInduce(opposite)}>
           + {opposite === "sell" ? "매도" : "매수"} 계획 등록하기
         </button>

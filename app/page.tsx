@@ -21,7 +21,7 @@ export default function SplashPage() {
       } else if (!seenOnboarding) {
         router.replace("/onboarding");
       } else {
-        router.replace("/login");
+        router.replace("/signup");
       }
     }, 1400);
     return () => clearTimeout(t);

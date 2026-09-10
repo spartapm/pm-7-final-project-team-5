@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { KakaoIcon, PhoneShell } from "@/components/ui";
-import { BrandMark } from "@/components/icons";
 import { afterAuthPath } from "@/lib/format";
 import { takeNext } from "@/lib/next-path";
 import { hasKakaoKey, startKakaoLogin } from "@/lib/kakao";
@@ -50,14 +49,21 @@ function LoginInner() {
 
   return (
     <PhoneShell>
-      <div className="hero" style={{ flex: "none", paddingTop: 48 }}>
-        <div className="blob">
-          <BrandMark size={56} />
-        </div>
+      <div className="topbar">
+        <button className="icon-btn" type="button" onClick={() => router.back()}>
+          ‹
+        </button>
+        <span />
+      </div>
+      <div className="hero" style={{ flex: "none", paddingTop: 24 }}>
         <h1>로그인</h1>
-        <p>카카오 회원번호로 계정을 찾습니다. 이메일은 카카오에서 받지 않아요.</p>
       </div>
       <div className="scroll">
+        <button className="btn btn-kakao" type="button" onClick={kakao}>
+          <KakaoIcon />
+          {hasKakaoKey() ? "카카오로 로그인" : "카카오 설정 필요"}
+        </button>
+        <p className="or-line">또는</p>
         <div className="field">
           <label>이메일</label>
           <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="이메일" />
@@ -70,10 +76,6 @@ function LoginInner() {
       <div className="footer-cta">
         <button className="btn btn-primary" type="button" onClick={submitEmail} disabled={!email || !password}>
           로그인
-        </button>
-        <button className="btn btn-kakao" type="button" style={{ marginTop: 8 }} onClick={kakao}>
-          <KakaoIcon />
-          {hasKakaoKey() ? "카카오로 로그인" : "카카오 설정 필요"}
         </button>
         <div className="login-link">
           계정이 없나요?{" "}

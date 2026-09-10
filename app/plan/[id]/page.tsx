@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Modal, PhoneShell } from "@/components/ui";
 import { formatPrice, sideLabel } from "@/lib/format";
 import { isOverseas, priceUnit } from "@/lib/markets";
@@ -45,6 +45,12 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
     setTakeProfit(plan!.takeProfit != null ? String(plan!.takeProfit) : "0");
     setEditing(true);
   }
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !plan) return;
+    if (new URLSearchParams(window.location.search).get("edit") === "1") startEdit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan?.id]);
 
   return (
     <PhoneShell>

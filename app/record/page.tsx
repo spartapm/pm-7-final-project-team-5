@@ -62,12 +62,17 @@ export default function RecordPage() {
       </div>
       <div className="scroll">
         <StockSearch
-          heading="기록할 종목을 검색해 주세요."
+          selected={stock}
           onPick={(s) => {
             setStock(s);
-            setPickSide(true);
+            setPickSide(false);
           }}
         />
+      </div>
+      <div className="footer-cta">
+        <button className="btn btn-primary" type="button" disabled={!stock} onClick={() => stock && setPickSide(true)}>
+          기록 시작하기
+        </button>
       </div>
       {pickSide && stock ? (
         <div className="modal-back">

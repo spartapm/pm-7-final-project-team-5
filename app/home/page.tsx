@@ -7,7 +7,7 @@ import { BrandMark, FolderIco, PencilIco, ProgressRing } from "@/components/icon
 import { TradeRow } from "@/components/TradeRow";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
 import { thisMonth } from "@/lib/format";
-import { dateHref } from "@/lib/insights";
+import { insightHref } from "@/lib/insights";
 import { useStore } from "@/lib/store";
 
 export default function HomePage() {
@@ -19,7 +19,9 @@ export default function HomePage() {
   const monthTrades = real.filter((t) => new Date(t.createdAt).toISOString().slice(0, 7) === month);
   const monthBuy = monthTrades.filter((t) => t.side === "buy").length;
   const monthSell = monthTrades.filter((t) => t.side === "sell").length;
-  const recent = [...real].sort((a, b) => (a.tradedAt < b.tradedAt ? 1 : -1)).slice(0, 5);
+  const recent = [...real]
+    .sort((a, b) => (a.tradedAt === b.tradedAt ? b.createdAt - a.createdAt : a.tradedAt < b.tradedAt ? 1 : -1))
+    .slice(0, 5);
   const issued = [...issuedCards].sort((a, b) => b.issuedAt - a.issuedAt).slice(0, 3);
   const buyCount = real.filter((t) => t.side === "buy").length;
   const sellCount = real.filter((t) => t.side === "sell").length;
@@ -44,7 +46,7 @@ export default function HomePage() {
             <h2>새로 나온 인사이트</h2>
             <div className="insight-rail">
               {issued.map((c) => (
-                <button key={c.id} className="insight-tile" type="button" onClick={() => router.push(dateHref(c.dateKey))}>
+                <button key={c.id} className="insight-tile" type="button" onClick={() => router.push(insightHref(c.id))}>
                   <span className="when">{c.dateKey.slice(5).replace("-", ".")}</span>
                   <p>{c.narrative2}</p>
                   <span className="meta">

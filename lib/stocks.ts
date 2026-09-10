@@ -45,7 +45,8 @@ export function searchStocks(query: string, limit = 20, region: StockRegion = "a
     else if (name.includes(q) || code.includes(q)) contains.push(s);
     if (starts.length >= limit) break;
   }
-  return [...starts, ...contains].slice(0, limit);
+  const byName = (a: Stock, b: Stock) => a.name.localeCompare(b.name, "ko");
+  return [...starts, ...contains].sort(byName).slice(0, limit);
 }
 
 export function findStock(code: string, market?: string) {

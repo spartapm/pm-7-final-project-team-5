@@ -5,20 +5,32 @@ import { useRouter } from "next/navigation";
 import { PhoneShell } from "@/components/ui";
 import { TERMS_ITEMS, TERMS_VIEW } from "@/lib/legal";
 import { upsertRegistry } from "@/lib/registry";
-import { uid } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import { takeNext } from "@/lib/next-path";
-import { touchRevisitCookie } from "@/lib/visit";
 
 export default function TermsPage() {
   const router = useRouter();
   const { login, setNickname, acceptTerms, markOnboarded, markWelcomeSeen } = useStore();
-  const [checks, setChecks] = useState<Record<string, boolean>>(() => Object.fromEntries(TERMS_ITEMS.map((t) => [t.id, false])));
+  const [checks, setChecks] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== "undefined") {
+      const raw = sessionStorage.getItem("signup_terms");
+      if (raw) {
+        try {
+          return JSON.parse(raw) as Record<string, boolean>;
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    return Object.fromEntries(TERMS_ITEMS.map((t) => [t.id, false]));
+  });
   const allOn = TERMS_ITEMS.every((t) => checks[t.id]);
 
   function toggleAll() {
     const next = !allOn;
-    setChecks(Object.fromEntries(TERMS_ITEMS.map((t) => [t.id, next])));
+    const checksNext = Object.fromEntries(TERMS_ITEMS.map((t) => [t.id, next]));
+    sessionStorage.setItem("signup_terms", JSON.stringify(checksNext));
+    setChecks(checksNext);
   }
 
   function finish() {
@@ -29,9 +41,9 @@ export default function TermsPage() {
     if (kind === "email") {
       const email = sessionStorage.getItem("signup_email") || "";
       const password = sessionStorage.getItem("signup_password") || "";
-      const id = uid("email");
-      upsertRegistry({ id, email, password, nickname });
-      login({ email, nickname, accountId: id });
+      const id = `email_${email.trim().toLowerCase()}`;
+      upsertRegistry({ id, email: email.trim().toLowerCase(), password, nickname });
+      login({ email: email.trim().toLowerCase(), nickname, accountId: id });
     } else {
       const kakaoId = sessionStorage.getItem("signup_kakao_id") || "";
       if (kakaoId) {
@@ -45,7 +57,6 @@ export default function TermsPage() {
     setNickname(nickname);
     markOnboarded();
     markWelcomeSeen();
-    touchRevisitCookie();
     router.replace(takeNext("/home"));
   }
 
@@ -67,7 +78,17 @@ export default function TermsPage() {
           </button>
           {TERMS_ITEMS.map((t) => (
             <div className="check-row" key={t.id}>
-              <button type="button" aria-pressed={Boolean(checks[t.id])} onClick={() => setChecks((s) => ({ ...s, [t.id]: !s[t.id] }))}>
+              <button
+                type="button"
+                aria-pressed={Boolean(checks[t.id])}
+                onClick={() =>
+                  setChecks((s) => {
+                    const next = { ...s, [t.id]: !s[t.id] };
+                    sessionStorage.setItem("signup_terms", JSON.stringify(next));
+                    return next;
+                  })
+                }
+              >
                 <i className={checks[t.id] ? "box on" : "box"} />
                 <span>
                   {t.required ? "[필수] " : "[선택] "}

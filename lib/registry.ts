@@ -31,8 +31,14 @@ export function findByEmail(email: string) {
 }
 
 export function upsertRegistry(row: RegistryAccount) {
-  const rows = load().filter((a) => a.id !== row.id && a.kakaoId !== row.kakaoId && a.email !== row.email);
-  rows.push(row);
+  const email = row.email?.trim().toLowerCase();
+  const rows = load().filter((a) => {
+    if (a.id === row.id) return false;
+    if (row.kakaoId && a.kakaoId === row.kakaoId) return false;
+    if (email && a.email?.toLowerCase() === email) return false;
+    return true;
+  });
+  rows.push({ ...row, email: email || row.email });
   save(rows);
 }
 

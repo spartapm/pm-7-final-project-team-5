@@ -1,47 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { todayKey } from "@/lib/format";
 import { isOverseas } from "@/lib/markets";
-import { sanitizePrice, sanitizeQty } from "@/lib/money";
+import { capPriceRaw, capQtyRaw, sanitizePrice, sanitizeQty } from "@/lib/money";
 
 export type PadKind = "price" | "qty" | "date" | "time";
 
 function digitsOf(v: string) {
   return v.replace(/[^\d]/g, "");
-}
-
-function showDate(raw: string) {
-  const d = digitsOf(raw).slice(0, 8);
-  const y = d.slice(0, 4);
-  const m = d.slice(4, 6);
-  const day = d.slice(6, 8);
-  if (d.length <= 4) return y || "YYYY";
-  if (d.length <= 6) return `${y}-${m}`;
-  return `${y}-${m}-${day}`;
-}
-
-function showTime(raw: string) {
-  const d = digitsOf(raw).slice(0, 4);
-  if (!d) return "선택 안 함";
-  if (d.length <= 2) return d;
-  return `${d.slice(0, 2)}:${d.slice(2)}`;
-}
-
-function commitDate(raw: string) {
-  const d = digitsOf(raw).slice(0, 8);
-  if (d.length !== 8) return todayKey();
-  const next = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
-  if (next > todayKey()) return todayKey();
-  return next;
-}
-
-function commitTime(raw: string) {
-  const d = digitsOf(raw).slice(0, 4);
-  if (!d) return "";
-  const hh = Math.min(23, Number(d.slice(0, 2) || "0"));
-  const mm = Math.min(59, Number((d.slice(2) || "0").padEnd(2, "0")));
-  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
 }
 
 export function NumPad({
@@ -63,34 +30,18 @@ export function NumPad({
   function shown() {
     if (kind === "price") return sanitizePrice(buf || "0", market);
     if (kind === "qty") return sanitizeQty(buf || "0");
-    if (kind === "date") return showDate(buf);
-    return showTime(buf);
+    return buf;
   }
 
   function tap(key: string) {
     if (key === "ok") {
       if (kind === "price") onCommit(sanitizePrice(buf || "0", market));
       else if (kind === "qty") onCommit(sanitizeQty(buf || "0"));
-      else if (kind === "date") onCommit(commitDate(buf));
-      else onCommit(commitTime(buf));
-      onClose();
-      return;
-    }
-    if (key === "skip") {
-      onCommit("");
       onClose();
       return;
     }
     if (key === "back") {
       setBuf((s) => s.slice(0, -1));
-      return;
-    }
-    if (kind === "date") {
-      setBuf((s) => digitsOf(s + key).slice(0, 8));
-      return;
-    }
-    if (kind === "time") {
-      setBuf((s) => digitsOf(s + key).slice(0, 4));
       return;
     }
     if (key === ".") {
@@ -100,17 +51,20 @@ export function NumPad({
       return;
     }
     if (key === "00") {
-      setBuf((s) => (s === "0" || !s ? "0" : s + "00"));
+      setBuf((s) => {
+        const next = !s || s === "0" ? "0" : s + "00";
+        return kind === "price" ? capPriceRaw(next, market) : capQtyRaw(next);
+      });
       return;
     }
     setBuf((s) => {
-      if (!s || s === "0") return key;
-      return s + key;
+      const next = !s || s === "0" ? key : s + key;
+      return kind === "price" ? capPriceRaw(next, market) : capQtyRaw(next);
     });
   }
 
   const keys =
-    kind === "date" || kind === "time" || (kind === "price" && !overseas)
+    kind === "price" && !overseas
       ? ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0", "back"]
       : ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "back"];
 
@@ -121,24 +75,141 @@ export function NumPad({
       <div className="num-pad" onClick={(e) => e.stopPropagation()}>
         <div className="num-pad-head">
           <span>{title}</span>
-          <b>{shown()}</b>
+          {kind === "price" || kind === "qty" ? <b>{shown()}</b> : null}
         </div>
-        <div className="num-pad-grid">
-          {keys.map((k) => (
-            <button key={k} type="button" onClick={() => tap(k)}>
-              {k === "back" ? "⌫" : k}
-            </button>
-          ))}
-        </div>
-        <button className="btn btn-primary" type="button" style={{ marginTop: 10 }} onClick={() => tap("ok")}>
-          완료
-        </button>
+        {kind === "date" ? (
+          <DateCal
+            value={value}
+            onPick={(next) => {
+              onCommit(next);
+              onClose();
+            }}
+          />
+        ) : null}
         {kind === "time" ? (
-          <button className="btn btn-ghost" type="button" style={{ marginTop: 8 }} onClick={() => tap("skip")}>
-            시각 생략
-          </button>
+          <TimeWheel
+            value={value}
+            onPick={(next) => {
+              onCommit(next);
+              onClose();
+            }}
+            onSkip={() => {
+              onCommit("");
+              onClose();
+            }}
+          />
+        ) : null}
+        {kind === "price" || kind === "qty" ? (
+          <>
+            <div className="num-pad-grid">
+              {keys.map((k) => (
+                <button key={k} type="button" onClick={() => tap(k)}>
+                  {k === "back" ? "⌫" : k}
+                </button>
+              ))}
+            </div>
+            <button className="btn btn-primary" type="button" style={{ marginTop: 10 }} onClick={() => tap("ok")}>
+              완료
+            </button>
+          </>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function DateCal({ value, onPick }: { value: string; onPick: (next: string) => void }) {
+  const today = todayKey();
+  const initial = /^\d{4}-\d{2}-\d{2}$/.test(value) && value <= today ? value : today;
+  const [cursor, setCursor] = useState(initial.slice(0, 7));
+  const [y, m] = cursor.split("-").map(Number);
+  const first = new Date(y, m - 1, 1);
+  const start = first.getDay();
+  const days = new Date(y, m, 0).getDate();
+  const cells = useMemo(() => {
+    const list: (number | null)[] = [...Array(start).fill(null)];
+    for (let d = 1; d <= days; d++) list.push(d);
+    return list;
+  }, [start, days]);
+
+  function prev() {
+    const d = new Date(y, m - 2, 1);
+    setCursor(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  function next() {
+    const d = new Date(y, m, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (key <= today.slice(0, 7)) setCursor(key);
+  }
+
+  return (
+    <div className="cal">
+      <div className="cal-head">
+        <button type="button" onClick={prev}>
+          ‹
+        </button>
+        <b>
+          {y}.{String(m).padStart(2, "0")}
+        </b>
+        <button type="button" onClick={next}>
+          ›
+        </button>
+      </div>
+      <div className="cal-grid cal-dow">
+        {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
+          <span key={d}>{d}</span>
+        ))}
+      </div>
+      <div className="cal-grid">
+        {cells.map((d, i) => {
+          if (!d) return <span key={`e${i}`} />;
+          const key = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          const disabled = key > today;
+          return (
+            <button key={key} type="button" className={key === initial ? "on" : ""} disabled={disabled} onClick={() => onPick(key)}>
+              {d}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TimeWheel({ value, onPick, onSkip }: { value: string; onPick: (next: string) => void; onSkip: () => void }) {
+  const parsed = /^(\d{2}):(\d{2})$/.test(value) ? value : "00:00";
+  const [hh, setHh] = useState(Number(parsed.slice(0, 2)));
+  const [mm, setMm] = useState(Number(parsed.slice(3, 5)));
+  return (
+    <div>
+      <div className="time-wheel">
+        <select value={hh} onChange={(e) => setHh(Number(e.target.value))} aria-label="시">
+          {Array.from({ length: 24 }, (_, i) => (
+            <option key={i} value={i}>
+              {String(i).padStart(2, "0")}
+            </option>
+          ))}
+        </select>
+        <span>:</span>
+        <select value={mm} onChange={(e) => setMm(Number(e.target.value))} aria-label="분">
+          {Array.from({ length: 60 }, (_, i) => (
+            <option key={i} value={i}>
+              {String(i).padStart(2, "0")}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button
+        className="btn btn-primary"
+        type="button"
+        style={{ marginTop: 10 }}
+        onClick={() => onPick(`${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`)}
+      >
+        완료
+      </button>
+      <button className="btn btn-ghost" type="button" style={{ marginTop: 8 }} onClick={onSkip}>
+        시각 생략
+      </button>
     </div>
   );
 }
@@ -147,16 +218,21 @@ export function PadField({
   label,
   value,
   placeholder,
+  unit,
   onOpen,
 }: {
   label: string;
   value: string;
   placeholder?: string;
+  unit?: string;
   onOpen: () => void;
 }) {
   return (
     <div className="field">
-      <label>{label}</label>
+      <label className="pad-label">
+        <span>{label}</span>
+        {unit ? <span className="pad-unit">{unit}</span> : null}
+      </label>
       <button className="pad-value" type="button" onClick={onOpen}>
         {value || placeholder || "0"}
       </button>

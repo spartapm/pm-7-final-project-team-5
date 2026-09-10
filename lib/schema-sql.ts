@@ -12,6 +12,9 @@ create table if not exists public.accounts (
 
 alter table public.accounts add column if not exists issue_baseline_buy integer not null default 0;
 alter table public.accounts add column if not exists issue_baseline_sell integer not null default 0;
+alter table public.accounts add column if not exists email text;
+alter table public.accounts add column if not exists terms_version text;
+alter table public.accounts add column if not exists terms_accepted_at timestamptz;
 
 create table if not exists public.plans (
   id text primary key,

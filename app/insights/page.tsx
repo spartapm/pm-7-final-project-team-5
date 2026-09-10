@@ -6,6 +6,7 @@ import { InsightCard } from "@/components/InsightCard";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
 import { reasonGroups } from "@/lib/categories";
 import { comboTop3, dateHref, groupedIssued, moodDistribution, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
+import { buyCaption, sellCaption } from "@/lib/plans";
 import { useStore } from "@/lib/store";
 import type { IssuedCard, Side, Trade } from "@/lib/types";
 
@@ -230,75 +231,132 @@ function Dashboard({
           <div>
             <b>매수</b>
             <Pie slices={buyMoods} emptyLabel="아직 기록 없음" />
+            <Legend slices={buyMoods} />
           </div>
           <div>
             <b>매도</b>
             <Pie slices={sellMoods} emptyLabel="아직 기록 없음" />
+            <Legend slices={sellMoods} />
           </div>
         </div>
       </div>
       <div className="card">
         <h2 style={{ margin: "0 0 8px", fontSize: 16 }}>자주 겹치는 조합 TOP3</h2>
-        {top3.length === 0 ? <p className="sub">조합이 아직 없어요.</p> : top3.map(([name, n]) => (
-          <HBar key={name} label={name} value={n} max={top3[0]![1]} />
+        {top3.length === 0 ? <p className="sub">조합이 아직 없어요.</p> : top3.map(([name, n], i) => (
+          <HBar key={name} rank={i + 1} label={name} value={n} max={top3[0]![1]} />
         ))}
       </div>
+      <PlanFollowCard trades={real} />
     </>
   );
 }
 
-function HBar({ label, value, max }: { label: string; value: number; max: number }) {
+function PlanFollowCard({ trades }: { trades: Trade[] }) {
+  const withPlan = trades.filter((t) => (t.side === "buy" ? t.planSnapshot?.buy : t.planSnapshot?.sell));
+  const followed = withPlan.filter((t) =>
+    t.side === "buy" && t.planSnapshot?.buy
+      ? buyCaption(t.price, t.planSnapshot.buy.min, t.planSnapshot.buy.max).inRange
+      : t.planSnapshot?.sell
+        ? sellCaption(t.price, t.planSnapshot.sell.stopLoss, t.planSnapshot.sell.takeProfit).inRange
+        : false
+  );
+  return (
+    <div className="card">
+      <h2 style={{ margin: "0 0 8px", fontSize: 16 }}>계획 이행 현황</h2>
+      <p>전체기록 {trades.length}건</p>
+      <p className="sub">계획이 있었던 기록 {withPlan.length}건</p>
+      <p className="sub">계획대로 이행한 기록 {followed.length}건</p>
+    </div>
+  );
+}
+
+function HBar({ rank, label, value, max }: { rank: number; label: string; value: number; max: number }) {
   const pct = max === 0 ? 0 : Math.round((value / max) * 100);
   return (
-    <div className="hbar">
-      <span>{label}</span>
-      <div className="track"><i style={{ width: `${pct}%` }} /></div>
-      <b>{value}건</b>
+    <div className="hbar-stack">
+      <div className="hbar-top">
+        {rank} {label}
+      </div>
+      <div className="hbar-bottom">
+        <div className="track">
+          <i style={{ width: `${pct}%` }} />
+        </div>
+        <b>{value}건</b>
+      </div>
     </div>
   );
 }
 
 function LineChart({ trades }: { trades: Trade[] }) {
   const days = [...new Set(trades.map((t) => t.tradedAt))].sort();
-  const [page, setPage] = useState(Math.max(0, Math.ceil(days.length / 5) - 1));
-  const pages = Math.max(1, Math.ceil(days.length / 5));
-  const slice = days.slice(page * 5, page * 5 + 5);
+  const [shift, setShift] = useState(0);
+  const end = days.length - 1 - shift;
+  const slice = days.slice(Math.max(0, end - 4), end + 1);
   const w = 320;
   const h = 140;
-  const pad = 24;
+  const pad = 28;
   const max = Math.max(1, ...slice.map((d) => trades.filter((t) => t.tradedAt === d).length));
+  function xy(d: string, i: number, side: Side) {
+    const n = trades.filter((t) => t.tradedAt === d && t.side === side).length;
+    const x = pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
+    const y = h - pad - (n / max) * (h - pad * 2);
+    return { x, y, n };
+  }
   function pts(side: Side) {
-    if (slice.length === 0) return "";
-    return slice
-      .map((d, i) => {
-        const n = trades.filter((t) => t.tradedAt === d && t.side === side).length;
-        const x = pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
-        const y = h - pad - (n / max) * (h - pad * 2);
-        return `${x},${y}`;
-      })
-      .join(" ");
+    return slice.map((d, i) => {
+      const p = xy(d, i, side);
+      return `${p.x},${p.y}`;
+    }).join(" ");
   }
   const from = slice[0]?.slice(5).replace("-", ".") || "";
   const to = slice[slice.length - 1]?.slice(5).replace("-", ".") || "";
+  const range = from === to ? from : `${from}~${to}`;
   return (
     <>
-      <div className="section-head">
-        <span className="sub">{from}~{to}</span>
-        {days.length >= 5 ? (
-          <span>
-            <button type="button" disabled={page <= 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>‹</button>
-            <button type="button" disabled={page >= pages - 1} onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}>›</button>
-          </span>
-        ) : null}
+      <div className="section-head chart-nav">
+        <span />
+        <span className="chart-range">
+          <button type="button" disabled={end <= 4} onClick={() => setShift((s) => s + 1)}>
+            ‹
+          </button>
+          <b>{range || "매매일자"}</b>
+          <button type="button" disabled={shift <= 0} onClick={() => setShift((s) => Math.max(0, s - 1))}>
+            ›
+          </button>
+        </span>
       </div>
       <div className="legend">
         <span className="buy"><i />매수</span>
         <span className="sell"><i />매도</span>
       </div>
-      {slice.length === 0 ? <p className="sub">기록이 더 쌓이면 일자별 추이가 그려져요.</p> : (
+      {slice.length === 0 ? (
+        <p className="sub">기록이 더 쌓이면 일자별 추이가 그려져요.</p>
+      ) : (
         <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
-          <polyline fill="none" stroke="#3d6bff" strokeWidth="2.5" points={pts("buy")} />
-          <polyline fill="none" stroke="#f07a3a" strokeWidth="2.5" points={pts("sell")} />
+          {slice.length === 1 ? (
+            <>
+              <circle cx={w / 2} cy={xy(slice[0]!, 0, "buy").y} r="4" fill="#3d6bff" />
+              <circle cx={w / 2} cy={xy(slice[0]!, 0, "sell").y} r="4" fill="#f07a3a" />
+            </>
+          ) : (
+            <>
+              <polyline fill="none" stroke="#3d6bff" strokeWidth="2.5" points={pts("buy")} />
+              <polyline fill="none" stroke="#f07a3a" strokeWidth="2.5" points={pts("sell")} />
+            </>
+          )}
+          {slice.map((d, i) => {
+            const x = pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
+            return (
+              <text key={d} x={x} y={h - 6} textAnchor="middle" fontSize="10" fill="#8b93a7">
+                {d.slice(5).replace("-", ".")}
+              </text>
+            );
+          })}
+          {[0, max].map((n) => (
+            <text key={n} x="4" y={h - pad - (n / max) * (h - pad * 2) + 4} fontSize="10" fill="#8b93a7">
+              {n}
+            </text>
+          ))}
         </svg>
       )}
     </>

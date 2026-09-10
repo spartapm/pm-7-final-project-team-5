@@ -3,17 +3,21 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PlanCards } from "@/components/PlanCards";
+import { TradeWizard } from "@/components/TradeWizard";
 import { Modal, PhoneShell } from "@/components/ui";
 import { formatPrice, formatQty, formatWhen, sideLabel } from "@/lib/format";
-import { useStore } from "@/lib/store";
+import { findStock } from "@/lib/stocks";
+import { draftFromTrade, useStore } from "@/lib/store";
 
 export default function RecordDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { hydrated, trades, deleteTrade, hidePlanOnTrade } = useStore();
+  const { hydrated, trades, deleteTrade, hidePlanOnTrade, updateTrade } = useStore();
   const [askDelete, setAskDelete] = useState(false);
   const [hideSide, setHideSide] = useState<"buy" | "sell" | null>(null);
+  const [editing, setEditing] = useState(false);
   const trade = trades.find((t) => t.id === id);
+  const [draft, setDraft] = useState<ReturnType<typeof draftFromTrade> | null>(null);
 
   if (!hydrated) return <div className="shell" />;
   if (!trade) {
@@ -25,6 +29,23 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
             목록으로
           </button>
         </div>
+      </PhoneShell>
+    );
+  }
+
+  if (editing && draft) {
+    return (
+      <PhoneShell>
+        <TradeWizard
+          draft={draft}
+          setDraft={setDraft}
+          savingLabel="저장하기"
+          onClose={() => setEditing(false)}
+          onSave={() => {
+            const saved = updateTrade(trade.id, draft);
+            if (saved) setEditing(false);
+          }}
+        />
       </PhoneShell>
     );
   }
@@ -42,6 +63,26 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
       </div>
       <div className="scroll">
         <div className="card">
+          <div className="section-head" style={{ marginTop: 0 }}>
+            <b>매매 정보</b>
+            <button
+              className="skip"
+              type="button"
+              onClick={() => {
+                const found = findStock(trade.stockCode, trade.market);
+                const stock = found || {
+                  code: trade.stockCode,
+                  name: trade.stockName,
+                  market: trade.market,
+                  marketName: trade.market,
+                };
+                setDraft(draftFromTrade(trade, stock));
+                setEditing(true);
+              }}
+            >
+              수정
+            </button>
+          </div>
           <dl className="detail-kv">
             <dt>구분</dt>
             <dd className={trade.side === "buy" ? "side-buy" : "side-sell"}>{sideLabel(trade.side)}</dd>

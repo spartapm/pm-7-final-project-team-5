@@ -107,6 +107,7 @@ type Store = AppState & {
   markOnboarded: () => void;
   skipOnboarding: () => void;
   addTrade: (draft: DraftTrade) => Trade | null;
+  updateTrade: (id: string, draft: DraftTrade) => Trade | null;
   deleteTrade: (id: string) => void;
   hidePlanOnTrade: (tradeId: string, side: Side) => void;
   addPlan: (plan: Omit<Plan, "id" | "createdAt" | "updatedAt">) => Plan;
@@ -290,7 +291,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     touch();
-    setState((s) => ({ ...s, loggedIn: false, loginAt: null }));
+    setState((s) => ({
+      ...empty(),
+      seenOnboarding: s.seenOnboarding,
+      loggedIn: false,
+    }));
   }, []);
 
   const withdraw = useCallback(() => {
@@ -370,6 +375,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
         return trade;
       },
+      updateTrade: (id, draft) => {
+        if (!draft.stock) return null;
+        const price = Number(draft.price.replace(/,/g, ""));
+        const qty = Number(draft.qty.replace(/,/g, ""));
+        if (!Number.isFinite(price) || price <= 0) return null;
+        if (!Number.isFinite(qty) || qty <= 0) return null;
+        const snap = snapshotForStock(stateRef.current.plans, draft.stock.code, draft.stock.market);
+        let next: Trade | null = null;
+        touch();
+        setState((s) => ({
+          ...s,
+          trades: s.trades.map((t) => {
+            if (t.id !== id) return t;
+            next = {
+              ...t,
+              side: draft.side,
+              stockCode: draft.stock!.code,
+              stockName: draft.stock!.name,
+              market: draft.stock!.market,
+              price,
+              qty,
+              tradedAt: draft.tradedAt,
+              tradedTime: draft.tradedTime,
+              reasons: draft.reasons,
+              moods: draft.moods,
+              planSnapshot: snap,
+            };
+            return next;
+          }),
+        }));
+        setToast({ message: "매매 정보를 수정했어요", kind: "ok" });
+        return next;
+      },
       deleteTrade: (id) => {
         touch();
         setState((s) => ({ ...s, trades: s.trades.filter((t) => t.id !== id) }));
@@ -378,26 +416,44 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         touch();
         setState((s) => ({
           ...s,
-          trades: s.trades.map((t) =>
-            t.id === tradeId
-              ? { ...t, hiddenPlan: { ...t.hiddenPlan, [side]: true }, planSnapshot: t.planSnapshot ? { ...t.planSnapshot, [side]: undefined } : t.planSnapshot }
-              : t
-          ),
+          trades: s.trades.map((t) => (t.id === tradeId ? { ...t, hiddenPlan: { ...t.hiddenPlan, [side]: true } } : t)),
         }));
       },
       addPlan: (plan) => {
         const row: Plan = { ...plan, id: uid("pl"), createdAt: Date.now(), updatedAt: Date.now() };
         touch();
-        setState((s) => ({ ...s, plans: [row, ...s.plans.filter((p) => !(p.stockCode === plan.stockCode && p.market === plan.market && p.side === plan.side))] }));
+        setState((s) => {
+          const plans = [row, ...s.plans.filter((p) => !(p.stockCode === plan.stockCode && p.market === plan.market && p.side === plan.side))];
+          return {
+            ...s,
+            plans,
+            trades: s.trades.map((t) =>
+              t.stockCode === plan.stockCode && t.market === plan.market
+                ? { ...t, planSnapshot: snapshotForStock(plans, t.stockCode, t.market), hiddenPlan: { ...t.hiddenPlan, [plan.side]: false } }
+                : t
+            ),
+          };
+        });
         setToast({ message: "계획을 등록했어요", kind: "ok" });
         return row;
       },
       updatePlan: (id, patch) => {
         touch();
-        setState((s) => ({
-          ...s,
-          plans: s.plans.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: Date.now() } : p)),
-        }));
+        setState((s) => {
+          const plans = s.plans.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: Date.now() } : p));
+          const row = plans.find((p) => p.id === id);
+          return {
+            ...s,
+            plans,
+            trades: row
+              ? s.trades.map((t) =>
+                  t.stockCode === row.stockCode && t.market === row.market
+                    ? { ...t, planSnapshot: snapshotForStock(plans, t.stockCode, t.market), hiddenPlan: { ...t.hiddenPlan, [row.side]: false } }
+                    : t
+                )
+              : s.trades,
+          };
+        });
         setToast({ message: "계획을 저장했어요", kind: "ok" });
       },
       deletePlan: (id) => {
@@ -457,5 +513,20 @@ export function emptyDraft(side: DraftTrade["side"], stock: Stock | null = null,
     moods: [],
     planId: null,
     isPractice,
+  };
+}
+
+export function draftFromTrade(trade: Trade, stock: Stock): DraftTrade {
+  return {
+    side: trade.side,
+    stock,
+    price: String(trade.price),
+    qty: String(trade.qty),
+    tradedAt: trade.tradedAt,
+    tradedTime: trade.tradedTime,
+    reasons: trade.reasons,
+    moods: trade.moods,
+    planId: trade.planId,
+    isPractice: trade.isPractice,
   };
 }
