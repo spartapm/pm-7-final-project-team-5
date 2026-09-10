@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PhoneShell } from "@/components/ui";
+import { findAccountByEmail } from "@/lib/cloud";
 import { emailValid, findByEmail, passwordValid } from "@/lib/registry";
 
 export default function EmailSignupPage() {
@@ -13,13 +14,48 @@ export default function EmailSignupPage() {
   const [confirm, setConfirm] = useState("");
   const [nickname, setNickname] = useState("");
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [remoteTaken, setRemoteTaken] = useState(false);
+  const [checking, setChecking] = useState(false);
 
-  const emailErr = email && !emailValid(email) ? "이메일이 올바르지 않습니다" : findByEmail(email) ? "이미 가입된 이메일입니다" : "";
+  useEffect(() => {
+    if (!emailValid(email)) {
+      setRemoteTaken(false);
+      setChecking(false);
+      return;
+    }
+    if (findByEmail(email)) {
+      setRemoteTaken(true);
+      setChecking(false);
+      return;
+    }
+    let live = true;
+    setChecking(true);
+    const t = window.setTimeout(async () => {
+      const remote = await findAccountByEmail(email);
+      if (!live) return;
+      setRemoteTaken(Boolean(remote));
+      setChecking(false);
+    }, 280);
+    return () => {
+      live = false;
+      window.clearTimeout(t);
+    };
+  }, [email]);
+
+  const taken = Boolean(findByEmail(email)) || remoteTaken;
+  const emailErr = email && !emailValid(email) ? "이메일이 올바르지 않습니다" : taken ? "이미 가입된 이메일입니다" : "";
   const pwErr = password && !passwordValid(password) ? "영문/숫자/특수문자(공백 제외)만 허용하며, 2개 이상 조합, 10자 이상" : "";
   const confirmErr = confirm && confirm !== password ? "비밀번호가 일치하지 않습니다. 다시 확인해주세요" : "";
   const nickErr =
     nickname && (nickname.trim().length < 2 || nickname.trim().length > 10) ? "닉네임은 2자 이상, 10자 이내로 입력해 주세요" : "";
-  const ok = emailValid(email) && !findByEmail(email) && passwordValid(password) && password === confirm && nickname.trim().length >= 2 && nickname.trim().length <= 10;
+  const ok =
+    emailValid(email) &&
+    !taken &&
+    !checking &&
+    passwordValid(password) &&
+    password === confirm &&
+    nickname.trim().length >= 2 &&
+    nickname.trim().length <= 10;
 
   return (
     <PhoneShell>
@@ -80,7 +116,13 @@ export default function EmailSignupPage() {
           className="btn btn-primary"
           type="button"
           disabled={!ok}
-          onClick={() => {
+          onClick={async () => {
+            const remote = await findAccountByEmail(email);
+            if (findByEmail(email) || remote) {
+              setRemoteTaken(true);
+              setTouched((s) => ({ ...s, email: true }));
+              return;
+            }
             sessionStorage.setItem("signup_email", email.trim());
             sessionStorage.setItem("signup_password", password);
             sessionStorage.setItem("signup_nickname", nickname.trim());

@@ -162,6 +162,16 @@ export async function findAccountByKakao(kakaoId: string) {
   return { id: String(res.data.id), kakaoId: String(res.data.kakao_id), nickname: String(res.data.nickname || "회원"), onboarded: Boolean(res.data.onboarded) };
 }
 
+export async function findAccountByEmail(email: string) {
+  const sb = getSupabase();
+  if (!sb) return null;
+  const key = email.trim().toLowerCase();
+  if (!key) return null;
+  const res = await sb.from("accounts").select("id, email, nickname").eq("email", key).maybeSingle();
+  if (res.error || !res.data) return null;
+  return { id: String(res.data.id), email: String(res.data.email || key), nickname: String(res.data.nickname || "회원") };
+}
+
 export async function pullAccount(accountId: string): Promise<{
   status: CloudStatus;
   data?: CloudAccount;
@@ -222,7 +232,7 @@ export async function pushAccount(state: AppState): Promise<CloudStatus> {
   const acc = await sb.from("accounts").upsert({
     id: state.accountId,
     kakao_id: state.kakaoId,
-    email: state.email,
+    email: state.email ? state.email.trim().toLowerCase() : state.email,
     nickname: state.nickname,
     onboarded: state.onboarded,
     login_at: toIso(state.loginAt),

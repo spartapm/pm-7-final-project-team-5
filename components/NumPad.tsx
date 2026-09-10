@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { todayKey } from "@/lib/format";
 import { isOverseas } from "@/lib/markets";
 import { capPriceRaw, capQtyRaw, sanitizePrice, sanitizeQty } from "@/lib/money";
@@ -176,28 +176,77 @@ function DateCal({ value, onPick }: { value: string; onPick: (next: string) => v
   );
 }
 
+function WheelCol({ items, value, onChange, label }: { items: number[]; value: number; onChange: (next: number) => void; label: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const skip = useRef(false);
+
+  useEffect(() => {
+    const box = ref.current;
+    if (!box) return;
+    const el = box.querySelector<HTMLElement>(`[data-v="${value}"]`);
+    if (!el) return;
+    skip.current = true;
+    el.scrollIntoView({ block: "center" });
+    window.setTimeout(() => {
+      skip.current = false;
+    }, 80);
+  }, [value]);
+
+  function pickFromScroll() {
+    const box = ref.current;
+    if (!box || skip.current) return;
+    const mid = box.scrollTop + box.clientHeight / 2;
+    let best = value;
+    let bestDist = Infinity;
+    box.querySelectorAll<HTMLElement>("[data-v]").forEach((node) => {
+      const center = node.offsetTop + node.offsetHeight / 2;
+      const dist = Math.abs(center - mid);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = Number(node.dataset.v);
+      }
+    });
+    if (best !== value) onChange(best);
+  }
+
+  return (
+    <div className="wheel-col-wrap">
+      <div className="wheel-col" ref={ref} onScroll={pickFromScroll} aria-label={label} role="listbox">
+        {items.map((n) => (
+          <button
+            key={n}
+            type="button"
+            data-v={n}
+            className={n === value ? "on" : ""}
+            role="option"
+            aria-selected={n === value}
+            onClick={() => {
+              onChange(n);
+              const box = ref.current;
+              const el = box?.querySelector<HTMLElement>(`[data-v="${n}"]`);
+              el?.scrollIntoView({ block: "center", behavior: "smooth" });
+            }}
+          >
+            {String(n).padStart(2, "0")}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TimeWheel({ value, onPick, onSkip }: { value: string; onPick: (next: string) => void; onSkip: () => void }) {
   const parsed = /^(\d{2}):(\d{2})$/.test(value) ? value : "00:00";
   const [hh, setHh] = useState(Number(parsed.slice(0, 2)));
   const [mm, setMm] = useState(Number(parsed.slice(3, 5)));
+  const hours = useMemo(() => Array.from({ length: 24 }, (_, i) => i), []);
+  const minutes = useMemo(() => Array.from({ length: 60 }, (_, i) => i), []);
   return (
     <div>
       <div className="time-wheel">
-        <select value={hh} onChange={(e) => setHh(Number(e.target.value))} aria-label="시">
-          {Array.from({ length: 24 }, (_, i) => (
-            <option key={i} value={i}>
-              {String(i).padStart(2, "0")}
-            </option>
-          ))}
-        </select>
-        <span>:</span>
-        <select value={mm} onChange={(e) => setMm(Number(e.target.value))} aria-label="분">
-          {Array.from({ length: 60 }, (_, i) => (
-            <option key={i} value={i}>
-              {String(i).padStart(2, "0")}
-            </option>
-          ))}
-        </select>
+        <WheelCol items={hours} value={hh} onChange={setHh} label="시" />
+        <span className="wheel-colon">:</span>
+        <WheelCol items={minutes} value={mm} onChange={setMm} label="분" />
       </div>
       <button
         className="btn btn-primary"

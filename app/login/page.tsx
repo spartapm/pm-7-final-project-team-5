@@ -6,9 +6,25 @@ import { KakaoIcon, PhoneShell } from "@/components/ui";
 import { afterAuthPath } from "@/lib/format";
 import { takeNext } from "@/lib/next-path";
 import { hasKakaoKey, startKakaoLogin } from "@/lib/kakao";
+import { consumeOAuthToast, peekOAuthToast } from "@/lib/oauth-toast";
 import { findByEmail } from "@/lib/registry";
 import { useStore } from "@/lib/store";
 import { Suspense } from "react";
+
+function AuthToast({ exists }: { exists: boolean }) {
+  const { showToast } = useStore();
+  useEffect(() => {
+    const oauth = peekOAuthToast();
+    const message = exists ? "이미 가입된 계정이에요. 로그인해 주세요" : oauth;
+    if (!message) return;
+    showToast(message, "info");
+    const t = window.setTimeout(() => consumeOAuthToast(), 400);
+    return () => window.clearTimeout(t);
+    // showToast identity changes when the toast store updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exists]);
+  return null;
+}
 
 function LoginInner() {
   const router = useRouter();
@@ -17,10 +33,6 @@ function LoginInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const exists = params.get("exists") === "1";
-
-  useEffect(() => {
-    if (exists) showToast("이미 가입된 계정이에요. 로그인해 주세요", "info");
-  }, [exists, showToast]);
 
   useEffect(() => {
     if (!hydrated || !loggedIn) return;
@@ -49,6 +61,7 @@ function LoginInner() {
 
   return (
     <PhoneShell>
+      <AuthToast exists={exists} />
       <div className="topbar">
         <button className="icon-btn" type="button" onClick={() => router.back()}>
           ‹

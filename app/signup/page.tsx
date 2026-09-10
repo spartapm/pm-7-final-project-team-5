@@ -1,13 +1,24 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { KakaoIcon, PhoneShell } from "@/components/ui";
 import { hasKakaoKey, startKakaoLogin } from "@/lib/kakao";
+import { consumeOAuthToast, peekOAuthToast } from "@/lib/oauth-toast";
 import { useStore } from "@/lib/store";
 
 export default function SignupChoicePage() {
   const router = useRouter();
   const { showToast } = useStore();
+
+  useEffect(() => {
+    const oauth = peekOAuthToast();
+    if (!oauth) return;
+    showToast(oauth, "info");
+    const t = window.setTimeout(() => consumeOAuthToast(), 400);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function kakao() {
     sessionStorage.setItem("kakao_intent", "signup");

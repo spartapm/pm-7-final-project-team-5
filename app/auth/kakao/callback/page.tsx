@@ -3,30 +3,35 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PhoneShell } from "@/components/ui";
-import { afterAuthPath } from "@/lib/format";
+import { needsNickname } from "@/lib/format";
 import { takeNext } from "@/lib/next-path";
 import { kakaoRedirectUri } from "@/lib/kakao";
 import { findAccountByKakao } from "@/lib/cloud";
+import { stashOAuthToast } from "@/lib/oauth-toast";
 import { findByKakao, upsertRegistry } from "@/lib/registry";
 import { useStore } from "@/lib/store";
 
 function CallbackInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const { login, loggedIn, nickname, seenWelcome, querying } = useStore();
+  const { login, markWelcomeSeen } = useStore();
   const [hint, setHint] = useState("카카오 로그인 확인 중...");
-  const [done, setDone] = useState(false);
   const once = useRef(false);
 
   useEffect(() => {
     if (once.current) return;
     const err = params.get("error");
     if (err === "access_denied") {
-      setHint("카카오 로그인을 취소했어요.");
+      once.current = true;
+      const intent = sessionStorage.getItem("kakao_intent") || "login";
+      stashOAuthToast("카카오 로그인을 취소했어요");
+      router.replace(intent === "signup" ? "/signup" : "/login");
       return;
     }
     if (err) {
-      setHint("로그인에 실패했어요. 다시 시도해 주세요.");
+      once.current = true;
+      stashOAuthToast("로그인에 실패했어요. 다시 시도해 주세요");
+      router.replace("/login");
       return;
     }
     const code = params.get("code");
@@ -58,13 +63,13 @@ function CallbackInner() {
       }
       const intent = sessionStorage.getItem("kakao_intent") || "login";
       sessionStorage.removeItem("kakao_intent");
-      let existing = findByKakao(data.kakaoId);
-      if (!existing) {
-        const remote = await findAccountByKakao(data.kakaoId);
-        if (remote) {
-          existing = { id: remote.id, kakaoId: remote.kakaoId, nickname: remote.nickname };
-          upsertRegistry(existing);
-        }
+      const local = findByKakao(data.kakaoId);
+      const remote = await findAccountByKakao(data.kakaoId);
+      let existing = local;
+      if (remote) {
+        const nickname = !needsNickname(remote.nickname) ? remote.nickname : local?.nickname || remote.nickname;
+        existing = { id: remote.id, kakaoId: remote.kakaoId, nickname };
+        upsertRegistry(existing);
       }
       if (intent === "signup" && existing) {
         router.replace("/login?exists=1");
@@ -77,15 +82,16 @@ function CallbackInner() {
         return;
       }
       login({ kakaoId: data.kakaoId, nickname: existing.nickname, accountId: existing.id });
-      setDone(true);
+      if (needsNickname(existing.nickname)) {
+        sessionStorage.setItem("signup_kakao_id", data.kakaoId);
+        sessionStorage.setItem("signup_kind", "kakao");
+        router.replace("/signup/nickname");
+        return;
+      }
+      markWelcomeSeen();
+      router.replace(takeNext("/home"));
     })();
-  }, [params, login, router]);
-
-  useEffect(() => {
-    if (!done || !loggedIn || querying) return;
-    const dest = afterAuthPath(nickname, seenWelcome);
-    router.replace(dest === "/home" ? takeNext("/home") : dest);
-  }, [done, loggedIn, querying, nickname, seenWelcome, router]);
+  }, [params, login, markWelcomeSeen, router]);
 
   return (
     <PhoneShell>

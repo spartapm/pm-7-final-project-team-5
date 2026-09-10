@@ -41,8 +41,9 @@ export default function InsightsPage() {
   return (
     <PhoneShell>
       <div className="scroll tabbed">
-        <div className="brand-kicker">인사이트</div>
-        <h1 className="hello">{tab === "dash" ? "나의 기록 통계" : "경향해석"}</h1>
+        <div className="brand-kicker insight-kicker">인사이트</div>
+        <h1 className="hello insight-hello">{tab === "dash" ? "나의 기록 통계" : "경향해석"}</h1>
+        {tab === "dash" && real.length > 0 ? <p className="sub dash-lead">전체 매매 기록을 기준으로 정리했어요</p> : null}
         <div className="tabs">
           <button type="button" className={tab === "dash" ? "on" : ""} onClick={() => setTab("dash")}>
             대시보드
@@ -178,42 +179,40 @@ function Dashboard({
 }) {
   return (
     <>
-      <div className="card">
+      <div className="card chart-card stat-card">
         <div className="stat-num">{real.length}건</div>
         <div className="sub">지금까지 기록한 매매</div>
-        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)", fontSize: 13 }}>
-          매수 {buyCount}건 · 매도 {sellCount}건
-        </div>
+        <div className="stat-split">매수 {buyCount}건 · 매도 {sellCount}건</div>
       </div>
       <div className="card chart-card">
-        <h2 style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 700, lineHeight: "17px", color: "#191F28" }}>매매 추이</h2>
+        <h2 className="chart-title">📈 매매 추이 · 매매유형별 (일자별)</h2>
         <LineChart trades={real} />
       </div>
+      <PlanFollowCard trades={real} />
       <div className="card chart-card">
         <ReasonToggle real={real} reasons={reasons} />
       </div>
       <div className="card chart-card">
-        <h2 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, lineHeight: "17px", color: "#191F28" }}>매매 당시 마음 상태</h2>
+        <h2 className="chart-title">🧭 매매 당시 마음 상태</h2>
         <div className="pie-pair">
           <div>
-            <b>매수</b>
+            <b className="chart-group">매수 · {buyCount}건</b>
             <Pie slices={buyMoods} emptyLabel="아직 기록 없음" palette={BUY_PIE} size={64} />
-            <Legend slices={buyMoods} palette={BUY_PIE} />
+            <Legend slices={buyMoods} palette={BUY_PIE} compact />
           </div>
           <div>
-            <b>매도</b>
+            <b className="chart-group">매도 · {sellCount}건</b>
             <Pie slices={sellMoods} emptyLabel="아직 기록 없음" palette={SELL_PIE} size={64} />
-            <Legend slices={sellMoods} palette={SELL_PIE} />
+            <Legend slices={sellMoods} palette={SELL_PIE} compact />
           </div>
         </div>
       </div>
       <div className="card chart-card">
-        <h2 style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 700, lineHeight: "17px", color: "#191F28" }}>자주 겹치는 조합 TOP3</h2>
+        <h2 className="chart-title">🔗 자주 겹치는 조합 · TOP 3</h2>
         {top3.length === 0 ? <p className="sub">조합이 아직 없어요.</p> : top3.map(([name, n], i) => (
-          <HBar key={name} rank={i + 1} label={name} value={n} max={top3[0]![1]} />
+          <HBar key={name} rank={i + 1} label={name} value={n} max={top3[0]![1]} tone="default" />
         ))}
       </div>
-      <PlanFollowCard trades={real} />
     </>
   );
 }
@@ -227,28 +226,41 @@ function PlanFollowCard({ trades }: { trades: Trade[] }) {
         ? sellCaption(t.price, t.planSnapshot.sell.stopLoss, t.planSnapshot.sell.takeProfit).inRange
         : false
   );
+  const total = Math.max(1, trades.length);
   return (
     <div className="card chart-card">
-      <h2 style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 700, lineHeight: "17px", color: "#191F28" }}>계획 이행 현황</h2>
-      <p>전체기록 {trades.length}건</p>
-      <p className="sub">계획이 있었던 기록 {withPlan.length}건</p>
-      <p className="sub">계획대로 이행한 기록 {followed.length}건</p>
+      <h2 className="chart-title">🎯 계획 이행 현황</h2>
+      <PlanBar label={`전체 기록 · ${trades.length}건`} pct={100} tone="default" />
+      <PlanBar label={`계획이 있었던 기록 · ${withPlan.length}건`} pct={Math.round((withPlan.length / total) * 100)} tone="default" />
+      <PlanBar label={`계획대로 이행한 기록 · ${followed.length}건`} pct={Math.round((followed.length / total) * 100)} tone="strong" />
     </div>
   );
 }
 
-function HBar({ rank, label, value, max }: { rank: number; label: string; value: number; max: number }) {
+function PlanBar({ label, pct, tone }: { label: string; pct: number; tone: "default" | "strong" }) {
+  return (
+    <div className="plan-bar">
+      <div className="plan-bar-label">{label}</div>
+      <div className="track">
+        <i className={tone} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function HBar({ rank, label, value, max, tone = "default" }: { rank: number; label: string; value: number; max: number; tone?: "default" | "strong" }) {
   const pct = max === 0 ? 0 : Math.round((value / max) * 100);
+  const mark = ["①", "②", "③"][rank - 1] || String(rank);
   return (
     <div className="hbar-stack">
       <div className="hbar-top">
-        {rank} {label}
+        {mark}{label}
       </div>
       <div className="hbar-bottom">
         <div className="track">
-          <i style={{ width: `${pct}%` }} />
+          <i className={tone} style={{ width: `${pct}%` }} />
         </div>
-        <b>{value}건</b>
+        <span>{value}건</span>
       </div>
     </div>
   );
@@ -277,11 +289,15 @@ function LineChart({ trades }: { trades: Trade[] }) {
   }
   const from = slice[0]?.slice(5).replace("-", ".") || "";
   const to = slice[slice.length - 1]?.slice(5).replace("-", ".") || "";
-  const range = from === to ? from : `${from}~${to}`;
+  const range = from === to ? from : `${from} ~ ${to}`;
+  const ticks = max <= 2 ? [0, max] : [0, Math.round(max / 2), max];
   return (
     <>
-      <div className="section-head chart-nav">
-        <span />
+      <div className="chart-nav">
+        <div className="legend">
+          <span className="buy"><i />매수</span>
+          <span className="sell"><i />매도</span>
+        </div>
         <span className="chart-range">
           <button type="button" disabled={end <= 4} onClick={() => setShift((s) => s + 1)}>
             ‹
@@ -292,17 +308,20 @@ function LineChart({ trades }: { trades: Trade[] }) {
           </button>
         </span>
       </div>
-      <div className="legend">
-        <span className="buy"><i />매수</span>
-        <span className="sell"><i />매도</span>
-      </div>
       {slice.length === 0 ? (
         <p className="sub">기록이 더 쌓이면 일자별 추이가 그려져요.</p>
       ) : (
         <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
-          {[0, 0.5, 1].map((t) => {
-            const y = h - pad - t * (h - pad * 2);
-            return <line key={t} x1={pad} x2={w - 8} y1={y} y2={y} stroke="#EDF0F5" strokeWidth="1" />;
+          {ticks.map((n) => {
+            const y = h - pad - (n / max) * (h - pad * 2);
+            return (
+              <g key={n}>
+                <line x1={pad} x2={w - 8} y1={y} y2={y} stroke="#EDF0F5" strokeWidth="1" />
+                <text x={pad - 6} y={y + 3} textAnchor="end" fontSize="10" fill="#8594A9">
+                  {n}
+                </text>
+              </g>
+            );
           })}
           {slice.length === 1 ? (
             <>
@@ -333,11 +352,6 @@ function LineChart({ trades }: { trades: Trade[] }) {
               </text>
             );
           })}
-          {[0, max].map((n) => (
-            <text key={n} x="4" y={h - pad - (n / max) * (h - pad * 2) + 4} fontSize="10" fill="#8594A9">
-              {n}
-            </text>
-          ))}
         </svg>
       )}
     </>
@@ -349,9 +363,9 @@ function ReasonToggle({ real, reasons }: { real: Trade[]; reasons: [string, numb
   return (
     <>
       <div className="section-head" style={{ margin: "0 0 12px" }}>
-        <h2 style={{ margin: 0, fontSize: 16 }}>{detail ? "판단 이유 자세히 보기" : "판단 이유 한눈에 보기"}</h2>
+        <h2 className="chart-title" style={{ margin: 0 }}>{detail ? "📊 판단 이유 자세히 보기" : "📊 판단 이유 한눈에 보기"}</h2>
         {reasons.length > 0 ? (
-          <button className="skip" type="button" onClick={() => setDetail((v) => !v)}>
+          <button className="chart-link" type="button" onClick={() => setDetail((v) => !v)}>
             {detail ? "한눈에 보기" : "자세히 보기"}
           </button>
         ) : null}
@@ -362,13 +376,14 @@ function ReasonToggle({ real, reasons }: { real: Trade[]; reasons: [string, numb
         reasonGroups().map((g) => {
           const slices = reasonSubDistribution(real, g.group);
           if (!slices.length) return null;
+          const count = slices.reduce((s, x) => s + x[1], 0);
           return (
             <div key={g.group} className="pie-wrap" style={{ marginTop: 12 }}>
               <div>
-                <b>{g.group}</b>
+                <b className="chart-group">{g.group} · {count}건</b>
                 <Pie slices={slices} size={56} />
               </div>
-              <Legend slices={slices} />
+              <Legend slices={slices} compact />
             </div>
           );
         })
@@ -382,15 +397,21 @@ function ReasonToggle({ real, reasons }: { real: Trade[]; reasons: [string, numb
   );
 }
 
-function Legend({ slices, palette = PIE }: { slices: [string, number][]; palette?: string[] }) {
+function Legend({ slices, palette = PIE, compact = false }: { slices: [string, number][]; palette?: string[]; compact?: boolean }) {
   const total = slices.reduce((s, x) => s + x[1], 0) || 1;
   return (
-    <div className="pie-legend">
-      {slices.slice(0, 5).map(([name, n], i) => (
+    <div className={compact ? "pie-legend compact" : "pie-legend"}>
+      {slices.slice(0, compact ? 7 : 5).map(([name, n], i) => (
         <div key={name}>
           <i className="swatch" style={{ background: palette[i % palette.length] }} />
-          <span style={{ color: "#191F28" }}>{name}</span>{" "}
-          <span style={{ color: "#8594A9" }}>{n}건 ({Math.round((n / total) * 100)}%)</span>
+          {compact ? (
+            <span className="legend-meta">{name} {n}건·{Math.round((n / total) * 100)}%</span>
+          ) : (
+            <>
+              <span className="legend-name">{name}</span>
+              <span className="legend-meta">{n}건 · {Math.round((n / total) * 100)}%</span>
+            </>
+          )}
         </div>
       ))}
     </div>
