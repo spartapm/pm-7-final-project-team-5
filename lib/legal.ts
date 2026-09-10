@@ -1,13 +1,13 @@
 export const TERMS_ITEMS = [
-  { id: "age", required: true, label: "만 14세 이상입니다", href: "/legal/age" },
-  { id: "service", required: true, label: "서비스 이용약관 동의", href: "/legal/terms" },
-  { id: "privacy", required: true, label: "개인정보 처리방침 동의", href: "/legal/privacy" },
+  { id: "age", required: true, label: "만 14세 이상입니다", href: "https://topaz-dentist-95d.notion.site/14-3cf469365df880428689e2cf9219cce0" },
+  { id: "service", required: true, label: "서비스 이용약관 동의", href: "https://topaz-dentist-95d.notion.site/3cf469365df8808ea351fd90bef1f9f6" },
+  { id: "privacy", required: true, label: "개인정보 처리방침 동의", href: "https://topaz-dentist-95d.notion.site/3cf469365df8808b8d3dd5df2072aeaf" },
 ] as const;
 
 export const TERMS_VIEW = {
-  age: "/legal/age",
-  service: "/legal/terms",
-  privacy: "/legal/privacy",
+  age: "https://topaz-dentist-95d.notion.site/14-3cf469365df880428689e2cf9219cce0",
+  service: "https://topaz-dentist-95d.notion.site/3cf469365df8808ea351fd90bef1f9f6",
+  privacy: "https://topaz-dentist-95d.notion.site/3cf469365df8808b8d3dd5df2072aeaf",
 } as const;
 
 export const AGE_BODY = `만 14세 이상 이용 확인

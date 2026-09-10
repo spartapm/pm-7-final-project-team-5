@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { TERMS_VIEW } from "@/lib/legal";
 import { useStore } from "@/lib/store";
 import { HomeIcon, InsightIcon, PlanIcon, RecordIcon } from "@/components/icons";
 
@@ -142,10 +143,10 @@ export function LegalFooter() {
     <div className="legal-block">
       <p className="legal">{LEGAL}</p>
       <div className="legal-links">
-        <a href="/legal/terms" target="_blank" rel="noreferrer">
+        <a href={TERMS_VIEW.service} target="_blank" rel="noreferrer">
           이용약관
         </a>
-        <a href="/legal/privacy" target="_blank" rel="noreferrer">
+        <a href={TERMS_VIEW.privacy} target="_blank" rel="noreferrer">
           개인정보
         </a>
         <a href="mailto:hello@patternnote.app">문의하기</a>
