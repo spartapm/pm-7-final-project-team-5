@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PencilIco } from "@/components/icons";
 import { PlanCards } from "@/components/PlanCards";
 import { TradeWizard } from "@/components/TradeWizard";
 import { Modal, PhoneShell } from "@/components/ui";
@@ -56,32 +57,30 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         <button className="icon-btn" type="button" onClick={() => router.back()}>
           ‹
         </button>
-        <h1 className="h1">{trade.stockName}</h1>
-        <button className="skip" type="button" onClick={() => setAskDelete(true)}>
-          삭제
+        <h1 className="h1">기록 상세</h1>
+        <button
+          className="icon-btn"
+          type="button"
+          aria-label="수정"
+          onClick={() => {
+            const found = findStock(trade.stockCode, trade.market);
+            const stock = found || {
+              code: trade.stockCode,
+              name: trade.stockName,
+              market: trade.market,
+              marketName: trade.market,
+            };
+            setDraft(draftFromTrade(trade, stock));
+            setEditing(true);
+          }}
+        >
+          <PencilIco />
         </button>
       </div>
       <div className="scroll">
         <div className="card">
           <div className="section-head" style={{ marginTop: 0 }}>
             <b>매매 정보</b>
-            <button
-              className="skip"
-              type="button"
-              onClick={() => {
-                const found = findStock(trade.stockCode, trade.market);
-                const stock = found || {
-                  code: trade.stockCode,
-                  name: trade.stockName,
-                  market: trade.market,
-                  marketName: trade.market,
-                };
-                setDraft(draftFromTrade(trade, stock));
-                setEditing(true);
-              }}
-            >
-              수정
-            </button>
           </div>
           <dl className="detail-kv">
             <dt>구분</dt>
@@ -118,6 +117,9 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
             {trade.moods.length ? trade.moods.map((m) => <span key={m.label}>{m.label}</span>) : <span className="sub">선택하지 않음</span>}
           </div>
         </div>
+        <button className="skip" type="button" onClick={() => setAskDelete(true)} style={{ display: "block", margin: "8px auto 0" }}>
+          기록 삭제
+        </button>
         <PlanCards
           trade={trade}
           onHide={(side) => setHideSide(side)}

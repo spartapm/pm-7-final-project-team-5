@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BANNED_WORDS, endingFor, fallbackNarrative1, fallbackNarrative2, HIDDEN_TAGS, VAGUE_POINTERS } from "@/lib/insight-copy";
+import { BANNED_WORDS, endingFor, fallbackNarrative1, fallbackNarrative2, HIDDEN_TAGS, NARRATIVE2_SHOTS, VAGUE_POINTERS } from "@/lib/insight-copy";
 import { sideLabel } from "@/lib/format";
 import type { Side } from "@/lib/types";
 
@@ -104,13 +104,13 @@ export async function POST(req: Request) {
 [내부 태그] 값은 노출하지 않습니다.
 문장은 반드시 [필수 어미]로 끝나야 합니다.
 narrative1 문장을 그대로 복사하지 마세요. 다만 트리거 상황(어떤 차트·뉴스·신호였는지, 어떤 심리·상황에서 매매로 이어졌는지)은 다른 어휘로 구체적으로 다시 언급하세요.
-"이런 판단으로", "이렇게", "비슷한 판단으로", "그렇게", "이런 식으로" 같은 지시대명사·뭉뚱그린 표현은 쓰지 마세요.
-narrative2는 narrative1과 다른 각도(반복 빈도, 여러 거래·구간에 걸친 지속성, 판단이 나타난 맥락)로 한 번 더 설명하세요.
+"이런 판단이", "비슷한 흐름", "비슷한 이유", "비슷한 마음", "비슷한 패턴", "이런 선택이", "이런 흐름이", "이런 마음이", "반복되고 있어요", "반복되는 경향" 같은 뭉뚱그린 표현은 쓰지 마세요.
+narrative2는 어떤 소분류 이유가 몇 건에서 반복됐는지, 어떤 상황에서 매매로 이어졌는지를 구체적으로 쓰세요.
 결과는 한 문장만 반환하세요.
-예시1: 지지선 근처에서 반등을 기다렸던 흐름이 한 번이 아니라 여러 하락 구간에서 반복되고 있어요
-예시2: 뉴스 헤드라인만 보고 따라간 매수가 짧은 기간에 여러 번 이어지는 경향이 보여요
-예시3: 주변이 사는 분위기와 겹친 매수가 같은 달 거래들에서도 다시 나타나는 패턴이 반복되고 있어요
-예시4: 차트 패턴을 보고 이익을 일찍 확정한 매도가 한 거래에 그치지 않고 이어지는 경향이 보여요`;
+예시1: ${NARRATIVE2_SHOTS[0]}
+예시2: ${NARRATIVE2_SHOTS[1]}
+예시3: ${NARRATIVE2_SHOTS[2]}
+예시4: ${NARRATIVE2_SHOTS[3]}`;
 
   const user2 = `매매유형: ${sideLabel(side)}
 내부 태그(비노출): ${moodMeta}

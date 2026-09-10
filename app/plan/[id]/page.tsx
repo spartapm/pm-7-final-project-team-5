@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
-import { Modal, PhoneShell } from "@/components/ui";
+import { PhoneShell } from "@/components/ui";
 import { formatPrice, sideLabel } from "@/lib/format";
 import { isOverseas, priceUnit } from "@/lib/markets";
 import { parseNum, sanitizePrice } from "@/lib/money";
@@ -12,9 +12,8 @@ import { useStore } from "@/lib/store";
 export default function PlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { hydrated, plans, deletePlan, updatePlan, showToast } = useStore();
+  const { hydrated, plans, updatePlan, showToast } = useStore();
   const plan = plans.find((p) => p.id === id);
-  const [askDelete, setAskDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [buyMin, setBuyMin] = useState("");
   const [buyMax, setBuyMax] = useState("");
@@ -59,11 +58,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
           ‹
         </button>
         <h1 className="h1">{plan.stockName}</h1>
-        {editing ? <span /> : (
-          <button className="skip" type="button" onClick={() => setAskDelete(true)}>
-            삭제
-          </button>
-        )}
+        <span />
       </div>
       <div className="scroll">
         {editing ? (
@@ -145,18 +140,6 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
           </button>
         </div>
       )}
-      {askDelete ? (
-        <Modal
-          title="이 계획을 삭제할까요?"
-          body="삭제한 계획은 되돌릴 수 없어요. 이미 저장된 기록의 스냅샷은 그대로 남습니다."
-          confirm="삭제"
-          onCancel={() => setAskDelete(false)}
-          onConfirm={() => {
-            deletePlan(plan.id);
-            router.replace("/plan");
-          }}
-        />
-      ) : null}
     </PhoneShell>
   );
 }

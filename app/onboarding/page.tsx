@@ -61,43 +61,23 @@ export default function OnboardingPage() {
             </button>
           </div>
           {tab === "dash" ? (
-            <>
-              <div className="card">
-                <div className="stat-num">3건</div>
-                <div className="sub">매수 3건 · 매도 0건</div>
-              </div>
-              <div className="card">
-                <h2 style={{ margin: "0 0 8px", fontSize: 16 }}>판단 이유</h2>
-                <p className="sub">차트를 보고 2건 · 관련 뉴스를 보고 1건</p>
-              </div>
-              <div className="card">
-                <h2 style={{ margin: "0 0 8px", fontSize: 16 }}>자주 겹치는 조합 TOP3</h2>
-                <div className="hbar">
-                  <span>매수 · 차트 · 기회</span>
-                  <div className="track"><i style={{ width: "100%" }} /></div>
-                  <b>2건</b>
-                </div>
-                <div className="hbar">
-                  <span>매수 · 뉴스 · 추세</span>
-                  <div className="track"><i style={{ width: "50%" }} /></div>
-                  <b>1건</b>
-                </div>
-              </div>
-            </>
+            <img src="/brand/insight-report-sample.png" alt="첫 인사이트 리포트 예시" className="example-report" width={375} height={1519} />
           ) : (
             <>
               <div className="card">
-                <p className="sub">{SAMPLE_INSIGHT.policy}</p>
+                <p className="sub" style={{ fontWeight: 700, color: "#264d80" }}>{SAMPLE_INSIGHT.policy}</p>
+                <p className="sub">{SAMPLE_INSIGHT.policySub}</p>
               </div>
               <div className="card insight-card">
-                <span className="badge">매수·차트 패턴·3건</span>
-                <h3>{SAMPLE_INSIGHT.narrative1}</h3>
-                <p>{SAMPLE_INSIGHT.narrative2}</p>
+                <span className="badge">📉 매수 · 차트 패턴 · 2건</span>
+                <h3>최근 매수 기록 중 2건에서 “차트에서 자주 멈추던 가격대를 뚫고 움직였다"는 이유가 반복됐어요.</h3>
+                <p>가격이 크게 떨어졌을 때 반사적으로 매수하는 경향이 보여요.</p>
               </div>
             </>
           )}
         </div>
         <div className="footer-cta">
+          <p className="report-cta-title">이제 진짜 기록을 시작해볼까요?</p>
           <button className="btn btn-primary" type="button" onClick={goSignup}>
             회원가입하고 시작하기
           </button>
@@ -273,16 +253,17 @@ export default function OnboardingPage() {
 
   if (stage === "ex1" || stage === "ex2" || stage === "ex3") {
     const data = stage === "ex1" ? PRACTICE.samsung : stage === "ex2" ? PRACTICE.kakao : PRACTICE.naver;
-    const kicker = stage === "ex3" ? "연습 매매 · 3/3" : stage === "ex2" ? "예시 과거 기록 · 2/3" : "예시 과거 기록 · 1/3";
+    const step = stage === "ex3" ? "3 / 3" : stage === "ex2" ? "2 / 3" : "1 / 3";
+    const head = stage === "ex3" ? "연습 매매" : "예시 과거 기록";
     const next = () => setStage(stage === "ex1" ? "ex2" : stage === "ex2" ? "ex3" : "reason");
     const title = stage === "ex3" ? "이번 연습 매매 정보예요" : "이렇게 기록했어요";
     const situation = "situation" in data ? data.situation : "";
     return (
       <PhoneShell>
-        <div className="topbar">
-          <span className="h1" style={{ fontSize: 14 }}>
-            {kicker}
-          </span>
+        <div className="onb-head">
+          <b>{head}</b>
+          <span className="spacer" />
+          <span className="badge">{step}</span>
           <button className="skip" type="button" onClick={toReplay}>
             건너뛰기
           </button>
@@ -297,11 +278,11 @@ export default function OnboardingPage() {
           ) : null}
           <div className="card">
             <dl className="detail-kv trade-mini">
-              <dt>종목·구분</dt>
+              <dt>종목 · 구분</dt>
               <dd>
                 {data.name} · {data.side}
               </dd>
-              <dt>가격·수량</dt>
+              <dt>가격 · 수량</dt>
               <dd>
                 {data.price} · {data.qty}
               </dd>
@@ -342,9 +323,9 @@ export default function OnboardingPage() {
           내 매매 습관이 보여요
         </h1>
         <p>
-          가상의 매매 3건으로
+          실제 계좌 연결 없이, 가상의 매매로
           <br />
-          먼저 가볍게 체험할 수 있어요
+          먼저 가볍게 체험해볼 수 있어요
         </p>
       </div>
       <div className="footer-cta">

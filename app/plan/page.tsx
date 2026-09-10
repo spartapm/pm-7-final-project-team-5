@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Chevron, StockTile } from "@/components/icons";
 import { ChartMark, PhoneShell, TabBar } from "@/components/ui";
 import { sideLabel } from "@/lib/format";
@@ -12,6 +12,16 @@ export default function PlanListPage() {
   const router = useRouter();
   const { hydrated, plans } = useStore();
   const [shown, setShown] = useState(10);
+  const moreRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = moreRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) setShown((n) => n + 10);
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [shown, hydrated, plans.length]);
   if (!hydrated) return <div className="shell" />;
   const sorted = [...plans].sort((a, b) => b.updatedAt - a.updatedAt);
   const visible = sorted.slice(0, shown);
@@ -22,7 +32,7 @@ export default function PlanListPage() {
         <h1 className="h1">계획</h1>
         {plans.length > 0 ? (
           <button className="skip" type="button" onClick={() => router.push("/plan/new")}>
-            새 계획
+            새 계획 만들기
           </button>
         ) : (
           <span />
@@ -35,10 +45,14 @@ export default function PlanListPage() {
               <ChartMark />
             </div>
             <h3>아직 등록한 계획이 없어요</h3>
-            <p>미리 정해 둔 계획이 있다면 기록해 보세요 · 매매를 기록할 때 나란히 볼 수 있어요</p>
+            <p>
+              미리 정해 둔 계획이 있다면 기록해 보세요
+              <br />
+              매매를 기록할 때 나란히 볼 수 있어요
+            </p>
             <ul className="plan-guide">
-              <li>매수 계획 — 희망 매수 구간</li>
-              <li>매도 계획 — 목표가와 손절가</li>
+              <li>매수 계획・이 가격대에서 사고 싶어요 (희망 매수가 구간)</li>
+              <li>매도 계획・목표가와 손절가를 미리 정해 둘 수 있어요</li>
             </ul>
             <button className="btn btn-primary" type="button" style={{ marginTop: 24 }} onClick={() => router.push("/plan/new")}>
               첫 계획 등록하기
@@ -59,11 +73,7 @@ export default function PlanListPage() {
                 <Chevron />
               </button>
             ))}
-            {shown < sorted.length ? (
-              <button className="btn btn-ghost" type="button" style={{ marginTop: 12 }} onClick={() => setShown((n) => n + 10)}>
-                더 보기
-              </button>
-            ) : null}
+            {shown < sorted.length ? <div ref={moreRef} style={{ height: 1 }} /> : null}
           </>
         )}
       </div>

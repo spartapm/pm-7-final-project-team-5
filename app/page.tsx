@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BrandMark } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
 import { afterAuthPath } from "@/lib/format";
 import { useStore } from "@/lib/store";
@@ -32,14 +31,7 @@ export default function SplashPage() {
   return (
     <PhoneShell>
       <div className="splash">
-        <div>
-          <div className="mark">
-            <BrandMark size={72} light />
-          </div>
-          <div style={{ fontWeight: 800, fontSize: 22 }}>인플롯</div>
-          <div style={{ letterSpacing: 2, opacity: 0.55, marginTop: 4, fontSize: 11 }}>INPLOT</div>
-          <div style={{ opacity: 0.7, marginTop: 8, fontSize: 13 }}>3번만 기록하면, 습관이 보여요</div>
-        </div>
+        <img src="/brand/splash-navy.png" alt="인플롯 INPLOT" className="splash-art" width={390} height={844} />
       </div>
     </PhoneShell>
   );

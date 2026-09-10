@@ -195,7 +195,7 @@ function NewPlanInner() {
             <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={() => chooseSide("buy")}>
               매수 계획
             </button>
-            <button className="btn btn-primary" type="button" style={{ marginBottom: 8, background: "#f07a3a" }} onClick={() => chooseSide("sell")}>
+            <button className="btn btn-ghost" type="button" style={{ marginBottom: 8 }} onClick={() => chooseSide("sell")}>
               매도 계획
             </button>
             <button className="btn btn-ghost" type="button" onClick={() => setAskType(false)}>

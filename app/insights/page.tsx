@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { InsightCard } from "@/components/InsightCard";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
@@ -10,20 +10,15 @@ import { buyCaption, sellCaption } from "@/lib/plans";
 import { useStore } from "@/lib/store";
 import type { IssuedCard, Side, Trade } from "@/lib/types";
 
-const PIE = ["#1b2d4f", "#3d6bff", "#7aa0ff", "#b7ccff", "#d9e4ff"];
-const EXAMPLES = [
-  { title: "매매추이", hint: "날짜별 매수·매도 건수가 여기에 그려져요" },
-  { title: "판단 이유", hint: "무엇을 보고 결정했는지 분포가 보여요" },
-  { title: "당시 마음", hint: "매수·매도 당시 상태가 나란히 보여요" },
-  { title: "계획 이행", hint: "계획 구간과 실제 체결을 대조해요" },
-  { title: "자주 겹치는 조합", hint: "이유와 마음이 같이 나온 조합 TOP3" },
-];
-
+const PIE = ["#252F4A", "#476B9E", "#738CAD", "#A6B8D1", "#D9E3F0", "#EEF2FA"];
+const BUY_PIE = ["#476B9E", "#6382AD", "#8098BC", "#9CAFCB", "#B8C5DA", "#D4DCE8", "#F0F2F7"];
+const SELL_PIE = ["#C99A3D", "#D5AE60", "#DFC382", "#E9D6A6", "#F3E9CC"];
+const CHART_BUY = "#476B9E";
+const CHART_SELL = "#C99A3D";
 export default function InsightsPage() {
   const router = useRouter();
   const { hydrated, trades, issuedCards, markCardsRead } = useStore();
   const [tab, setTab] = useState<"dash" | "trend">("dash");
-  const [ex, setEx] = useState(0);
   const real = trades.filter((t) => !t.isPractice);
   const buyCount = sideTrades(trades, "buy").length;
   const sellCount = sideTrades(trades, "sell").length;
@@ -60,7 +55,7 @@ export default function InsightsPage() {
 
         {tab === "dash" ? (
           real.length === 0 ? (
-            <EmptyDash ex={ex} setEx={setEx} onRecord={() => router.push("/record")} />
+            <EmptyDash onRecord={() => router.push("/record")} />
           ) : (
             <Dashboard
               real={real}
@@ -88,41 +83,13 @@ export default function InsightsPage() {
   );
 }
 
-function EmptyDash({ ex, setEx, onRecord }: { ex: number; setEx: (n: number) => void; onRecord: () => void }) {
-  const rail = useRef<HTMLDivElement>(null);
-
-  function go(i: number) {
-    setEx(i);
-    const card = rail.current?.children[i] as HTMLElement | undefined;
-    card?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-  }
-
-  function onScroll() {
-    const el = rail.current;
-    if (!el) return;
-    const card = el.firstElementChild as HTMLElement | null;
-    const w = (card?.offsetWidth || 1) + 10;
-    const i = Math.round(el.scrollLeft / w);
-    setEx(Math.max(0, Math.min(EXAMPLES.length - 1, i)));
-  }
-
+function EmptyDash({ onRecord }: { onRecord: () => void }) {
   return (
     <>
       <h3>아직 기록이 없어요</h3>
       <p className="sub">매매를 기록하면 나만의 통계가 이렇게 채워져요</p>
-      <div className="example-rail" ref={rail} onScroll={onScroll}>
-        {EXAMPLES.map((item, i) => (
-          <div key={item.title} className={`card example-card ${i === ex ? "on" : ""}`}>
-            <span className="ex-badge">예시</span>
-            <b>{item.title}</b>
-            <p className="sub">{item.hint}</p>
-          </div>
-        ))}
-      </div>
-      <div className="dots">
-        {EXAMPLES.map((_, i) => (
-          <i key={i} className={i === ex ? "on" : ""} onClick={() => go(i)} />
-        ))}
+      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        <img src="/brand/insight-report-sample.png" alt="인사이트 리포트 예시" className="example-report" width={375} height={1519} />
       </div>
       <button className="btn btn-primary" type="button" style={{ marginTop: 20 }} onClick={onRecord}>
         첫 매매 기록하기
@@ -218,30 +185,30 @@ function Dashboard({
           매수 {buyCount}건 · 매도 {sellCount}건
         </div>
       </div>
-      <div className="card">
-        <h2 style={{ margin: "0 0 8px", fontSize: 16 }}>매매 추이</h2>
+      <div className="card chart-card">
+        <h2 style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 700, lineHeight: "17px", color: "#191F28" }}>매매 추이</h2>
         <LineChart trades={real} />
       </div>
-      <div className="card">
+      <div className="card chart-card">
         <ReasonToggle real={real} reasons={reasons} />
       </div>
-      <div className="card">
-        <h2 style={{ margin: "0 0 12px", fontSize: 16 }}>매매 당시 마음 상태</h2>
+      <div className="card chart-card">
+        <h2 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, lineHeight: "17px", color: "#191F28" }}>매매 당시 마음 상태</h2>
         <div className="pie-pair">
           <div>
             <b>매수</b>
-            <Pie slices={buyMoods} emptyLabel="아직 기록 없음" />
-            <Legend slices={buyMoods} />
+            <Pie slices={buyMoods} emptyLabel="아직 기록 없음" palette={BUY_PIE} size={64} />
+            <Legend slices={buyMoods} palette={BUY_PIE} />
           </div>
           <div>
             <b>매도</b>
-            <Pie slices={sellMoods} emptyLabel="아직 기록 없음" />
-            <Legend slices={sellMoods} />
+            <Pie slices={sellMoods} emptyLabel="아직 기록 없음" palette={SELL_PIE} size={64} />
+            <Legend slices={sellMoods} palette={SELL_PIE} />
           </div>
         </div>
       </div>
-      <div className="card">
-        <h2 style={{ margin: "0 0 8px", fontSize: 16 }}>자주 겹치는 조합 TOP3</h2>
+      <div className="card chart-card">
+        <h2 style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 700, lineHeight: "17px", color: "#191F28" }}>자주 겹치는 조합 TOP3</h2>
         {top3.length === 0 ? <p className="sub">조합이 아직 없어요.</p> : top3.map(([name, n], i) => (
           <HBar key={name} rank={i + 1} label={name} value={n} max={top3[0]![1]} />
         ))}
@@ -261,8 +228,8 @@ function PlanFollowCard({ trades }: { trades: Trade[] }) {
         : false
   );
   return (
-    <div className="card">
-      <h2 style={{ margin: "0 0 8px", fontSize: 16 }}>계획 이행 현황</h2>
+    <div className="card chart-card">
+      <h2 style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 700, lineHeight: "17px", color: "#191F28" }}>계획 이행 현황</h2>
       <p>전체기록 {trades.length}건</p>
       <p className="sub">계획이 있었던 기록 {withPlan.length}건</p>
       <p className="sub">계획대로 이행한 기록 {followed.length}건</p>
@@ -333,27 +300,41 @@ function LineChart({ trades }: { trades: Trade[] }) {
         <p className="sub">기록이 더 쌓이면 일자별 추이가 그려져요.</p>
       ) : (
         <svg className="chart" viewBox={`0 0 ${w} ${h}`}>
+          {[0, 0.5, 1].map((t) => {
+            const y = h - pad - t * (h - pad * 2);
+            return <line key={t} x1={pad} x2={w - 8} y1={y} y2={y} stroke="#EDF0F5" strokeWidth="1" />;
+          })}
           {slice.length === 1 ? (
             <>
-              <circle cx={w / 2} cy={xy(slice[0]!, 0, "buy").y} r="4" fill="#3d6bff" />
-              <circle cx={w / 2} cy={xy(slice[0]!, 0, "sell").y} r="4" fill="#f07a3a" />
+              <circle cx={w / 2} cy={xy(slice[0]!, 0, "buy").y} r="3" fill={CHART_BUY} />
+              <circle cx={w / 2} cy={xy(slice[0]!, 0, "sell").y} r="3" fill={CHART_SELL} />
             </>
           ) : (
             <>
-              <polyline fill="none" stroke="#3d6bff" strokeWidth="2.5" points={pts("buy")} />
-              <polyline fill="none" stroke="#f07a3a" strokeWidth="2.5" points={pts("sell")} />
+              <polyline fill="none" stroke={CHART_BUY} strokeWidth="2" points={pts("buy")} />
+              <polyline fill="none" stroke={CHART_SELL} strokeWidth="2" points={pts("sell")} />
+              {slice.map((d, i) => {
+                const buy = xy(d, i, "buy");
+                const sell = xy(d, i, "sell");
+                return (
+                  <g key={d}>
+                    <circle cx={buy.x} cy={buy.y} r="3" fill={CHART_BUY} />
+                    <circle cx={sell.x} cy={sell.y} r="3" fill={CHART_SELL} />
+                  </g>
+                );
+              })}
             </>
           )}
           {slice.map((d, i) => {
             const x = pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
             return (
-              <text key={d} x={x} y={h - 6} textAnchor="middle" fontSize="10" fill="#8b93a7">
+              <text key={d} x={x} y={h - 6} textAnchor="middle" fontSize="10" fill="#8594A9">
                 {d.slice(5).replace("-", ".")}
               </text>
             );
           })}
           {[0, max].map((n) => (
-            <text key={n} x="4" y={h - pad - (n / max) * (h - pad * 2) + 4} fontSize="10" fill="#8b93a7">
+            <text key={n} x="4" y={h - pad - (n / max) * (h - pad * 2) + 4} fontSize="10" fill="#8594A9">
               {n}
             </text>
           ))}
@@ -385,7 +366,7 @@ function ReasonToggle({ real, reasons }: { real: Trade[]; reasons: [string, numb
             <div key={g.group} className="pie-wrap" style={{ marginTop: 12 }}>
               <div>
                 <b>{g.group}</b>
-                <Pie slices={slices} />
+                <Pie slices={slices} size={56} />
               </div>
               <Legend slices={slices} />
             </div>
@@ -393,7 +374,7 @@ function ReasonToggle({ real, reasons }: { real: Trade[]; reasons: [string, numb
         })
       ) : (
         <div className="pie-wrap">
-          <Pie slices={reasons} />
+          <Pie slices={reasons} size={120} />
           <Legend slices={reasons} />
         </div>
       )}
@@ -401,44 +382,47 @@ function ReasonToggle({ real, reasons }: { real: Trade[]; reasons: [string, numb
   );
 }
 
-function Legend({ slices }: { slices: [string, number][] }) {
+function Legend({ slices, palette = PIE }: { slices: [string, number][]; palette?: string[] }) {
   const total = slices.reduce((s, x) => s + x[1], 0) || 1;
   return (
     <div className="pie-legend">
       {slices.slice(0, 5).map(([name, n], i) => (
         <div key={name}>
-          <i className="swatch" style={{ background: PIE[i % PIE.length] }} />
-          {name} {n}건 ({Math.round((n / total) * 100)}%)
+          <i className="swatch" style={{ background: palette[i % palette.length] }} />
+          <span style={{ color: "#191F28" }}>{name}</span>{" "}
+          <span style={{ color: "#8594A9" }}>{n}건 ({Math.round((n / total) * 100)}%)</span>
         </div>
       ))}
     </div>
   );
 }
 
-function Pie({ slices, emptyLabel }: { slices: [string, number][]; emptyLabel?: string }) {
+function Pie({ slices, emptyLabel, palette = PIE, size = 96 }: { slices: [string, number][]; emptyLabel?: string; palette?: string[]; size?: number }) {
   const total = slices.reduce((s, x) => s + x[1], 0) || 1;
   let acc = 0;
-  const r = 36;
+  const r = Math.round(size * 0.375);
+  const stroke = Math.max(10, Math.round(size * 0.14));
   const c = 2 * Math.PI * r;
+  const mid = size / 2;
   if (!slices.length) {
     return (
       <div className="pie-empty">
-        <svg width="96" height="96" viewBox="0 0 96 96">
-          <circle cx="48" cy="48" r="36" fill="none" stroke="#e7ebf3" strokeWidth="16" />
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <circle cx={mid} cy={mid} r={r} fill="none" stroke="#EAEDF0" strokeWidth={stroke} />
         </svg>
         <p className="sub">{emptyLabel || "아직 기록 없음"}</p>
       </div>
     );
   }
   return (
-    <svg width="96" height="96" viewBox="0 0 96 96">
-      <g transform="translate(48,48) rotate(-90)">
-        {slices.slice(0, 5).map(([, n], i) => {
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <g transform={`translate(${mid},${mid}) rotate(-90)`}>
+        {slices.slice(0, 6).map(([, n], i) => {
           const dash = (n / total) * c;
           const gap = c - dash;
           const offset = -acc;
           acc += dash;
-          return <circle key={i} r={r} fill="none" stroke={PIE[i % PIE.length]} strokeWidth="16" strokeDasharray={`${dash} ${gap}`} strokeDashoffset={offset} />;
+          return <circle key={i} r={r} fill="none" stroke={palette[i % palette.length]} strokeWidth={stroke} strokeDasharray={`${dash} ${gap}`} strokeDashoffset={offset} strokeLinecap="butt" />;
         })}
       </g>
     </svg>

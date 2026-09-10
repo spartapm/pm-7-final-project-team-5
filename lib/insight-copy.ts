@@ -37,7 +37,29 @@ export const HIDDEN_TAGS = [
 ];
 
 export const BANNED_WORDS = ["충동적으로", "성급하게", "실수로"];
-export const VAGUE_POINTERS = ["이런 판단으로", "비슷한 판단으로", "그런 판단으로", "이렇게", "그렇게", "이런 식으로"];
+export const VAGUE_POINTERS = [
+  "이런 판단이",
+  "비슷한 흐름",
+  "비슷한 이유",
+  "비슷한 마음",
+  "비슷한 패턴",
+  "이런 선택이",
+  "이런 흐름이",
+  "이런 마음이",
+  "이런 판단으로",
+  "비슷한 판단으로",
+  "그런 판단으로",
+  "이렇게",
+  "그렇게",
+  "이런 식으로",
+];
+
+export const NARRATIVE2_SHOTS = [
+  "최근 매수 3건 중 2건에서 차트에서 자주 멈추던 가격대를 뚫고 움직였다는 이유가 반복됐어요.",
+  "가격이 크게 떨어졌을 때 반사적으로 매수하는 경향이 보여요.",
+  "최근 매수 3건 중 2건에서 거래량이 갑자기 크게 늘거나 줄었다는 이유가 반복됐어요.",
+  "오르는 흐름을 놓칠까 봐 추격 매수하는 경향이 보여요.",
+];
 
 export function isExcludedMood(pick: CategoryPick) {
   return pick.label === EXCLUDED_MOOD_LABEL || pick.meta === EXCLUDED_MOOD_META || pick.meta.includes("집계 제외");

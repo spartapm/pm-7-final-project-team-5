@@ -66,23 +66,22 @@ function LoginInner() {
         <p className="or-line">또는</p>
         <div className="field">
           <label>이메일</label>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="이메일" />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" />
         </div>
         <div className="field">
           <label>비밀번호</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호" />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" />
+        </div>
+        <div className="login-link right">
+          <b role="link" onClick={() => router.push("/signup")}>
+            회원가입
+          </b>
         </div>
       </div>
       <div className="footer-cta">
         <button className="btn btn-primary" type="button" onClick={submitEmail} disabled={!email || !password}>
           로그인
         </button>
-        <div className="login-link">
-          계정이 없나요?{" "}
-          <b role="link" onClick={() => router.push("/signup")}>
-            회원가입
-          </b>
-        </div>
       </div>
     </PhoneShell>
   );

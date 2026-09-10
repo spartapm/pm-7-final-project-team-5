@@ -25,16 +25,16 @@ export default function NicknamePage() {
   return (
     <PhoneShell>
       <div className="topbar">
-        <span />
+        <button className="icon-btn" type="button" onClick={() => router.back()}>
+          ‹
+        </button>
         <span />
       </div>
       <div className="scroll">
-        <div className="step-kicker">회원가입</div>
-        <h1 className="step-title">어떻게 불러 드릴까요?</h1>
-        <p className="sub">닉네임은 2~10자이며 중복은 허용돼요.</p>
+        <h1 className="step-title">회원가입</h1>
         <div className="field" style={{ marginTop: 20 }}>
-          <label>닉네임 ({name.trim().length}/10)</label>
-          <input value={name} onChange={(e) => setName(e.target.value.slice(0, 11))} placeholder="예: 패턴러" maxLength={11} />
+          <label>닉네임<span className="req">*</span> ({name.trim().length}/10)</label>
+          <input value={name} onChange={(e) => setName(e.target.value.slice(0, 11))} placeholder="닉네임을 입력해 주세요" maxLength={11} />
           {err ? <p className="field-err">닉네임은 2자 이상, 10자 이내로 입력해 주세요</p> : null}
         </div>
       </div>

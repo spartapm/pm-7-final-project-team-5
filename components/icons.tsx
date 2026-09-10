@@ -3,23 +3,30 @@
 import { initials } from "@/lib/format";
 import { INSIGHT_THRESHOLD } from "@/lib/insights";
 
-const TILE = ["#3d6bff", "#1b2d4f", "#f07a3a", "#2f9e6b", "#7aa0ff", "#c45c3e"];
 
-function hash(s: string) {
-  let n = 0;
-  for (const ch of s) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
-  return n;
+export function BrandMark({ size = 40, light: _light = false }: { size?: number; light?: boolean }) {
+  const radius = Math.round(size * 0.22);
+  return (
+    <img
+      src="/brand/app-icon-1024.png"
+      alt=""
+      width={size}
+      height={size}
+      className="brand-mark"
+      style={{ width: size, height: size, borderRadius: radius }}
+    />
+  );
 }
 
-export function BrandMark({ size = 40, light = false }: { size?: number; light?: boolean }) {
-  const bg = light ? "#fff" : "#1B2D4F";
-  const fg = light ? "#1B2D4F" : "#fff";
+export function BrandLockup({ height = 36 }: { height?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden>
-      <rect width="40" height="40" rx="12" fill={bg} />
-      <path d="M18.2 28V12h3.6V28h-3.6z" fill={fg} />
-      <circle cx="31.5" cy="10.5" r="3.5" fill="#3D6BFF" />
-    </svg>
+    <img
+      src="/brand/logo-horizontal.png"
+      alt="인플롯"
+      height={height}
+      className="brand-lockup"
+      style={{ height, width: "auto" }}
+    />
   );
 }
 
@@ -54,11 +61,10 @@ export function Chevron() {
 }
 
 export function StockTile({ name, code }: { name: string; code: string }) {
-  const color = TILE[hash(`${code}:${name}`) % TILE.length];
   const latin = /^[A-Za-z]/.test(code);
   const label = latin ? code.slice(0, 2).toUpperCase() : initials(name);
   return (
-    <span className="stock-tile" style={{ background: color }} aria-hidden>
+    <span className="avatar" aria-hidden>
       {label}
     </span>
   );
@@ -81,7 +87,7 @@ export function ProgressRing({
   const r = 26;
   const c = 2 * Math.PI * r;
   const dash = (pct / 100) * c;
-  const color = side === "buy" ? "#3d6bff" : "#f07a3a";
+  const color = side === "buy" ? "#476B9E" : "#C99A3D";
   return (
     <div className={`progress-card ${side}`}>
       <div className={`k ${side}`}>{side === "buy" ? "매수" : "매도"}</div>
@@ -99,7 +105,7 @@ export function ProgressRing({
             strokeDasharray={`${dash} ${c}`}
             transform="rotate(-90 36 36)"
           />
-          <text x="36" y="40" textAnchor="middle" fontSize="13" fontWeight="800" fill="#1b2d4f">
+          <text x="36" y="40" textAnchor="middle" fontSize="13" fontWeight="700" fill="#191F28">
             {shown}/{max}
           </text>
         </svg>

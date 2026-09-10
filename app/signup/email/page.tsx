@@ -30,10 +30,9 @@ export default function EmailSignupPage() {
         <span />
       </div>
       <div className="scroll">
-        <div className="step-kicker">회원가입</div>
-        <h1 className="step-title">이메일로 가입</h1>
+        <h1 className="step-title">회원가입</h1>
         <div className="field" style={{ marginTop: 16 }}>
-          <label>이메일</label>
+          <label>이메일<span className="req">*</span></label>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -43,7 +42,7 @@ export default function EmailSignupPage() {
           {touched.email && emailErr ? <p className="field-err">{emailErr}</p> : null}
         </div>
         <div className="field">
-          <label>비밀번호</label>
+          <label>비밀번호<span className="req">*</span></label>
           <input
             type="password"
             value={password}
@@ -54,7 +53,7 @@ export default function EmailSignupPage() {
           {touched.pw && pwErr ? <p className="field-err">{pwErr}</p> : null}
         </div>
         <div className="field">
-          <label>비밀번호 확인</label>
+          <label>비밀번호 확인<span className="req">*</span></label>
           <input
             type="password"
             value={confirm}
@@ -65,7 +64,7 @@ export default function EmailSignupPage() {
           {(touched.confirm || confirm) && confirmErr ? <p className="field-err">{confirmErr}</p> : null}
         </div>
         <div className="field">
-          <label>닉네임 ({nickname.trim().length}/10)</label>
+          <label>닉네임<span className="req">*</span> ({nickname.trim().length}/10)</label>
           <input
             value={nickname}
             onChange={(e) => setNickname(e.target.value.slice(0, 11))}

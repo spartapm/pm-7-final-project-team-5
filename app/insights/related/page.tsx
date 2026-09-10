@@ -6,6 +6,18 @@ import { PhoneShell } from "@/components/ui";
 import { TradeRow } from "@/components/TradeRow";
 import { reasonChip } from "@/lib/insights";
 import { useStore } from "@/lib/store";
+import type { CategoryPick } from "@/lib/types";
+
+function groupReasons(reasons: CategoryPick[]) {
+  const map = new Map<string, string[]>();
+  for (const r of reasons) {
+    const key = r.group || "기타";
+    const arr = map.get(key) || [];
+    arr.push(r.label);
+    map.set(key, arr);
+  }
+  return [...map.entries()].map(([group, labels]) => `${group} · ${labels.join(" · ")}`);
+}
 
 function RelatedInner() {
   const params = useSearchParams();
@@ -40,10 +52,8 @@ function RelatedInner() {
                 <TradeRow trade={t} showQty showReason onClick={() => router.push(`/records/${t.id}`)} />
                 <div className="sub stack-lines" style={{ marginTop: 8 }}>
                   <b>매매이유</b>
-                  {t.reasons.map((r) => (
-                    <span key={r.label}>
-                      {r.group} · {r.label}
-                    </span>
+                  {groupReasons(t.reasons).map((line) => (
+                    <span key={line}>{line}</span>
                   ))}
                   <b>그때 마음</b>
                   {t.moods.map((m) => (

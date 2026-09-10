@@ -30,16 +30,18 @@ export default function SignupChoicePage() {
           기록을 이어가요
         </h1>
       </div>
-      <div className="footer-cta">
-        <button className="btn btn-primary" type="button" onClick={() => router.push("/signup/email")}>
-          이메일로 계속하기
-        </button>
-        <p className="or-line">또는</p>
+      <div className="scroll">
         <button className="btn btn-kakao" type="button" onClick={kakao}>
           <KakaoIcon />
           {hasKakaoKey() ? "카카오로 시작하기" : "카카오 설정 필요"}
         </button>
-        <div className="login-link">
+        <p className="or-line">또는</p>
+        <button className="btn btn-ghost" type="button" onClick={() => router.push("/signup/email")}>
+          이메일로 시작하기
+        </button>
+      </div>
+      <div className="footer-cta">
+        <div className="login-link center">
           이미 계정이 있나요?{" "}
           <b role="link" onClick={() => router.push("/login")}>
             로그인

@@ -57,10 +57,10 @@ export function TabBar() {
 export function ChartMark() {
   return (
     <svg width="88" height="64" viewBox="0 0 88 64" fill="none">
-      <rect x="8" y="12" width="72" height="40" rx="4" stroke="#c5d7f5" />
-      <rect x="18" y="28" width="10" height="18" rx="2" fill="#2f9e6b" />
-      <rect x="36" y="20" width="10" height="26" rx="2" fill="#e5484d" />
-      <rect x="54" y="24" width="10" height="22" rx="2" fill="#3d6bff" />
+      <rect x="8" y="12" width="72" height="40" rx="4" stroke="#EAEDF0" />
+      <rect x="18" y="28" width="10" height="18" rx="2" fill="#A6B8D1" />
+      <rect x="36" y="20" width="10" height="26" rx="2" fill="#C99A3D" />
+      <rect x="54" y="24" width="10" height="22" rx="2" fill="#476B9E" />
     </svg>
   );
 }
@@ -89,7 +89,12 @@ export function Toast({
     const t = setTimeout(onDone, 5000);
     return () => clearTimeout(t);
   }, [message, onDone]);
-  return <div className={`toast ${kind}`}>{message}</div>;
+  return (
+    <div className={`toast ${kind}`}>
+      <span className="toast-dot" aria-hidden />
+      <span>{message}</span>
+    </div>
+  );
 }
 
 export function ToastHost() {

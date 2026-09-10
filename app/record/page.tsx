@@ -82,7 +82,7 @@ export default function RecordPage() {
             <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={() => start("buy", stock)}>
               매수 기록
             </button>
-            <button className="btn btn-primary" type="button" style={{ marginBottom: 8, background: "#f07a3a" }} onClick={() => start("sell", stock)}>
+            <button className="btn btn-ghost" type="button" style={{ marginBottom: 8 }} onClick={() => start("sell", stock)}>
               매도 기록
             </button>
             <button className="btn btn-ghost" type="button" onClick={() => setPickSide(false)}>
