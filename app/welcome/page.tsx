@@ -21,7 +21,7 @@ export default function WelcomePage() {
         <div className="blob">
           <BrandMark size={64} />
         </div>
-        <h1>패턴노트로<br />기록을 이어가요</h1>
+        <h1>인플롯으로<br />기록을 이어가요</h1>
         <p>
           {nickname && nickname !== "회원" ? `${nickname}님, ` : ""}
           매매를 남길수록 반복된 판단이 카드로 쌓여요.

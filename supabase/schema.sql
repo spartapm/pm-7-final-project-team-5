@@ -1,4 +1,4 @@
--- 패턴노트: 계정 / 매매계획 / 매매기록 / 인사이트 카드
+-- 인플롯: 계정 / 매매계획 / 매매기록 / 인사이트 카드
 -- Dashboard SQL Editor에 붙여넣고 Run 해도 됩니다.
 
 create table if not exists public.accounts (

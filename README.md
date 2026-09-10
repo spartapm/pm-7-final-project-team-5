@@ -1,8 +1,8 @@
-# 패턴노트 — 5조
+# 인플롯(INPLOT) — 5조
 
 내배캠 PM 7기 5조 최종 프로젝트. 매매 당시의 판단 근거와 상태를 선택형으로 남겨, 반복되는 판단 패턴을 스스로 볼 수 있게 합니다.
 
-화면은 [피그마 5조](https://www.figma.com/design/4vkt1I8oKaDETSNRHXF4ns/5%EC%A1%B0?node-id=50-2293) **패턴노트 0.2**를 기준으로 맞췄습니다. 작업 로그는 `docs/PROGRESS.md`.
+화면은 [피그마 5조](https://www.figma.com/design/4vkt1I8oKaDETSNRHXF4ns/5%EC%A1%B0?node-id=50-2293) **인플롯 0.2**를 기준으로 맞췄습니다. 작업 로그는 `docs/PROGRESS.md`.
 
 ## 실행
 

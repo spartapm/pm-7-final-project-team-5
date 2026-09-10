@@ -20,6 +20,7 @@ import {
 } from "./cloud";
 import { uid, todayKey } from "./format";
 import {
+  applyIssueCooldown,
   candidateToCard,
   detectCandidates,
   shouldAttemptIssue,
@@ -146,10 +147,10 @@ async function copyForCandidate(c: {
     const data = (await res.json()) as { narrative1?: string; narrative2?: string; observation?: string; interpretation?: string };
     return {
       n1: data.narrative1 || data.observation || fallbackNarrative1(c.moodLabel, c.count),
-      n2: data.narrative2 || data.interpretation || fallbackNarrative2(c.moodLabel, c.count),
+      n2: data.narrative2 || data.interpretation || fallbackNarrative2(c.moodLabel, c.count, c.reasonLabels),
     };
   } catch {
-    return { n1: fallbackNarrative1(c.moodLabel, c.count), n2: fallbackNarrative2(c.moodLabel, c.count) };
+    return { n1: fallbackNarrative1(c.moodLabel, c.count), n2: fallbackNarrative2(c.moodLabel, c.count, c.reasonLabels) };
   }
 }
 
@@ -244,7 +245,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     for (const side of ["buy", "sell"] as Side[]) {
       const count = sideTrades(trades, side).length;
       if (!shouldAttemptIssue(count, baseline[side])) continue;
-      const cands = detectCandidates(trades, side);
+      const cands = applyIssueCooldown(detectCandidates(trades, side), stateRef.current.issuedCards);
       if (!cands.length) continue;
       for (const c of cands) {
         const copy = await copyForCandidate(c);

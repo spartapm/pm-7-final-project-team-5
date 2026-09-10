@@ -37,6 +37,7 @@ export const HIDDEN_TAGS = [
 ];
 
 export const BANNED_WORDS = ["충동적으로", "성급하게", "실수로"];
+export const VAGUE_POINTERS = ["이런 판단으로", "비슷한 판단으로", "그런 판단으로", "이렇게", "그렇게", "이런 식으로"];
 
 export function isExcludedMood(pick: CategoryPick) {
   return pick.label === EXCLUDED_MOOD_LABEL || pick.meta === EXCLUDED_MOOD_META || pick.meta.includes("집계 제외");
@@ -64,6 +65,11 @@ export function fallbackNarrative1(moodLabel: string, n: number) {
   return swapEnding(expose, endingFor(n));
 }
 
-export function fallbackNarrative2(moodLabel: string, n: number) {
-  return fallbackNarrative1(moodLabel, n);
+export function fallbackNarrative2(moodLabel: string, n: number, reasonLabels: string[] = []) {
+  const trigger = reasonLabels.filter(Boolean).slice(0, 2).join("·");
+  const ending = endingFor(n);
+  if (trigger) {
+    return `${trigger} 보고 매매한 흐름이 한 건이 아니라 ${n}건에 걸쳐 ${ending}`;
+  }
+  return `같은 신호와 마음이 여러 거래에 걸쳐 ${ending}`;
 }

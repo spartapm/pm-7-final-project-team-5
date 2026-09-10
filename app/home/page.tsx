@@ -34,7 +34,7 @@ export default function HomePage() {
             <BrandMark size={40} />
           </button>
           <div className="home-hello">
-            <div className="brand-kicker">패턴노트</div>
+            <div className="brand-kicker">인플롯</div>
             <h1 className="hello">안녕하세요, {nickname}님</h1>
           </div>
         </div>

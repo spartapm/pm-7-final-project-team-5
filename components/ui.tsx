@@ -130,7 +130,7 @@ export function Modal({
 }
 
 export const LEGAL =
-  "패턴노트는 투자자문업자 또는 유사투자자문업자가 아니며, 이용자가 입력한 기록을 계산해 지난 매매의 경향을 보여줍니다. 특정 종목의 매매를 권유하지 않으며, 투자 판단과 그 결과에 대한 책임은 이용자 본인에게 있습니다.";
+  "인플롯은 투자자문업자 또는 유사투자자문업자가 아니며, 이용자가 입력한 기록을 계산해 지난 매매의 경향을 보여줍니다. 특정 종목의 매매를 권유하지 않으며, 투자 판단과 그 결과에 대한 책임은 이용자 본인에게 있습니다.";
 
 export function LegalFooter() {
   return (
@@ -145,7 +145,7 @@ export function LegalFooter() {
         </a>
         <a href="mailto:hello@patternnote.app">문의하기</a>
       </div>
-      <p className="copy">© 2026 패턴노트</p>
+      <p className="copy">© 2026 인플롯</p>
     </div>
   );
 }

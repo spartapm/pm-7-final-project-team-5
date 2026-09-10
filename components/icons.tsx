@@ -17,10 +17,7 @@ export function BrandMark({ size = 40, light = false }: { size?: number; light?:
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden>
       <rect width="40" height="40" rx="12" fill={bg} />
-      <path
-        d="M13 28V12h7.1c3.8 0 6.2 2 6.2 5.1 0 2.2-1.2 3.9-3.4 4.6L28.8 28h-4.6l-5.4-6.6H17V28H13zm4-10.4h2.6c1.8 0 2.9-.9 2.9-2.4s-1.1-2.3-2.9-2.3H17v4.7z"
-        fill={fg}
-      />
+      <path d="M18.2 28V12h3.6V28h-3.6z" fill={fg} />
       <circle cx="31.5" cy="10.5" r="3.5" fill="#3D6BFF" />
     </svg>
   );

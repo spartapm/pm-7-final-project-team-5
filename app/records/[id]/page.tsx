@@ -85,6 +85,11 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
           }
         />
       </div>
+      <div className="footer-cta">
+        <button className="btn btn-primary" type="button" onClick={() => router.push("/records")}>
+          기록 목록 확인하기
+        </button>
+      </div>
       {hideSide ? (
         <Modal
           title="이 계획을 기록에서 삭제하시겠어요?"

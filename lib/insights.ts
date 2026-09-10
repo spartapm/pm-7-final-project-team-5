@@ -134,7 +134,30 @@ export function detectCandidates(trades: Trade[], side: Side): Candidate[] {
     }
   }
 
-  return pool.sort((a, b) => b.score - a.score).slice(0, 2);
+  return pool.sort((a, b) => b.score - a.score);
+}
+
+export function candidateKey(c: {
+  moodMeta: string;
+  reasonLevel: string;
+  reasonGroup?: string;
+  reasonMeta: string;
+  reasonLabels: string[];
+}) {
+  return [c.moodMeta, c.reasonLevel, c.reasonGroup || c.reasonMeta, [...c.reasonLabels].sort().join("|")].join("::");
+}
+
+export function applyIssueCooldown(cands: Candidate[], issued: IssuedCard[]) {
+  const ready = cands.filter((c) => {
+    const prev = issued
+      .filter((card) => candidateKey(card) === candidateKey(c))
+      .sort((a, b) => b.issuedAt - a.issuedAt)[0];
+    if (!prev) return true;
+    if (c.count >= prev.count + 2) return true;
+    if (prev.score > 0 && c.score >= prev.score * 1.2) return true;
+    return false;
+  });
+  return ready.slice(0, 2);
 }
 
 export function shouldAttemptIssue(sideCount: number, baseline: number) {
@@ -159,7 +182,7 @@ export function candidateToCard(c: Candidate, n1: string, n2: string): IssuedCar
     windowSize: c.windowSize,
     score: c.score,
     narrative1: n1 || fallbackNarrative1(c.moodLabel, c.count),
-    narrative2: n2 || fallbackNarrative2(c.moodLabel, c.count),
+    narrative2: n2 || fallbackNarrative2(c.moodLabel, c.count, c.reasonLabels),
     relatedTradeIds: c.tradeIds,
     read: false,
   };

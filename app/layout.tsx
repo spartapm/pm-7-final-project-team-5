@@ -4,7 +4,7 @@ import { Providers } from "./providers";
 import { CloudBanner } from "@/components/CloudBanner";
 
 export const metadata: Metadata = {
-  title: "패턴노트",
+  title: "인플롯",
   description: "매매 판단 패턴을 기록하고 반복되는 습관을 발견하세요.",
 };
 

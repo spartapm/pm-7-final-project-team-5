@@ -6,7 +6,6 @@ import { BrandMark } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
 import { afterAuthPath } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import { hasRevisitCookie, touchRevisitCookie } from "@/lib/visit";
 
 export default function SplashPage() {
   const router = useRouter();
@@ -18,13 +17,10 @@ export default function SplashPage() {
     const t = setTimeout(() => {
       setShow(false);
       if (loggedIn) {
-        touchRevisitCookie();
         router.replace(afterAuthPath(nickname, seenWelcome));
-      } else if (!hasRevisitCookie()) {
-        touchRevisitCookie();
+      } else if (!seenOnboarding) {
         router.replace("/onboarding");
       } else {
-        touchRevisitCookie();
         router.replace("/login");
       }
     }, 1400);
@@ -40,7 +36,8 @@ export default function SplashPage() {
           <div className="mark">
             <BrandMark size={72} light />
           </div>
-          <div style={{ fontWeight: 800, fontSize: 22 }}>패턴노트</div>
+          <div style={{ fontWeight: 800, fontSize: 22 }}>인플롯</div>
+          <div style={{ letterSpacing: 2, opacity: 0.55, marginTop: 4, fontSize: 11 }}>INPLOT</div>
           <div style={{ opacity: 0.7, marginTop: 8, fontSize: 13 }}>3번만 기록하면, 습관이 보여요</div>
         </div>
       </div>

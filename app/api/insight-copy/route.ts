@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BANNED_WORDS, endingFor, fallbackNarrative1, fallbackNarrative2, HIDDEN_TAGS } from "@/lib/insight-copy";
+import { BANNED_WORDS, endingFor, fallbackNarrative1, fallbackNarrative2, HIDDEN_TAGS, VAGUE_POINTERS } from "@/lib/insight-copy";
 import { sideLabel } from "@/lib/format";
 import type { Side } from "@/lib/types";
 
@@ -57,10 +57,11 @@ export async function POST(req: Request) {
   const moodLabel = String(body.moodLabel || "");
   const moodMeta = String(body.moodMeta || "");
   const reasonLabels = Array.isArray(body.reasonLabels) ? body.reasonLabels.map(String) : [];
+  const reasonMeta = String(body.reasonMeta || "");
   const count = Number(body.count) || 3;
   const ending = endingFor(count);
   const n1fb = fallbackNarrative1(moodLabel, count);
-  const n2fb = fallbackNarrative2(moodLabel, count);
+  const n2fb = fallbackNarrative2(moodLabel, count, reasonLabels);
 
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return NextResponse.json({ narrative1: n1fb, narrative2: n2fb });
@@ -102,14 +103,21 @@ export async function POST(req: Request) {
 "충동적으로", "성급하게", "실수로"처럼 평가가 담긴 부사·형용사는 쓰지 않습니다.
 [내부 태그] 값은 노출하지 않습니다.
 문장은 반드시 [필수 어미]로 끝나야 합니다.
-[narrative1]에 이미 나온 판단근거 문구를 그대로 반복하지 마세요.
-결과는 한 문장만 반환하세요.`;
+narrative1 문장을 그대로 복사하지 마세요. 다만 트리거 상황(어떤 차트·뉴스·신호였는지, 어떤 심리·상황에서 매매로 이어졌는지)은 다른 어휘로 구체적으로 다시 언급하세요.
+"이런 판단으로", "이렇게", "비슷한 판단으로", "그렇게", "이런 식으로" 같은 지시대명사·뭉뚱그린 표현은 쓰지 마세요.
+narrative2는 narrative1과 다른 각도(반복 빈도, 여러 거래·구간에 걸친 지속성, 판단이 나타난 맥락)로 한 번 더 설명하세요.
+결과는 한 문장만 반환하세요.
+예시1: 지지선 근처에서 반등을 기다렸던 흐름이 한 번이 아니라 여러 하락 구간에서 반복되고 있어요
+예시2: 뉴스 헤드라인만 보고 따라간 매수가 짧은 기간에 여러 번 이어지는 경향이 보여요
+예시3: 주변이 사는 분위기와 겹친 매수가 같은 달 거래들에서도 다시 나타나는 패턴이 반복되고 있어요
+예시4: 차트 패턴을 보고 이익을 일찍 확정한 매도가 한 거래에 그치지 않고 이어지는 경향이 보여요`;
 
   const user2 = `매매유형: ${sideLabel(side)}
 내부 태그(비노출): ${moodMeta}
+판단근거 소분류 원문: ${reasonLabels.join(" · ")}
+판단근거 메타데이터: ${reasonMeta}
 narrative1: ${narrative1}
 필수 어미: ${ending}
-참고 예시: 이런 판단으로 매수하는 모습이 이번 한 번이 아니라 비슷한 하락 국면마다 반복되고 있어요
 위 정보를 바탕으로 narrative2 문장 하나를 작성하세요.`;
 
   let narrative2 = n2fb;
@@ -117,7 +125,7 @@ narrative1: ${narrative1}
     for (let i = 0; i < 2; i++) {
       try {
         const text = await once(key, model, sys2, user2);
-        if (valid(text, ending, [moodMeta]) && !text.includes(reasonLabels[0] || "___")) {
+        if (valid(text, ending, [moodMeta]) && !VAGUE_POINTERS.some((w) => text.includes(w))) {
           narrative2 = text;
           break;
         }
