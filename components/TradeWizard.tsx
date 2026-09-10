@@ -4,7 +4,8 @@ import { useState } from "react";
 import { moodOptions, reasonGroups, toPick } from "@/lib/categories";
 import { formatPrice, formatQty, formatWhen, sideLabel, todayKey } from "@/lib/format";
 import { priceUnit } from "@/lib/markets";
-import { bumpQty, parseNum, pricePlaceholder } from "@/lib/money";
+import { bumpQty, displayPriceValue, parseNum, pricePlaceholder } from "@/lib/money";
+import { BackChevron } from "@/components/icons";
 import { NumPad, PadField, type PadKind } from "@/components/NumPad";
 import { useStore } from "@/lib/store";
 import type { CategoryPick, DraftTrade } from "@/lib/types";
@@ -15,12 +16,14 @@ export function TradeWizard({
   onSave,
   savingLabel,
   onClose,
+  mode = "create",
 }: {
   draft: DraftTrade;
   setDraft: (next: DraftTrade) => void;
   onSave: () => void;
   savingLabel: string;
   onClose?: () => void;
+  mode?: "create" | "edit";
 }) {
   const { showToast } = useStore();
   const [step, setStep] = useState(1);
@@ -54,44 +57,49 @@ export function TradeWizard({
 
   return (
     <>
-      <div className="topbar">
+      <div className="topbar wizard-head">
         <button className="icon-btn" type="button" onClick={() => (step <= 1 ? onClose?.() : setStep((s) => s - 1))} aria-label="뒤로">
-          ‹
+          <BackChevron />
         </button>
-        <span className="h1" style={{ fontSize: 16 }}>
-          {side} 기록
+        <span className="wizard-kicker">
+          {side} 기록 · {step} / 3 단계
         </span>
-        <span />
       </div>
-      <div className="step-track" aria-hidden>
+      <div className="step-track slim" aria-hidden>
         <i style={{ width: `${(step / 3) * 100}%` }} />
       </div>
       <div className="scroll">
         {step === 1 && (
           <>
-            <h1 className="step-title">
-              {draft.stock?.name} <span className="sub">{draft.stock?.code} · {draft.stock?.marketName}</span>
-            </h1>
+            <h1 className="step-title">어떤 {side}였나요?</h1>
+            <p className="step-kicker">종목명</p>
+            <p className="stock-line">
+              <b>{draft.stock?.name} </b>
+              <span>
+                ({draft.stock?.code} · {draft.stock?.marketName})
+              </span>
+            </p>
             <div className="field-row">
               <div style={{ flex: 1 }}>
                 <PadField
                   label={draft.side === "buy" ? "매수가" : "매도가"}
-                  unit={unit}
-                  value={draft.price}
+                  unit={draft.stock ? (unit === "원" ? "KRW · 원" : "USD · $") : unit}
+                  value={displayPriceValue(draft.price, market)}
                   placeholder={pricePlaceholder(market)}
+                  align="right"
                   onOpen={() => setPad("price")}
                 />
               </div>
               <div className="field" style={{ flex: 1 }}>
                 <label>수량</label>
-                <div className="qty-row">
-                  <button type="button" className="qty-btn" onClick={() => setDraft({ ...draft, qty: bumpQty(draft.qty, -1) })}>
+                <div className="qty-box">
+                  <button type="button" className="qty-pm" onClick={() => setDraft({ ...draft, qty: bumpQty(draft.qty, -1) })}>
                     -
                   </button>
-                  <button className="pad-value" type="button" onClick={() => setPad("qty")}>
-                    {draft.qty || "0"}
+                  <button className="pad-value qty-num" type="button" onClick={() => setPad("qty")}>
+                    {draft.qty || "0"}주
                   </button>
-                  <button type="button" className="qty-btn" onClick={() => setDraft({ ...draft, qty: bumpQty(draft.qty, 1) })}>
+                  <button type="button" className="qty-pm" onClick={() => setDraft({ ...draft, qty: bumpQty(draft.qty, 1) })}>
                     +
                   </button>
                 </div>
@@ -102,7 +110,7 @@ export function TradeWizard({
                 <PadField label="매매일자" value={draft.tradedAt} onOpen={() => setPad("date")} />
               </div>
               <div style={{ flex: 1 }}>
-                <PadField label="매매 시각" value={draft.tradedTime} placeholder="00:00" onOpen={() => setPad("time")} />
+                <PadField label="시간" unit="선택" value={draft.tradedTime || "00:00"} placeholder="00:00" onOpen={() => setPad("time")} />
               </div>
             </div>
           </>
@@ -110,13 +118,16 @@ export function TradeWizard({
         {step === 2 && (
           <>
             <h1 className="step-title">이번 {side}는 무엇을 보고 결정하셨어요?</h1>
-            <p className="sub">최대 3개까지 고를 수 있어요. ({draft.reasons.length}/3)</p>
+            <p className="sub">
+              {draft.side === "buy" ? "매수할 때 참고한 내용을 모두 선택해주세요. " : ""}
+              최대 3개까지 고를 수 있어요. ({draft.reasons.length}/3)
+            </p>
             <div className="acc" style={{ marginTop: 16 }}>
               {groups.map((g) => {
                 const picked = draft.reasons.some((r) => r.group === g.group);
                 const shown = open.has(g.group) || picked;
                 return (
-                <div className={`acc-item ${picked ? "has" : ""}`} key={g.group}>
+                <div className={`acc-item ${shown ? "has" : ""}`} key={g.group}>
                   <button
                     className={shown ? "acc-h open" : "acc-h"}
                     type="button"
@@ -152,8 +163,8 @@ export function TradeWizard({
         )}
         {step === 3 && (
           <>
-            <h1 className="step-title">당시 어떤 상태였나요?</h1>
-            <p className="sub">최대 2개까지 고를 수 있어요. ({draft.moods.length}/2)</p>
+            <h1 className="step-title">그때 마음은 어떠셨어요?</h1>
+            <p className="sub">가장 가까운 마음을 골라주세요. (최대 2개)</p>
             <div className="mood-list" style={{ marginTop: 16 }}>
               {moods.map((m) => {
                 const on = draft.moods.some((x) => x.label === m.label);
@@ -168,7 +179,11 @@ export function TradeWizard({
         )}
       </div>
       <div className="footer-cta">
-        {step < 3 ? (
+        {mode === "edit" && step === 1 ? (
+          <button className="btn btn-primary" type="button" disabled={!canInfo} onClick={onSave}>
+            {savingLabel}
+          </button>
+        ) : step < 3 ? (
           <button
             className="btn btn-primary"
             type="button"
@@ -186,13 +201,13 @@ export function TradeWizard({
       {ask ? (
         <div className="modal-back">
           <div className="modal">
-            <h3>이 매매를 기록할까요?</h3>
-            <p>저장한 기록은 상세에서 다시 확인할 수 있어요.</p>
+            <h3>이대로 저장할까요?</h3>
+            <p>매매 이유와 그때 마음은 저장 후 수정이 어려워요.</p>
             <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={onSave}>
-              저장하기
+              네
             </button>
             <button className="btn btn-ghost" type="button" onClick={() => setAsk(false)}>
-              취소
+              아니오
             </button>
           </div>
         </div>

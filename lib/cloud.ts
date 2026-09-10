@@ -12,6 +12,10 @@ export type CloudAccount = {
   nickname: string;
   onboarded: boolean;
   loginAt: number | null;
+  termsAccepted: boolean;
+  termsVersion: string | null;
+  termsAcceptedAt: number | null;
+  passwordHash: string | null;
   plans: Plan[];
   trades: Trade[];
   issuedCards: IssuedCard[];
@@ -140,20 +144,6 @@ export function mergeIssueBaseline(local: IssueBaseline, remote?: IssueBaseline)
   };
 }
 
-function emptyCloud(accountId: string): CloudAccount {
-  return {
-    id: accountId,
-    kakaoId: null,
-    nickname: "회원",
-    onboarded: false,
-    loginAt: null,
-    plans: [],
-    trades: [],
-    issuedCards: [],
-    issueBaseline: { buy: 0, sell: 0 },
-  };
-}
-
 export async function findAccountByKakao(kakaoId: string) {
   const sb = getSupabase();
   if (!sb) return null;
@@ -167,9 +157,27 @@ export async function findAccountByEmail(email: string) {
   if (!sb) return null;
   const key = email.trim().toLowerCase();
   if (!key) return null;
-  const res = await sb.from("accounts").select("id, email, nickname").eq("email", key).maybeSingle();
+  const cols = "id, email, nickname, onboarded, password_hash";
+  let res = await sb.from("accounts").select(cols).eq("email", key).maybeSingle();
+  if (res.error && /password_hash/.test(res.error.message)) {
+    res = await sb.from("accounts").select("id, email, nickname, onboarded").eq("email", key).maybeSingle();
+  }
   if (res.error || !res.data) return null;
-  return { id: String(res.data.id), email: String(res.data.email || key), nickname: String(res.data.nickname || "회원") };
+  const row = res.data as { id: string; email?: string; nickname?: string; onboarded?: boolean; password_hash?: string | null };
+  return {
+    id: String(row.id),
+    email: String(row.email || key),
+    nickname: String(row.nickname || "회원"),
+    onboarded: Boolean(row.onboarded),
+    passwordHash: row.password_hash ? String(row.password_hash) : null,
+  };
+}
+
+export async function bindEmailPassword(accountId: string, hash: string) {
+  const sb = getSupabase();
+  if (!sb || !hash) return false;
+  const res = await sb.from("accounts").update({ password_hash: hash }).eq("id", accountId);
+  return !res.error;
 }
 
 export async function pullAccount(accountId: string): Promise<{
@@ -180,17 +188,18 @@ export async function pullAccount(accountId: string): Promise<{
   const sb = getSupabase();
   if (!sb) return { status: "off" };
 
-  const accountRes = await sb
-    .from("accounts")
-    .select("id, kakao_id, nickname, onboarded, login_at, issue_baseline_buy, issue_baseline_sell")
-    .eq("id", accountId)
-    .maybeSingle();
+  const fullCols = "id, kakao_id, nickname, onboarded, login_at, terms_version, terms_accepted_at, password_hash, issue_baseline_buy, issue_baseline_sell";
+  const baseCols = "id, kakao_id, nickname, onboarded, login_at, issue_baseline_buy, issue_baseline_sell";
+  let accountRes = await sb.from("accounts").select(fullCols).eq("id", accountId).maybeSingle();
+  if (accountRes.error && /password_hash|terms_/.test(accountRes.error.message)) {
+    accountRes = await sb.from("accounts").select(baseCols).eq("id", accountId).maybeSingle();
+  }
   if (accountRes.error) {
     if (isMissingTable(accountRes.error)) return { status: "missing-table" };
     return { status: "error", message: accountRes.error.message };
   }
   if (!accountRes.data) {
-    return { status: "ok", data: emptyCloud(accountId) };
+    return { status: "ok" };
   }
 
   const [planRes, tradeRes, cardRes] = await Promise.all([
@@ -213,6 +222,10 @@ export async function pullAccount(accountId: string): Promise<{
       nickname: accountRes.data.nickname || "회원",
       onboarded: Boolean(accountRes.data.onboarded),
       loginAt: accountRes.data.login_at ? fromIso(accountRes.data.login_at) : null,
+      termsAccepted: Boolean(accountRes.data.terms_accepted_at),
+      termsVersion: accountRes.data.terms_version ? String(accountRes.data.terms_version) : null,
+      termsAcceptedAt: accountRes.data.terms_accepted_at ? fromIso(accountRes.data.terms_accepted_at) : null,
+      passwordHash: accountRes.data.password_hash ? String(accountRes.data.password_hash) : null,
       plans: (planRes.data ?? []).map(rowToPlan),
       trades: (tradeRes.data ?? []).map(rowToTrade),
       issuedCards: (cardRes.data ?? []).map(rowToCard),
@@ -229,7 +242,7 @@ export async function pushAccount(state: AppState): Promise<CloudStatus> {
   if (!sb) return "off";
   if (!state.loggedIn) return "ok";
 
-  const acc = await sb.from("accounts").upsert({
+  const payload = {
     id: state.accountId,
     kakao_id: state.kakaoId,
     email: state.email ? state.email.trim().toLowerCase() : state.email,
@@ -238,10 +251,16 @@ export async function pushAccount(state: AppState): Promise<CloudStatus> {
     login_at: toIso(state.loginAt),
     terms_version: state.termsVersion,
     terms_accepted_at: toIso(state.termsAcceptedAt),
+    password_hash: state.passwordHash,
     issue_baseline_buy: state.issueBaseline.buy,
     issue_baseline_sell: state.issueBaseline.sell,
     updated_at: new Date().toISOString(),
-  });
+  };
+  let acc = await sb.from("accounts").upsert(payload);
+  if (acc.error && /password_hash/.test(acc.error.message)) {
+    const { password_hash: _drop, ...rest } = payload;
+    acc = await sb.from("accounts").upsert(rest);
+  }
   if (acc.error) {
     if (isMissingTable(acc.error)) return "missing-table";
     return "error";

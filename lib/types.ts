@@ -96,6 +96,7 @@ export type AppState = {
   accountId: string;
   kakaoId: string | null;
   email: string | null;
+  passwordHash: string | null;
   nickname: string;
   loggedIn: boolean;
   loginAt: number | null;

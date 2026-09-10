@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BackChevron } from "@/components/icons";
 import { Modal, PhoneShell } from "@/components/ui";
 import { StockSearch } from "@/components/StockSearch";
 import { TradeWizard } from "@/components/TradeWizard";
@@ -55,7 +56,7 @@ export default function RecordPage() {
     <PhoneShell>
       <div className="topbar">
         <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
-          ‹
+          <BackChevron />
         </button>
         <h1 className="h1">종목 검색</h1>
         <span />

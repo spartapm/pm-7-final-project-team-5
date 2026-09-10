@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { BackChevron } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
 import { PRIVACY_BODY } from "@/lib/legal";
 
@@ -10,7 +11,7 @@ export default function PrivacyPage() {
     <PhoneShell>
       <div className="topbar">
         <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
-          ‹
+          <BackChevron />
         </button>
         <h1 className="h1">개인정보 처리방침</h1>
         <span />

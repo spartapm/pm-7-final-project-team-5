@@ -22,8 +22,10 @@ export default function RecordsPage() {
   return (
     <PhoneShell>
       <div className="topbar">
-        <h1 className="h1">기록 확인</h1>
-        <button className="skip" type="button" onClick={() => router.push("/record")}>기록하기</button>
+        <h1 className="h1 list-title">기록</h1>
+        <button className="new-pill" type="button" onClick={() => router.push("/record")}>
+          + 새 기록
+        </button>
       </div>
       <div className="scroll tabbed">
         <div className="seg seg-3">

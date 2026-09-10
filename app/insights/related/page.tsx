@@ -2,22 +2,11 @@
 
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PhoneShell } from "@/components/ui";
+import { BackChevron } from "@/components/icons";
 import { TradeRow } from "@/components/TradeRow";
+import { PhoneShell } from "@/components/ui";
 import { reasonChip } from "@/lib/insights";
 import { useStore } from "@/lib/store";
-import type { CategoryPick } from "@/lib/types";
-
-function groupReasons(reasons: CategoryPick[]) {
-  const map = new Map<string, string[]>();
-  for (const r of reasons) {
-    const key = r.group || "기타";
-    const arr = map.get(key) || [];
-    arr.push(r.label);
-    map.set(key, arr);
-  }
-  return [...map.entries()].map(([group, labels]) => `${group} · ${labels.join(" · ")}`);
-}
 
 function RelatedInner() {
   const params = useSearchParams();
@@ -35,7 +24,7 @@ function RelatedInner() {
     <PhoneShell>
       <div className="topbar">
         <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
-          ‹
+          <BackChevron />
         </button>
         <h1 className="h1">기록</h1>
         <button className="skip" type="button" onClick={() => router.push("/record")}>
@@ -48,19 +37,7 @@ function RelatedInner() {
             <span className="badge">{reasonChip(card)}</span>
             <p className="sub">기록일시 최신순 정렬</p>
             {related.map((t) => (
-              <div key={t.id} className="card" style={{ marginTop: 10 }}>
-                <TradeRow trade={t} showQty showReason onClick={() => router.push(`/records/${t.id}`)} />
-                <div className="sub stack-lines" style={{ marginTop: 8 }}>
-                  <b>매매이유</b>
-                  {groupReasons(t.reasons).map((line) => (
-                    <span key={line}>{line}</span>
-                  ))}
-                  <b>그때 마음</b>
-                  {t.moods.map((m) => (
-                    <span key={m.label}>{m.label}</span>
-                  ))}
-                </div>
-              </div>
+              <TradeRow key={t.id} trade={t} showQty showReason onClick={() => router.push(`/records/${t.id}`)} />
             ))}
           </>
         ) : (

@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PencilIco } from "@/components/icons";
+import { BackChevron, PencilIco } from "@/components/icons";
 import { PlanCards } from "@/components/PlanCards";
 import { TradeWizard } from "@/components/TradeWizard";
 import { Modal, PhoneShell } from "@/components/ui";
@@ -38,6 +38,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
     return (
       <PhoneShell>
         <TradeWizard
+          mode="edit"
           draft={draft}
           setDraft={setDraft}
           savingLabel="저장하기"
@@ -54,8 +55,8 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
   return (
     <PhoneShell>
       <div className="topbar">
-        <button className="icon-btn" type="button" onClick={() => router.back()}>
-          ‹
+        <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
+          <BackChevron />
         </button>
         <h1 className="h1">기록 상세</h1>
         <button

@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BackChevron } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
 import { TERMS_ITEMS, TERMS_VIEW } from "@/lib/legal";
+import { hashPassword } from "@/lib/password";
 import { upsertRegistry } from "@/lib/registry";
 import { useStore } from "@/lib/store";
 import { takeNext } from "@/lib/next-path";
 
 export default function TermsPage() {
   const router = useRouter();
-  const { login, setNickname, acceptTerms, markOnboarded, markWelcomeSeen } = useStore();
+  const { completeSignup, showToast } = useStore();
+  const [busy, setBusy] = useState(false);
   const [checks, setChecks] = useState<Record<string, boolean>>(() => {
     if (typeof window !== "undefined") {
       const raw = sessionStorage.getItem("signup_terms");
@@ -33,38 +36,40 @@ export default function TermsPage() {
     setChecks(checksNext);
   }
 
-  function finish() {
-    if (!allOn) return;
-    acceptTerms();
+  async function finish() {
+    if (!allOn || busy) return;
+    setBusy(true);
     const kind = sessionStorage.getItem("signup_kind") || "kakao";
     const nickname = sessionStorage.getItem("signup_nickname") || "회원";
-    if (kind === "email") {
-      const email = sessionStorage.getItem("signup_email") || "";
-      const password = sessionStorage.getItem("signup_password") || "";
-      const id = `email_${email.trim().toLowerCase()}`;
-      upsertRegistry({ id, email: email.trim().toLowerCase(), password, nickname });
-      login({ email: email.trim().toLowerCase(), nickname, accountId: id });
-    } else {
-      const kakaoId = sessionStorage.getItem("signup_kakao_id") || "";
-      if (kakaoId) {
-        upsertRegistry({ id: `kakao_${kakaoId}`, kakaoId, nickname });
-        login({ kakaoId, nickname, accountId: `kakao_${kakaoId}` });
+    try {
+      if (kind === "email") {
+        const email = (sessionStorage.getItem("signup_email") || "").trim().toLowerCase();
+        const password = sessionStorage.getItem("signup_password") || "";
+        const id = `email_${email}`;
+        const passwordHash = email && password ? await hashPassword(email, password) : undefined;
+        upsertRegistry({ id, email, password, nickname });
+        await completeSignup({ accountId: id, email, nickname, passwordHash });
       } else {
-        setNickname(nickname);
-        login({ nickname });
+        const kakaoId = sessionStorage.getItem("signup_kakao_id") || "";
+        if (kakaoId) {
+          upsertRegistry({ id: `kakao_${kakaoId}`, kakaoId, nickname });
+          await completeSignup({ accountId: `kakao_${kakaoId}`, kakaoId, nickname });
+        } else {
+          await completeSignup({ accountId: `acc_${Date.now()}`, nickname });
+        }
       }
+      router.replace(takeNext("/home"));
+    } catch {
+      showToast("가입을 저장하지 못했어요. 다시 시도해 주세요", "err");
+      setBusy(false);
     }
-    setNickname(nickname);
-    markOnboarded();
-    markWelcomeSeen();
-    router.replace(takeNext("/home"));
   }
 
   return (
     <PhoneShell>
       <div className="topbar">
-        <button className="icon-btn" type="button" onClick={() => router.back()}>
-          ‹
+        <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
+          <BackChevron />
         </button>
         <span />
       </div>
@@ -103,8 +108,8 @@ export default function TermsPage() {
         </div>
       </div>
       <div className="footer-cta">
-        <button className="btn btn-primary" type="button" disabled={!allOn} onClick={finish}>
-          동의하고 계속하기
+        <button className="btn btn-primary" type="button" disabled={!allOn || busy} onClick={() => void finish()}>
+          {busy ? "저장 중..." : "동의하고 계속하기"}
         </button>
       </div>
     </PhoneShell>

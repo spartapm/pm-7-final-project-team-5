@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { BackChevron } from "@/components/icons";
 import { KakaoIcon, PhoneShell } from "@/components/ui";
 import { afterAuthPath } from "@/lib/format";
 import { takeNext } from "@/lib/next-path";
 import { hasKakaoKey, startKakaoLogin } from "@/lib/kakao";
 import { consumeOAuthToast, peekOAuthToast } from "@/lib/oauth-toast";
-import { findByEmail } from "@/lib/registry";
+import { bindEmailPassword, findAccountByEmail } from "@/lib/cloud";
+import { hashPassword } from "@/lib/password";
+import { findByEmail, upsertRegistry } from "@/lib/registry";
 import { useStore } from "@/lib/store";
 import { Suspense } from "react";
 
@@ -29,9 +32,10 @@ function AuthToast({ exists }: { exists: boolean }) {
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const { hydrated, loggedIn, login, nickname, seenWelcome, showToast } = useStore();
+  const { hydrated, loggedIn, login, markWelcomeSeen, nickname, seenWelcome, showToast } = useStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   const exists = params.get("exists") === "1";
 
   useEffect(() => {
@@ -42,13 +46,31 @@ function LoginInner() {
 
   if (!hydrated) return <div className="shell" />;
 
-  function submitEmail() {
-    const row = findByEmail(email);
-    if (!row || row.password !== password) {
-      showToast("이메일 또는 비밀번호가 올바르지 않아요", "err");
+  async function submitEmail() {
+    if (busy) return;
+    const local = findByEmail(email);
+    if (local && local.password === password) {
+      markWelcomeSeen();
+      login({ email: local.email, nickname: local.nickname, accountId: local.id });
       return;
     }
-    login({ email: row.email, nickname: row.nickname, accountId: row.id });
+    setBusy(true);
+    try {
+      const remote = await findAccountByEmail(email);
+      const hash = await hashPassword(email, password);
+      if (remote && (remote.passwordHash === hash || !remote.passwordHash)) {
+        if (!remote.passwordHash) await bindEmailPassword(remote.id, hash);
+        upsertRegistry({ id: remote.id, email: remote.email, password, nickname: remote.nickname });
+        markWelcomeSeen();
+        login({ email: remote.email, nickname: remote.nickname, accountId: remote.id, passwordHash: hash });
+        return;
+      }
+      showToast("이메일 또는 비밀번호가 올바르지 않아요", "err");
+    } catch {
+      showToast("이메일 또는 비밀번호가 올바르지 않아요", "err");
+    } finally {
+      setBusy(false);
+    }
   }
 
   function kakao() {
@@ -63,8 +85,8 @@ function LoginInner() {
     <PhoneShell>
       <AuthToast exists={exists} />
       <div className="topbar">
-        <button className="icon-btn" type="button" onClick={() => router.back()}>
-          ‹
+        <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
+          <BackChevron />
         </button>
         <span />
       </div>
@@ -92,8 +114,8 @@ function LoginInner() {
         </div>
       </div>
       <div className="footer-cta">
-        <button className="btn btn-primary" type="button" onClick={submitEmail} disabled={!email || !password}>
-          로그인
+        <button className="btn btn-primary" type="button" onClick={() => void submitEmail()} disabled={!email || !password || busy}>
+          {busy ? "확인 중..." : "로그인"}
         </button>
       </div>
     </PhoneShell>

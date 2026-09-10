@@ -32,7 +32,7 @@ export default function PlanListPage() {
         <h1 className="h1">계획</h1>
         {plans.length > 0 ? (
           <button className="skip" type="button" onClick={() => router.push("/plan/new")}>
-            새 계획 만들기
+            + 새 계획
           </button>
         ) : (
           <span />
@@ -62,13 +62,14 @@ export default function PlanListPage() {
           <>
             <p className="sub">종목마다 매수 계획(희망 매수가 구간) · 매도 계획(목표가·손절가)을 따로 등록할 수 있어요</p>
             {visible.map((p) => (
-              <button key={p.id} className="plan-row" type="button" onClick={() => router.push(`/plan/${p.id}?edit=1`)}>
+              <button key={p.id} className="plan-row" type="button" onClick={() => router.push(`/plan/${p.id}`)}>
                 <StockTile name={p.stockName} code={p.stockCode} />
-                <div>
-                  <h3>{p.stockName}</h3>
-                  <div className="plan-nums">
-                    <span className={p.side === "buy" ? "badge" : "badge sell-badge"}>{sideLabel(p.side)}</span> {planSummary(p)}
+                <div className="plan-row-main">
+                  <div className="plan-row-top">
+                    <h3>{p.stockName}</h3>
+                    <span className={p.side === "buy" ? "badge" : "badge sell-badge"}>{sideLabel(p.side)} 계획</span>
                   </div>
+                  <div className="plan-nums">{planSummary(p)}</div>
                 </div>
                 <Chevron />
               </button>

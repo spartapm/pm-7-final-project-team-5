@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { BackChevron } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
 import { InsightCard } from "@/components/InsightCard";
 import { useStore } from "@/lib/store";
@@ -19,7 +20,7 @@ function DateInner() {
     <PhoneShell>
       <div className="topbar">
         <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
-          ‹
+          <BackChevron />
         </button>
         <h1 className="h1">{date} 발행 카드 전체보기</h1>
         <span />

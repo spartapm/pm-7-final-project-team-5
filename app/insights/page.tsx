@@ -6,6 +6,7 @@ import { InsightCard } from "@/components/InsightCard";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
 import { reasonGroups } from "@/lib/categories";
 import { comboTop3, dateHref, groupedIssued, moodDistribution, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
+import { SAMPLE_INSIGHT } from "@/lib/onboarding-data";
 import { buyCaption, sellCaption } from "@/lib/plans";
 import { useStore } from "@/lib/store";
 import type { IssuedCard, Side, Trade } from "@/lib/types";
@@ -56,7 +57,7 @@ export default function InsightsPage() {
 
         {tab === "dash" ? (
           real.length === 0 ? (
-            <EmptyDash onRecord={() => router.push("/record")} />
+            <EmptyDash />
           ) : (
             <Dashboard
               real={real}
@@ -74,27 +75,71 @@ export default function InsightsPage() {
           <TrendList groups={groups} />
         ) : (
           <div className="card">
-            <p className="sub">매수·매도 판단은 각각 따로 집계돼요. 조건이 맞으면 카드가 발행돼요.</p>
+            <p className="sub">{SAMPLE_INSIGHT.policy}</p>
+            <p className="sub">{SAMPLE_INSIGHT.policySub}</p>
           </div>
         )}
         <LegalFooter />
       </div>
+      {tab === "dash" && real.length === 0 ? (
+        <div className="footer-cta over-tabs">
+          <button className="btn btn-primary" type="button" onClick={() => router.push("/record")}>
+            첫 매매 기록하기
+          </button>
+        </div>
+      ) : null}
       <TabBar />
     </PhoneShell>
   );
 }
 
-function EmptyDash({ onRecord }: { onRecord: () => void }) {
+function EmptyDash() {
+  const [dot, setDot] = useState(0);
   return (
     <>
       <h3>아직 기록이 없어요</h3>
       <p className="sub">매매를 기록하면 나만의 통계가 이렇게 채워져요</p>
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        <img src="/brand/insight-report-sample.png" alt="인사이트 리포트 예시" className="example-report" width={375} height={1519} />
+      <div
+        className="example-rail"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth * 0.78));
+          setDot(Math.min(2, Math.max(0, i)));
+        }}
+      >
+        <div className="example-card">
+          <span className="ex-badge">예시</span>
+          <b>매매 추이</b>
+          <p className="sub">일자별 매수·매도 건수</p>
+          <div className="ex-bars">
+            <i style={{ height: "40%" }} />
+            <i style={{ height: "70%" }} />
+            <i style={{ height: "55%" }} />
+            <i style={{ height: "90%" }} />
+          </div>
+        </div>
+        <div className="example-card">
+          <span className="ex-badge">예시</span>
+          <b>계획 이행</b>
+          <p className="sub">계획이 있었던 기록 비율</p>
+          <div className="ex-plan">
+            <span />
+            <span style={{ width: "62%" }} />
+            <span style={{ width: "38%" }} />
+          </div>
+        </div>
+        <div className="example-card">
+          <span className="ex-badge">예시</span>
+          <b>판단 이유</b>
+          <p className="sub">자주 고른 근거 비중</p>
+          <div className="ex-pie" />
+        </div>
       </div>
-      <button className="btn btn-primary" type="button" style={{ marginTop: 20 }} onClick={onRecord}>
-        첫 매매 기록하기
-      </button>
+      <div className="dots">
+        {[0, 1, 2].map((i) => (
+          <i key={i} className={dot === i ? "on" : ""} />
+        ))}
+      </div>
     </>
   );
 }
@@ -102,8 +147,8 @@ function EmptyDash({ onRecord }: { onRecord: () => void }) {
 function Waiting({ buyCount, sellCount, onRecord }: { buyCount: number; sellCount: number; onRecord: () => void }) {
   return (
     <>
-      <h2>반복되는 판단을 보여드려요</h2>
-      <p className="sub">매수·매도 판단은 각각 따로 집계돼요</p>
+      <h2>{SAMPLE_INSIGHT.policy}</h2>
+      <p className="sub">{SAMPLE_INSIGHT.policySub}</p>
       <SegBox label="매수" count={buyCount} />
       <SegBox label="매도" count={sellCount} />
       <button className="btn btn-primary" type="button" style={{ marginTop: 20 }} onClick={onRecord}>
@@ -147,7 +192,7 @@ function TrendList({ groups }: { groups: [string, IssuedCard[]][] }) {
         return (
           <div className="date-group" key={date}>
             <div className="date-group-h">
-              <b>{date}</b>
+              <b>{date} 발행</b>
               <a href={dateHref(date)}>이 날짜의 카드 전체보기</a>
             </div>
             {shown.map((c) => (
@@ -277,7 +322,7 @@ function LineChart({ trades }: { trades: Trade[] }) {
   const max = Math.max(1, ...slice.map((d) => trades.filter((t) => t.tradedAt === d).length));
   function xy(d: string, i: number, side: Side) {
     const n = trades.filter((t) => t.tradedAt === d && t.side === side).length;
-    const x = pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
+    const x = slice.length === 1 ? w / 2 : pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
     const y = h - pad - (n / max) * (h - pad * 2);
     return { x, y, n };
   }
@@ -325,8 +370,8 @@ function LineChart({ trades }: { trades: Trade[] }) {
           })}
           {slice.length === 1 ? (
             <>
-              <circle cx={w / 2} cy={xy(slice[0]!, 0, "buy").y} r="3" fill={CHART_BUY} />
-              <circle cx={w / 2} cy={xy(slice[0]!, 0, "sell").y} r="3" fill={CHART_SELL} />
+              <circle cx={xy(slice[0]!, 0, "buy").x} cy={xy(slice[0]!, 0, "buy").y} r="3" fill={CHART_BUY} />
+              <circle cx={xy(slice[0]!, 0, "sell").x} cy={xy(slice[0]!, 0, "sell").y} r="3" fill={CHART_SELL} />
             </>
           ) : (
             <>
@@ -345,7 +390,7 @@ function LineChart({ trades }: { trades: Trade[] }) {
             </>
           )}
           {slice.map((d, i) => {
-            const x = pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
+            const x = slice.length === 1 ? w / 2 : pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
             return (
               <text key={d} x={x} y={h - 6} textAnchor="middle" fontSize="10" fill="#8594A9">
                 {d.slice(5).replace("-", ".")}

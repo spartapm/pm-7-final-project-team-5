@@ -147,7 +147,7 @@ export function LegalFooter() {
           이용약관
         </a>
         <a href={TERMS_VIEW.privacy} target="_blank" rel="noreferrer">
-          개인정보
+          개인정보 약관
         </a>
         <a href="mailto:hello@patternnote.app">문의하기</a>
       </div>

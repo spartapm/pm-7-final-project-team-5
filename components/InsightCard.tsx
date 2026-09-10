@@ -6,10 +6,9 @@ import type { IssuedCard } from "@/lib/types";
 export function InsightCard({ card }: { card: IssuedCard }) {
   return (
     <div className={`card insight-card accent ${card.side}`}>
-      <p className="sub">{card.dateKey} 발행</p>
       <span className={`badge ${card.side === "sell" ? "sell-badge" : ""}`}>{reasonChip(card)}</span>
-      <h3>{card.narrative1}</h3>
-      <p>{card.narrative2}</p>
+      <p className="narrative1">{card.narrative1}</p>
+      <h3 className="narrative2">{card.narrative2}</h3>
       <div className="insight-cta">
         <a className="sub" href={insightHref(card.id)}>
           관련 기록 모두보기

@@ -60,6 +60,14 @@ export function Chevron() {
   );
 }
 
+export function BackChevron() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden>
+      <path d="M11.5 3.5 6 9l5.5 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function StockTile({ name, code }: { name: string; code: string }) {
   const latin = /^[A-Za-z]/.test(code);
   const label = latin ? code.slice(0, 2).toUpperCase() : initials(name);

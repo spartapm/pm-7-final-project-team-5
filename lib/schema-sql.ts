@@ -16,6 +16,7 @@ alter table public.accounts add column if not exists email text;
 create unique index if not exists accounts_email_lower_idx on public.accounts (lower(email)) where email is not null;
 alter table public.accounts add column if not exists terms_version text;
 alter table public.accounts add column if not exists terms_accepted_at timestamptz;
+alter table public.accounts add column if not exists password_hash text;
 
 create table if not exists public.plans (
   id text primary key,

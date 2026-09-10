@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { BackChevron } from "@/components/icons";
 import { KakaoIcon, PhoneShell } from "@/components/ui";
 import { hasKakaoKey, startKakaoLogin } from "@/lib/kakao";
 import { consumeOAuthToast, peekOAuthToast } from "@/lib/oauth-toast";
@@ -29,8 +30,8 @@ export default function SignupChoicePage() {
   return (
     <PhoneShell>
       <div className="topbar">
-        <button className="icon-btn" type="button" onClick={() => router.back()}>
-          ‹
+        <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
+          <BackChevron />
         </button>
         <span />
       </div>

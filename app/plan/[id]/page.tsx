@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
+import { BackChevron } from "@/components/icons";
+import { NumPad, PadField } from "@/components/NumPad";
 import { PhoneShell } from "@/components/ui";
-import { formatPrice, sideLabel } from "@/lib/format";
-import { isOverseas, priceUnit } from "@/lib/markets";
-import { parseNum, sanitizePrice } from "@/lib/money";
+import { sideLabel } from "@/lib/format";
+import { currencyHint, priceUnit } from "@/lib/markets";
+import { displayPriceValue, parseNum } from "@/lib/money";
 import { planSummary } from "@/lib/plans";
 import { useStore } from "@/lib/store";
 
@@ -19,6 +21,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   const [buyMax, setBuyMax] = useState("");
   const [stopLoss, setStopLoss] = useState("");
   const [takeProfit, setTakeProfit] = useState("");
+  const [pad, setPad] = useState<"buyMin" | "buyMax" | "stopLoss" | "takeProfit" | null>(null);
 
   if (!hydrated) return <div className="shell" />;
   if (!plan) {
@@ -34,7 +37,6 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const overseas = isOverseas(plan.market);
   const unit = priceUnit(plan.market);
 
   function startEdit() {
@@ -54,8 +56,8 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   return (
     <PhoneShell>
       <div className="topbar">
-        <button className="icon-btn" type="button" onClick={() => (editing ? setEditing(false) : router.back())}>
-          ‹
+        <button className="icon-btn" type="button" onClick={() => (editing ? setEditing(false) : router.back())} aria-label="뒤로">
+          <BackChevron />
         </button>
         <h1 className="h1">{plan.stockName}</h1>
         <span />
@@ -66,27 +68,16 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
             <p className="sub">
               {plan.stockName} · {sideLabel(plan.side)} · {plan.market}
             </p>
+            <p className="currency-hint">{currencyHint(plan.market)}</p>
             {plan.side === "buy" ? (
               <>
-                <div className="field" style={{ marginTop: 16 }}>
-                  <label>최소 희망가 ({unit})</label>
-                  <input inputMode="decimal" value={buyMin} onChange={(e) => setBuyMin(sanitizePrice(e.target.value, plan.market))} />
-                </div>
-                <div className="field">
-                  <label>최대 희망가 ({unit})</label>
-                  <input inputMode="decimal" value={buyMax} onChange={(e) => setBuyMax(sanitizePrice(e.target.value, plan.market))} />
-                </div>
+                <PadField label={`최소 희망가 (${unit})`} value={displayPriceValue(buyMin, plan.market)} onOpen={() => setPad("buyMin")} />
+                <PadField label={`최대 희망가 (${unit})`} value={displayPriceValue(buyMax, plan.market)} onOpen={() => setPad("buyMax")} />
               </>
             ) : (
               <>
-                <div className="field" style={{ marginTop: 16 }}>
-                  <label className="danger">손절가 ({unit})</label>
-                  <input inputMode="decimal" value={stopLoss} onChange={(e) => setStopLoss(sanitizePrice(e.target.value, plan.market))} />
-                </div>
-                <div className="field">
-                  <label>목표가 ({unit})</label>
-                  <input inputMode="decimal" value={takeProfit} onChange={(e) => setTakeProfit(sanitizePrice(e.target.value, plan.market))} />
-                </div>
+                <PadField label={`손절가 (${unit})`} value={displayPriceValue(stopLoss, plan.market)} onOpen={() => setPad("stopLoss")} />
+                <PadField label={`목표가 (${unit})`} value={displayPriceValue(takeProfit, plan.market)} onOpen={() => setPad("takeProfit")} />
               </>
             )}
           </>
@@ -114,7 +105,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
                 const min = parseNum(buyMin);
                 const max = parseNum(buyMax);
                 if (!(min > 0) || !(max > 0) || min > max) {
-                  showToast("희망 매수 구간을 확인해 주세요", "err");
+                  showToast("최소 희망가는 최대 희망가보다 작거나 같아야해요", "err");
                   return;
                 }
                 updatePlan(plan.id, { buyMin: min, buyMax: max });
@@ -122,7 +113,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
                 const stop = parseNum(stopLoss);
                 const take = parseNum(takeProfit);
                 if (!(stop > 0) || !(take > 0) || take < stop) {
-                  showToast("목표가와 손절가를 확인해 주세요", "err");
+                  showToast("손절가는 목표가보다 낮거나 같아야해요", "err");
                   return;
                 }
                 updatePlan(plan.id, { stopLoss: stop, takeProfit: take });
@@ -140,6 +131,20 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
           </button>
         </div>
       )}
+      {pad ? (
+        <NumPad
+          kind="price"
+          value={pad === "buyMin" ? buyMin : pad === "buyMax" ? buyMax : pad === "stopLoss" ? stopLoss : takeProfit}
+          market={plan.market}
+          onCommit={(next) => {
+            if (pad === "buyMin") setBuyMin(next);
+            else if (pad === "buyMax") setBuyMax(next);
+            else if (pad === "stopLoss") setStopLoss(next);
+            else setTakeProfit(next);
+          }}
+          onClose={() => setPad(null)}
+        />
+      ) : null}
     </PhoneShell>
   );
 }

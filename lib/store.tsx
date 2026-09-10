@@ -39,6 +39,7 @@ function empty(): AppState {
     accountId: uid("acc"),
     kakaoId: null,
     email: null,
+    passwordHash: null,
     nickname: "회원",
     loggedIn: false,
     loginAt: null,
@@ -74,6 +75,7 @@ function load(): AppState {
       ...parsed,
       accountId: parsed.accountId || fallback.accountId,
       email: parsed.email ?? null,
+      passwordHash: parsed.passwordHash ?? null,
       loggedIn: sessionExpired ? false : Boolean(parsed.loggedIn),
       loginAt: sessionExpired ? null : parsed.loginAt ?? null,
       termsAccepted: Boolean(parsed.termsAccepted),
@@ -99,7 +101,14 @@ type Store = AppState & {
   querying: boolean;
   actionError: boolean;
   toast: { message: string; kind: ToastKind } | null;
-  login: (opts?: { kakaoId?: string; nickname?: string; email?: string; accountId?: string }) => void;
+  login: (opts?: { kakaoId?: string; nickname?: string; email?: string; accountId?: string; passwordHash?: string }) => void;
+  completeSignup: (opts: {
+    accountId: string;
+    nickname: string;
+    email?: string;
+    kakaoId?: string;
+    passwordHash?: string;
+  }) => Promise<CloudStatus>;
   logout: () => void;
   withdraw: () => void;
   setNickname: (name: string) => void;
@@ -197,11 +206,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (mutGen.current !== genAtPull) return;
     const remote = res.data;
     const hasRemote = remote.trades.length > 0 || remote.plans.length > 0 || remote.kakaoId;
+    const remoteNick = remote.nickname && remote.nickname !== "회원" ? remote.nickname : null;
     setState((s) => ({
       ...s,
       kakaoId: remote.kakaoId ?? s.kakaoId,
-      nickname: remote.nickname || s.nickname,
+      nickname: remoteNick || s.nickname,
       onboarded: remote.onboarded || s.onboarded,
+      termsAccepted: s.termsAccepted || remote.termsAccepted,
+      termsVersion: remote.termsVersion || s.termsVersion,
+      termsAcceptedAt: remote.termsAcceptedAt ?? s.termsAcceptedAt,
       loginAt: remote.loginAt ?? s.loginAt,
       trades: hasRemote ? remote.trades : s.trades,
       plans: hasRemote ? remote.plans : s.plans,
@@ -248,10 +261,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!shouldAttemptIssue(count, baseline[side])) continue;
       const cands = applyIssueCooldown(detectCandidates(trades, side), stateRef.current.issuedCards);
       if (!cands.length) continue;
-      for (const c of cands) {
-        const copy = await copyForCandidate(c);
-        nextCards.push(candidateToCard(c, copy.n1, copy.n2));
-      }
+      const c = cands[0];
+      const copy = await copyForCandidate(c);
+      nextCards.push(candidateToCard(c, copy.n1, copy.n2));
       nextBaseline[side] = count;
     }
     if (!nextCards.length) return;
@@ -262,7 +274,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const login = useCallback((opts?: { kakaoId?: string; nickname?: string; email?: string; accountId?: string }) => {
+  const login = useCallback((opts?: { kakaoId?: string; nickname?: string; email?: string; accountId?: string; passwordHash?: string }) => {
     touch();
     const nextId = opts?.accountId
       ? opts.accountId
@@ -280,6 +292,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         accountId: nextId,
         kakaoId: opts?.kakaoId ?? s.kakaoId,
         email: opts?.email ?? s.email,
+        passwordHash: opts?.passwordHash ?? s.passwordHash,
         nickname: opts?.nickname && opts.nickname !== "회원" ? opts.nickname : same && s.nickname !== "회원" ? s.nickname : opts?.kakaoId ? "회원" : opts?.nickname || s.nickname,
         loggedIn: true,
         loginAt: Date.now(),
@@ -288,6 +301,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
     if (opts?.kakaoId || opts?.email || opts?.accountId) void runPull(nextId);
   }, [runPull]);
+
+  const completeSignup = useCallback(
+    async (opts: { accountId: string; nickname: string; email?: string; kakaoId?: string; passwordHash?: string }) => {
+      touch();
+      const next: AppState = {
+        ...stateRef.current,
+        accountId: opts.accountId,
+        kakaoId: opts.kakaoId ?? null,
+        email: opts.email ?? stateRef.current.email,
+        passwordHash: opts.passwordHash ?? stateRef.current.passwordHash,
+        nickname: opts.nickname,
+        loggedIn: true,
+        loginAt: Date.now(),
+        onboarded: true,
+        seenOnboarding: true,
+        seenWelcome: true,
+        termsAccepted: true,
+        termsVersion: TERMS_VERSION,
+        termsAcceptedAt: Date.now(),
+      };
+      const status = await pushAccount(next);
+      stateRef.current = next;
+      skipPush.current = true;
+      setState(next);
+      if (status === "error") {
+        setActionError(true);
+        setToast({ message: "클라우드 저장에 실패했어요", kind: "err" });
+      }
+      if (status === "ok") setActionError(false);
+      if (status !== "off") setCloudStatus(status);
+      return status;
+    },
+    []
+  );
 
   const logout = useCallback(() => {
     touch();
@@ -316,6 +363,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       actionError,
       toast,
       login,
+      completeSignup,
       logout,
       withdraw,
       setNickname: (name) => {
@@ -381,7 +429,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const qty = Number(draft.qty.replace(/,/g, ""));
         if (!Number.isFinite(price) || price <= 0) return null;
         if (!Number.isFinite(qty) || qty <= 0) return null;
-        const snap = snapshotForStock(stateRef.current.plans, draft.stock.code, draft.stock.market);
         let next: Trade | null = null;
         touch();
         setState((s) => ({
@@ -400,7 +447,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               tradedTime: draft.tradedTime,
               reasons: draft.reasons,
               moods: draft.moods,
-              planSnapshot: snap,
+              planSnapshot: t.planSnapshot,
             };
             return next;
           }),
@@ -424,15 +471,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         touch();
         setState((s) => {
           const plans = [row, ...s.plans.filter((p) => !(p.stockCode === plan.stockCode && p.market === plan.market && p.side === plan.side))];
-          return {
-            ...s,
-            plans,
-            trades: s.trades.map((t) =>
-              t.stockCode === plan.stockCode && t.market === plan.market
-                ? { ...t, planSnapshot: snapshotForStock(plans, t.stockCode, t.market), hiddenPlan: { ...t.hiddenPlan, [plan.side]: false } }
-                : t
-            ),
-          };
+          return { ...s, plans };
         });
         setToast({ message: "계획을 등록했어요", kind: "ok" });
         return row;
@@ -441,18 +480,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         touch();
         setState((s) => {
           const plans = s.plans.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: Date.now() } : p));
-          const row = plans.find((p) => p.id === id);
-          return {
-            ...s,
-            plans,
-            trades: row
-              ? s.trades.map((t) =>
-                  t.stockCode === row.stockCode && t.market === row.market
-                    ? { ...t, planSnapshot: snapshotForStock(plans, t.stockCode, t.market), hiddenPlan: { ...t.hiddenPlan, [row.side]: false } }
-                    : t
-                )
-              : s.trades,
-          };
+          return { ...s, plans };
         });
         setToast({ message: "계획을 저장했어요", kind: "ok" });
       },
@@ -489,7 +517,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         void runPush();
       },
     }),
-    [state, hydrated, cloudStatus, querying, actionError, toast, login, logout, withdraw, runPull, runPush, tryIssue]
+    [state, hydrated, cloudStatus, querying, actionError, toast, login, completeSignup, logout, withdraw, runPull, runPush, tryIssue]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

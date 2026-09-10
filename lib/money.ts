@@ -67,3 +67,9 @@ export function bumpQty(raw: string, dir: 1 | -1) {
 export function pricePlaceholder(market: string) {
   return isOverseas(market) ? "$0" : "0원";
 }
+
+export function displayPriceValue(value: string, market: string) {
+  const shown = value || "0";
+  if (isOverseas(market)) return shown.startsWith("$") ? shown : `$${shown}`;
+  return shown.endsWith("원") ? shown : `${shown}원`;
+}

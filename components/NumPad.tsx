@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { todayKey } from "@/lib/format";
 import { isOverseas } from "@/lib/markets";
-import { capPriceRaw, capQtyRaw, sanitizePrice, sanitizeQty } from "@/lib/money";
+import { capPriceRaw, capQtyRaw, displayPriceValue, sanitizePrice, sanitizeQty } from "@/lib/money";
 
 export type PadKind = "price" | "qty" | "date" | "time";
 
@@ -28,7 +28,7 @@ export function NumPad({
   const overseas = isOverseas(market);
 
   function shown() {
-    if (kind === "price") return sanitizePrice(buf || "0", market);
+    if (kind === "price") return displayPriceValue(sanitizePrice(buf || "0", market), market);
     if (kind === "qty") return sanitizeQty(buf || "0");
     return buf;
   }
@@ -268,12 +268,14 @@ export function PadField({
   value,
   placeholder,
   unit,
+  align = "left",
   onOpen,
 }: {
   label: string;
   value: string;
   placeholder?: string;
   unit?: string;
+  align?: "left" | "right";
   onOpen: () => void;
 }) {
   return (
@@ -282,7 +284,7 @@ export function PadField({
         <span>{label}</span>
         {unit ? <span className="pad-unit">{unit}</span> : null}
       </label>
-      <button className="pad-value" type="button" onClick={onOpen}>
+      <button className={`pad-value ${align === "right" ? "end" : ""}`} type="button" onClick={onOpen}>
         {value || placeholder || "0"}
       </button>
     </div>

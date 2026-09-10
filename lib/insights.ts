@@ -157,7 +157,7 @@ export function applyIssueCooldown(cands: Candidate[], issued: IssuedCard[]) {
     if (prev.score > 0 && c.score >= prev.score * 1.2) return true;
     return false;
   });
-  return ready.slice(0, 2);
+  return ready.slice(0, 1);
 }
 
 export function shouldAttemptIssue(sideCount: number, baseline: number) {

@@ -1,9 +1,8 @@
 "use client";
 
-import { StockTile } from "@/components/icons";
-import { formatPrice, formatQty, sideLabel } from "@/lib/format";
-import type { Trade } from "@/lib/types";
 import { useState } from "react";
+import { formatMd, formatPrice, formatQty, sideLabel } from "@/lib/format";
+import type { Trade } from "@/lib/types";
 
 export function TradeRow({
   trade,
@@ -20,42 +19,55 @@ export function TradeRow({
 }) {
   const [open, setOpen] = useState(!blurMoney);
   return (
-    <button
-      className="trade-row"
-      type="button"
-      onClick={onClick}
-    >
-      <StockTile name={trade.stockName} code={trade.stockCode} />
-      <div>
-        <div className="name">{trade.stockName}</div>
-        <div className={trade.side === "buy" ? "side-buy" : "side-sell"}>{sideLabel(trade.side)}</div>
-        {showReason ? (
-          <div className="meta stack-lines">
-            {trade.reasons.map((r) => (
-              <span key={r.label}>
-                {r.group} · {r.label}
-              </span>
-            ))}
-            {trade.moods.map((m) => (
-              <span key={m.label}>{m.label}</span>
-            ))}
-          </div>
-        ) : null}
+    <button className="trade-card" type="button" onClick={onClick}>
+      <div className="trade-card-top">
+        <b>{trade.stockName}</b>
+        <span className={trade.side === "buy" ? "badge" : "badge sell-badge"}>{sideLabel(trade.side)}</span>
+        <span className="trade-date">{formatMd(trade.tradedAt)}</span>
       </div>
-      <div className="right">
-        <div
-          className={`price ${blurMoney && !open ? "blurred" : ""}`}
-          onClick={(e) => {
-            if (!blurMoney) return;
-            e.stopPropagation();
-            setOpen(true);
-          }}
-        >
-          {formatPrice(trade.price, trade.market)}
-          {showQty ? ` · ${formatQty(trade.qty)}` : ""}
+      <p
+        className={`trade-amt ${blurMoney && !open ? "blurred" : ""}`}
+        onClick={(e) => {
+          if (!blurMoney) return;
+          e.stopPropagation();
+          setOpen(true);
+        }}
+      >
+        {showQty ? `${formatQty(trade.qty)} · ` : ""}
+        {formatPrice(trade.price, trade.market)}
+      </p>
+      {showReason ? (
+        <div className="trade-meta">
+          {trade.reasons.length ? (
+            trade.reasons.map((r) => (
+              <div className="kv-mini" key={r.label}>
+                <span>매매 이유</span>
+                <p>
+                  {r.group} · {r.label}
+                </p>
+              </div>
+            ))
+          ) : (
+            <div className="kv-mini">
+              <span>매매 이유</span>
+              <p>선택하지 않음</p>
+            </div>
+          )}
+          {trade.moods.length ? (
+            trade.moods.map((m) => (
+              <div className="kv-mini" key={m.label}>
+                <span>그때 마음</span>
+                <p>{m.label}</p>
+              </div>
+            ))
+          ) : (
+            <div className="kv-mini">
+              <span>그때 마음</span>
+              <p>선택하지 않음</p>
+            </div>
+          )}
         </div>
-        <div className="meta">{trade.tradedAt.slice(5).replace("-", ".")}</div>
-      </div>
+      ) : null}
     </button>
   );
 }

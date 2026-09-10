@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BackChevron } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
 import { useStore } from "@/lib/store";
 
@@ -25,8 +26,8 @@ export default function NicknamePage() {
   return (
     <PhoneShell>
       <div className="topbar">
-        <button className="icon-btn" type="button" onClick={() => router.back()}>
-          ‹
+        <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
+          <BackChevron />
         </button>
         <span />
       </div>

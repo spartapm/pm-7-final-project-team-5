@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BackChevron } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
 import { findAccountByEmail } from "@/lib/cloud";
 import { emailValid, findByEmail, passwordValid } from "@/lib/registry";
@@ -60,8 +61,8 @@ export default function EmailSignupPage() {
   return (
     <PhoneShell>
       <div className="topbar">
-        <button className="icon-btn" type="button" onClick={() => router.back()}>
-          ‹
+        <button className="icon-btn" type="button" onClick={() => router.back()} aria-label="뒤로">
+          <BackChevron />
         </button>
         <span />
       </div>

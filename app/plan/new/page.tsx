@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { BackChevron } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
 import { StockSearch } from "@/components/StockSearch";
-import { isOverseas, priceUnit } from "@/lib/markets";
-import { parseNum } from "@/lib/money";
+import { currencyHint, isOverseas, priceUnit } from "@/lib/markets";
+import { displayPriceValue, parseNum } from "@/lib/money";
 import { NumPad, PadField } from "@/components/NumPad";
 import { findPlan } from "@/lib/plans";
 import { findStock } from "@/lib/stocks";
@@ -42,7 +43,7 @@ function NewPlanInner() {
   }, [params, stock]);
 
   useEffect(() => {
-    if (stock && lockSide && !side) chooseSide(lockSide);
+    if (stock && lockSide) chooseSide(lockSide);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stock, lockSide]);
 
@@ -125,18 +126,23 @@ function NewPlanInner() {
             }
             if (formReady) {
               setSide(lockSide);
+              setAskType(false);
+              setAskDup(false);
               setEditingId(null);
               return;
             }
             if (stock) {
               setStock(null);
+              setAskType(false);
+              setAskDup(false);
               setSide(lockSide);
               return;
             }
             router.back();
           }}
+          aria-label="뒤로"
         >
-          ‹
+          <BackChevron />
         </button>
         <h1 className="h1">{overseas ? "해외 종목 계획" : side === "sell" ? "매도 계획" : side === "buy" ? "매수 계획" : "계획 등록"}</h1>
         <span />
@@ -158,15 +164,16 @@ function NewPlanInner() {
               {stock!.name} · {stock!.code} · {stock!.marketName}
             </p>
             {overseas ? <p className="overseas-hint">해외 종목은 가격을 달러(USD)로 입력하고, 소수점도 쓸 수 있어요.</p> : null}
+            <p className="currency-hint">{currencyHint(stock!.market)}</p>
             {side === "buy" ? (
               <>
-                <PadField label={`최소 희망가 (${unit})`} value={buyMin} onOpen={() => setPad("buyMin")} />
-                <PadField label={`최대 희망가 (${unit})`} value={buyMax} onOpen={() => setPad("buyMax")} />
+                <PadField label={`최소 희망가 (${unit})`} value={displayPriceValue(buyMin, stock!.market)} onOpen={() => setPad("buyMin")} />
+                <PadField label={`최대 희망가 (${unit})`} value={displayPriceValue(buyMax, stock!.market)} onOpen={() => setPad("buyMax")} />
               </>
             ) : (
               <>
-                <PadField label={`손절가 (${unit})`} value={stopLoss} onOpen={() => setPad("stopLoss")} />
-                <PadField label={`목표가 (${unit})`} value={takeProfit} onOpen={() => setPad("takeProfit")} />
+                <PadField label={`손절가 (${unit})`} value={displayPriceValue(stopLoss, stock!.market)} onOpen={() => setPad("stopLoss")} />
+                <PadField label={`목표가 (${unit})`} value={displayPriceValue(takeProfit, stock!.market)} onOpen={() => setPad("takeProfit")} />
               </>
             )}
           </>
@@ -174,9 +181,9 @@ function NewPlanInner() {
           <p className="sub">{stock?.name} 종목이 선택됐어요.</p>
         )}
       </div>
-      {stock && !side ? (
+      {!formReady ? (
         <div className="footer-cta">
-          <button className="btn btn-primary" type="button" onClick={() => setAskType(true)}>
+          <button className="btn btn-primary" type="button" disabled={!stock} onClick={() => stock && setAskType(true)}>
             다음
           </button>
         </div>

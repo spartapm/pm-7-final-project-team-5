@@ -24,6 +24,13 @@ export function formatWhen(date: string, time?: string) {
   return `${date} · ${time}`;
 }
 
+export function formatMd(date: string) {
+  const m = date.slice(5, 7);
+  const d = date.slice(8, 10);
+  if (!m || !d) return date;
+  return `${m}.${d}`;
+}
+
 export function needsNickname(nickname: string) {
   const n = nickname.trim();
   return !n || n === "회원";

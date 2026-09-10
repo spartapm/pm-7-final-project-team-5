@@ -15,3 +15,7 @@ export function currencyLabel(market: string) {
 export function priceUnit(market: string) {
   return isOverseas(market) ? "달러" : "원";
 }
+
+export function currencyHint(market: string) {
+  return isOverseas(market) ? "종목 통화 단위 USD · $ (자동)" : "종목 통화 단위 KRW · 원 (자동)";
+}

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BrandMark } from "@/components/icons";
-import { PhoneShell } from "@/components/ui";
+import { BackChevron } from "@/components/icons";
+import { ChartMark, PhoneShell } from "@/components/ui";
 import { reasonGroups, toPick } from "@/lib/categories";
 import { moodOptions } from "@/lib/categories";
 import { PRACTICE, SAMPLE_INSIGHT } from "@/lib/onboarding-data";
@@ -17,6 +17,34 @@ function Lines({ items }: { items: string[] }) {
         <span key={t}>{t}</span>
       ))}
     </p>
+  );
+}
+
+function OnbNote({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div className="onb-note">
+      <span className="onb-note-label">{label}</span>
+      <Lines items={items} />
+    </div>
+  );
+}
+
+function OnbTrade({ name, side, price, qty }: { name: string; side: string; price: string; qty: string }) {
+  return (
+    <dl className="onb-kv">
+      <div>
+        <dt>종목 · 구분</dt>
+        <dd>
+          {name} · {side}
+        </dd>
+      </div>
+      <div>
+        <dt>가격 · 수량</dt>
+        <dd>
+          {price} · {qty}
+        </dd>
+      </div>
+    </dl>
   );
 }
 
@@ -115,25 +143,19 @@ export default function OnboardingPage() {
         </div>
         <div className="scroll">
           <h1 className="step-title">3건을 이렇게 기록했어요</h1>
-          <p className="sub">기록이 쌓이면 이렇게 다시 볼 수 있어요</p>
+          <p className="sub onb-lead">기록이 쌓이면 이렇게 다시 볼 수 있어요</p>
           {cards.map((c) => (
             <div key={c.code} className={`card ${c.highlight ? "highlight-card" : ""}`}>
               <div className="replay-head">
-                <b>{c.name}</b>
-                <span className="badge">{c.side}</span>
-                <span className="sub">{c.n === 3 ? "3번째 · 방금" : `${c.n}번째`}</span>
+                <div className="replay-name">
+                  <b>{c.name}</b>
+                  <span className="badge">{c.side}</span>
+                </div>
+                <span className="replay-rank">{c.n === 3 ? "3번째 · 방금" : `${c.n}번째`}</span>
               </div>
-              <p className="sub">
-                {c.price} · {c.qty}
-              </p>
-              <div className="sub" style={{ marginTop: 8 }}>
-                매매 이유
-                <Lines items={c.r} />
-              </div>
-              <div className="sub" style={{ marginTop: 8 }}>
-                그때 마음
-                <Lines items={c.m} />
-              </div>
+              <OnbTrade name={c.name} side={c.side} price={c.price} qty={c.qty} />
+              <OnbNote label="매매 이유" items={c.r} />
+              <OnbNote label="그때 마음" items={c.m} />
             </div>
           ))}
         </div>
@@ -147,36 +169,47 @@ export default function OnboardingPage() {
   }
 
   if (stage === "reason" || stage === "mood") {
-    const kicker = stage === "reason" ? "매수 기록 · 1/3 단계" : "매수 기록 · 2/3 단계";
+    const kicker = stage === "reason" ? "매수 기록 · 1 / 3 단계" : "매수 기록 · 2 / 3 단계";
     return (
       <PhoneShell>
-        <div className="topbar">
-          <button className="icon-btn" type="button" onClick={() => setStage(stage === "reason" ? "ex3" : "reason")}>
-            ‹
+        <div className="topbar wizard-head">
+          <button className="icon-btn" type="button" onClick={() => setStage(stage === "reason" ? "ex3" : "reason")} aria-label="뒤로">
+            <BackChevron />
           </button>
+          <span className="wizard-kicker">{kicker}</span>
           <button className="skip" type="button" onClick={toReplay}>
             건너뛰기
           </button>
         </div>
-        <div className="step-track" aria-hidden>
+        <div className="step-track slim" aria-hidden>
           <i style={{ width: stage === "reason" ? "33%" : "66%" }} />
         </div>
         <div className="scroll">
-          <div className="step-kicker">{kicker}</div>
           {stage === "reason" ? (
             <>
               <h1 className="step-title">이번 매수는 무엇을 보고 결정하셨어요?</h1>
-              <p className="sub">매수할 때 참고한 내용을 선택해 주세요. 최대 3개까지 고를 수 있어요. ({reasons.length}/3)</p>
+              <p className="sub">
+                매수할 때 참고한 내용을 선택해 주세요.
+                <br />
+                최대 3개까지 고를 수 있어요. ({reasons.length}/3)
+              </p>
               <div className="acc" style={{ marginTop: 16 }}>
-                {groups.map((g) => (
-                  <div className="acc-item" key={g.group}>
+                {groups.map((g) => {
+                  const locked = g.group !== "차트를 보고";
+                  const shown = open === g.group;
+                  return (
+                  <div className={`acc-item ${shown ? "has" : ""} ${locked ? "locked" : ""}`} key={g.group}>
                     <button
-                      className={open === g.group ? "acc-h open" : "acc-h"}
+                      className={shown ? "acc-h open" : "acc-h"}
                       type="button"
-                      onClick={() => setOpen(open === g.group ? "" : g.group)}
+                      disabled={locked}
+                      onClick={() => {
+                        if (locked) return;
+                        setOpen(open === g.group ? "" : g.group);
+                      }}
                     >
                       {g.group}
-                      <span>{open === g.group ? "▾" : "▸"}</span>
+                      <span>{shown ? "▾" : "▸"}</span>
                     </button>
                     {open === g.group && (
                       <div className="acc-body">
@@ -206,13 +239,14 @@ export default function OnboardingPage() {
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           ) : (
             <>
-              <h1 className="step-title">당시 어떤 상태였나요?</h1>
-              <p className="sub">최대 2개까지 고를 수 있어요. ({moods.length}/2)</p>
+              <h1 className="step-title">그때 마음은 어떠셨어요?</h1>
+              <p className="sub">가장 가까운 마음을 골라주세요. (최대 2개)</p>
               <div className="mood-list" style={{ marginTop: 16 }}>
                 {moodList.map((m) => {
                   const on = moods.some((x) => x.label === m.label);
@@ -271,36 +305,21 @@ export default function OnboardingPage() {
         <div className="scroll">
           <h1 className="step-title">{title}</h1>
           {situation ? (
-            <div className="card">
+            <div className="onb-situation">
               <span className="badge">가상 상황</span>
-              <p style={{ marginTop: 8 }}>{situation}</p>
+              <p>{situation}</p>
             </div>
           ) : null}
-          <div className="card">
-            <dl className="detail-kv trade-mini">
-              <dt>종목 · 구분</dt>
-              <dd>
-                {data.name} · {data.side}
-              </dd>
-              <dt>가격 · 수량</dt>
-              <dd>
-                {data.price} · {data.qty}
-              </dd>
-            </dl>
-            {stage === "ex3" ? <p className="sub">예시로 고정된 정보예요</p> : null}
-            {"reasons" in data ? (
-              <>
-                <div className="sub" style={{ marginTop: 12 }}>
-                  매매 이유
-                  <Lines items={data.reasons} />
-                </div>
-                <div className="sub" style={{ marginTop: 8 }}>
-                  그때 마음
-                  <Lines items={data.moods} />
-                </div>
-              </>
-            ) : null}
+          <div className="card onb-kv-card">
+            <OnbTrade name={data.name} side={data.side} price={data.price} qty={data.qty} />
           </div>
+          {stage === "ex3" ? <p className="sub onb-fixed-note">예시로 고정된 정보예요</p> : null}
+          {"reasons" in data ? (
+            <>
+              <OnbNote label="매매 이유" items={data.reasons} />
+              <OnbNote label="그때 마음" items={data.moods} />
+            </>
+          ) : null}
         </div>
         <div className="footer-cta">
           <button className="btn btn-primary" type="button" onClick={next}>
@@ -315,7 +334,7 @@ export default function OnboardingPage() {
     <PhoneShell>
       <div className="hero">
         <div className="blob">
-          <BrandMark size={64} />
+          <ChartMark />
         </div>
         <h1>
           3번만 기록하면,
@@ -332,7 +351,7 @@ export default function OnboardingPage() {
         <button className="btn btn-primary" type="button" onClick={() => setStage("ex1")}>
           체험 시작하기
         </button>
-        <div className="login-link">
+        <div className="login-link center">
           이미 계정이 있나요?{" "}
           <b role="link" onClick={goLogin}>
             로그인
