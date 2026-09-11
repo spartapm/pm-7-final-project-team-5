@@ -44,12 +44,12 @@ export default function InsightsPage() {
       <div className="scroll tabbed">
         <div className="brand-kicker insight-kicker">인사이트</div>
         <h1 className="hello insight-hello">{tab === "dash" ? "나의 기록 통계" : "경향해석"}</h1>
-        {tab === "dash" && real.length > 0 ? <p className="sub dash-lead">전체 매매 기록을 기준으로 정리했어요</p> : null}
+        {tab === "dash" ? <p className="sub dash-lead">전체 매매 기록을 기준으로 정리했어요</p> : null}
         <div className="tabs">
           <button type="button" className={tab === "dash" ? "on" : ""} onClick={() => setTab("dash")}>
             대시보드
           </button>
-          <button type="button" className={tab === "trend" ? "on" : ""} onClick={goTrend}>
+          <button type="button" className={tab === "trend" ? "on" : ""} onClick={goTrend} disabled={real.length === 0} aria-disabled={real.length === 0}>
             경향해석
             {issuedCards.some((c) => !c.read) ? <i className="dot" /> : null}
           </button>
@@ -104,7 +104,7 @@ function EmptyDash() {
         onScroll={(e) => {
           const el = e.currentTarget;
           const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth * 0.78));
-          setDot(Math.min(2, Math.max(0, i)));
+          setDot(Math.min(4, Math.max(0, i)));
         }}
       >
         <div className="example-card">
@@ -120,6 +120,12 @@ function EmptyDash() {
         </div>
         <div className="example-card">
           <span className="ex-badge">예시</span>
+          <b>판단 근거</b>
+          <p className="sub">자주 고른 근거 비중</p>
+          <div className="ex-pie" />
+        </div>
+        <div className="example-card">
+          <span className="ex-badge">예시</span>
           <b>계획 이행</b>
           <p className="sub">계획이 있었던 기록 비율</p>
           <div className="ex-plan">
@@ -130,13 +136,27 @@ function EmptyDash() {
         </div>
         <div className="example-card">
           <span className="ex-badge">예시</span>
-          <b>판단 이유</b>
-          <p className="sub">자주 고른 근거 비중</p>
-          <div className="ex-pie" />
+          <b>매수 마음</b>
+          <p className="sub">매수할 때 자주 고른 마음</p>
+          <div className="ex-bars">
+            <i style={{ height: "80%" }} />
+            <i style={{ height: "45%" }} />
+            <i style={{ height: "30%" }} />
+          </div>
+        </div>
+        <div className="example-card">
+          <span className="ex-badge">예시</span>
+          <b>매도 마음</b>
+          <p className="sub">매도할 때 자주 고른 마음</p>
+          <div className="ex-bars">
+            <i style={{ height: "55%" }} />
+            <i style={{ height: "75%" }} />
+            <i style={{ height: "35%" }} />
+          </div>
         </div>
       </div>
       <div className="dots">
-        {[0, 1, 2].map((i) => (
+        {[0, 1, 2, 3, 4].map((i) => (
           <i key={i} className={dot === i ? "on" : ""} />
         ))}
       </div>

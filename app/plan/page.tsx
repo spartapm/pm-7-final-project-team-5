@@ -31,7 +31,7 @@ export default function PlanListPage() {
       <div className="topbar">
         <h1 className="h1">계획</h1>
         {plans.length > 0 ? (
-          <button className="skip" type="button" onClick={() => router.push("/plan/new")}>
+          <button className="new-pill" type="button" onClick={() => router.push("/plan/new")}>
             + 새 계획
           </button>
         ) : (

@@ -333,9 +333,7 @@ export default function OnboardingPage() {
   return (
     <PhoneShell>
       <div className="hero">
-        <div className="blob">
-          <ChartMark />
-        </div>
+        <ChartMark />
         <h1>
           3번만 기록하면,
           <br />

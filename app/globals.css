@@ -329,7 +329,7 @@ img { display: block; max-width: 100%; }
 .login-link { margin-top: 14px; font-size: 12.5px; color: #AAB6C6; }
 .login-link b { color: #AAB6C6; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .hero .brand-mark { margin-bottom: 28px; }
-.blob { width: 140px; height: 140px; }
+.hero > svg, .hero .chart-mark { margin-bottom: 28px; }
 
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 13px; font-weight: 400; line-height: 16px; margin-bottom: 8px; color: var(--color-text-secondary); }
@@ -414,6 +414,7 @@ img { display: block; max-width: 100%; }
 
 .tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); margin: 16px 0; }
 .tabs button { padding: 10px 0; font-weight: 700; color: var(--muted); position: relative; }
+.tabs button:disabled { opacity: 0.4; cursor: default; }
 .tabs button.on { color: var(--navy); }
 .tabs button.on::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px;
@@ -556,7 +557,7 @@ img { display: block; max-width: 100%; }
 .brand-mark { display: block; object-fit: cover; flex-shrink: 0; }
 .brand-lockup { display: block; object-fit: contain; }
 .onb-head {
-  display: flex; align-items: center; gap: 8px; padding: 24px 20px 8px;
+  display: flex; align-items: center; gap: 8px; padding: 16px;
 }
 .onb-head b { font-size: 13px; font-weight: 600; color: #253247; }
 .onb-head .spacer { flex: 1; }
@@ -644,7 +645,7 @@ img { display: block; max-width: 100%; }
   background: #F2F3F5; border-radius: 12px; padding: 16px; margin-bottom: 12px;
 }
 .onb-situation .badge { margin-bottom: 0; background: #E5E7EB; color: #6B7488; font-weight: 400; }
-.onb-situation p { margin: 9px 0 0; font-size: 13px; line-height: 22px; color: #4A5568; }
+.onb-situation p { margin: 8px 0 0; font-size: 12px; line-height: 18px; color: #4A5568; }
 .onb-kv-card { padding: 16px; border-radius: 12px; }
 .onb-kv { display: flex; flex-direction: column; gap: 12px; margin: 0; }
 .onb-kv > div { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }

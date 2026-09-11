@@ -6,8 +6,8 @@ import { BackChevron } from "@/components/icons";
 import { NumPad, PadField } from "@/components/NumPad";
 import { PhoneShell } from "@/components/ui";
 import { sideLabel } from "@/lib/format";
-import { currencyHint, priceUnit } from "@/lib/markets";
-import { displayPriceValue, parseNum } from "@/lib/money";
+import { currencyHint, isOverseas } from "@/lib/markets";
+import { displayPriceValue, parseNum, sanitizePrice } from "@/lib/money";
 import { planSummary } from "@/lib/plans";
 import { useStore } from "@/lib/store";
 
@@ -37,13 +37,13 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const unit = priceUnit(plan.market);
+  const unitHint = isOverseas(plan.market) ? "USD · $" : "KRW · 원";
 
   function startEdit() {
-    setBuyMin(plan!.buyMin != null ? String(plan!.buyMin) : "0");
-    setBuyMax(plan!.buyMax != null ? String(plan!.buyMax) : "0");
-    setStopLoss(plan!.stopLoss != null ? String(plan!.stopLoss) : "0");
-    setTakeProfit(plan!.takeProfit != null ? String(plan!.takeProfit) : "0");
+    setBuyMin(plan!.buyMin != null ? sanitizePrice(String(plan!.buyMin), plan!.market) : "0");
+    setBuyMax(plan!.buyMax != null ? sanitizePrice(String(plan!.buyMax), plan!.market) : "0");
+    setStopLoss(plan!.stopLoss != null ? sanitizePrice(String(plan!.stopLoss), plan!.market) : "0");
+    setTakeProfit(plan!.takeProfit != null ? sanitizePrice(String(plan!.takeProfit), plan!.market) : "0");
     setEditing(true);
   }
 
@@ -71,13 +71,13 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
             <p className="currency-hint">{currencyHint(plan.market)}</p>
             {plan.side === "buy" ? (
               <>
-                <PadField label={`최소 희망가 (${unit})`} value={displayPriceValue(buyMin, plan.market)} onOpen={() => setPad("buyMin")} />
-                <PadField label={`최대 희망가 (${unit})`} value={displayPriceValue(buyMax, plan.market)} onOpen={() => setPad("buyMax")} />
+                <PadField label="최소 희망가" unit={unitHint} value={displayPriceValue(buyMin, plan.market)} align="right" onOpen={() => setPad("buyMin")} />
+                <PadField label="최대 희망가" unit={unitHint} value={displayPriceValue(buyMax, plan.market)} align="right" onOpen={() => setPad("buyMax")} />
               </>
             ) : (
               <>
-                <PadField label={`손절가 (${unit})`} value={displayPriceValue(stopLoss, plan.market)} onOpen={() => setPad("stopLoss")} />
-                <PadField label={`목표가 (${unit})`} value={displayPriceValue(takeProfit, plan.market)} onOpen={() => setPad("takeProfit")} />
+                <PadField label="손절가" unit={unitHint} value={displayPriceValue(stopLoss, plan.market)} align="right" onOpen={() => setPad("stopLoss")} />
+                <PadField label="목표가" unit={unitHint} value={displayPriceValue(takeProfit, plan.market)} align="right" onOpen={() => setPad("takeProfit")} />
               </>
             )}
           </>
