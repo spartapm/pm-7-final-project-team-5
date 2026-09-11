@@ -54,7 +54,8 @@ npm run db:schema
 
 카카오 로그인은 **회원번호만**으로 사용자를 식별합니다. 이메일은 요청하지 않습니다(비즈 앱 등록 없이 운영).
 
-카카오 디벨로퍼스 Redirect URI에 아래를 **둘 다** 등록하세요.
+카카오 디벨로퍼스 Redirect URI에 아래를 등록하세요.
 
 - `http://localhost:3005/auth/kakao/callback`
-- `https://pattern-note.vercel.app/auth/kakao/callback`
+- `https://inplot.co.kr/auth/kakao/callback`
+- `https://pm-7-final-project-team-5.vercel.app/auth/kakao/callback`

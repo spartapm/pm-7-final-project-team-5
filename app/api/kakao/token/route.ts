@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 
+const ALLOWED_HTTPS_HOSTS = new Set([
+  "inplot.co.kr",
+  "www.inplot.co.kr",
+  "pm-7-final-project-team-5.vercel.app",
+  "pattern-note.vercel.app",
+]);
+
 function allowedRedirect(uri: string) {
   try {
     const u = new URL(uri);
     if (u.pathname !== "/auth/kakao/callback") return false;
     if (u.protocol === "http:" && u.hostname === "localhost" && u.port === "3005") return true;
-    if (u.protocol === "https:" && u.hostname === "pattern-note.vercel.app") return true;
+    if (u.protocol === "https:" && ALLOWED_HTTPS_HOSTS.has(u.hostname)) return true;
     const env = process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI;
     return Boolean(env && uri === env);
   } catch {
