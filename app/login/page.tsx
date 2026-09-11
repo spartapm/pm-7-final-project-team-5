@@ -50,8 +50,10 @@ function LoginInner() {
     if (busy) return;
     const local = findByEmail(email);
     if (local && local.password === password) {
+      const hash = await hashPassword(email, password);
+      if (local.id) void bindEmailPassword(local.id, hash);
       markWelcomeSeen();
-      login({ email: local.email, nickname: local.nickname, accountId: local.id });
+      login({ email: local.email, nickname: local.nickname, accountId: local.id, passwordHash: hash });
       return;
     }
     setBusy(true);

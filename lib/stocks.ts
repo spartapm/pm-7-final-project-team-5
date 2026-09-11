@@ -1,5 +1,5 @@
 import stocks from "@/data/stocks.json";
-import { isKorea, isOverseas } from "./markets";
+import { isKorea, isOverseas, sameStockCode } from "./markets";
 import type { Stock } from "./types";
 
 const all = stocks as Stock[];
@@ -50,5 +50,11 @@ export function searchStocks(query: string, limit = 20, region: StockRegion = "a
 }
 
 export function findStock(code: string, market?: string) {
-  return all.find((s) => s.code === code && (!market || s.market === market)) ?? null;
+  return (
+    all.find((s) => s.code === code && (!market || s.market === market)) ??
+    all.find((s) => s.code === code) ??
+    all.find((s) => sameStockCode(s.code, code) && (!market || s.market === market)) ??
+    all.find((s) => sameStockCode(s.code, code)) ??
+    null
+  );
 }

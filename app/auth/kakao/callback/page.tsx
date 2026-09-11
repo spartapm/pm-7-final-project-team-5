@@ -71,7 +71,7 @@ function CallbackInner() {
         existing = { id: remote.id, kakaoId: remote.kakaoId, nickname };
         upsertRegistry(existing);
       }
-      if (intent === "signup" && existing) {
+      if (intent === "signup" && existing && (remote?.onboarded || !needsNickname(existing.nickname))) {
         router.replace("/login?exists=1");
         return;
       }
@@ -82,7 +82,7 @@ function CallbackInner() {
         return;
       }
       login({ kakaoId: data.kakaoId, nickname: existing.nickname, accountId: existing.id });
-      if (needsNickname(existing.nickname)) {
+      if (needsNickname(existing.nickname) && !remote?.onboarded) {
         sessionStorage.setItem("signup_kakao_id", data.kakaoId);
         sessionStorage.setItem("signup_kind", "kakao");
         router.replace("/signup/nickname");

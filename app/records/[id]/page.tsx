@@ -125,7 +125,9 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
           trade={trade}
           onHide={(side) => setHideSide(side)}
           onInduce={(side) =>
-            router.push(`/plan/new?side=${side}&code=${trade.stockCode}&market=${trade.market}&return=${encodeURIComponent(`/records/${trade.id}`)}`)
+            router.push(
+              `/plan/new?side=${side}&code=${encodeURIComponent(trade.stockCode)}&market=${encodeURIComponent(trade.market)}&name=${encodeURIComponent(trade.stockName)}&return=${encodeURIComponent(`/records/${trade.id}`)}`
+            )
           }
         />
       </div>

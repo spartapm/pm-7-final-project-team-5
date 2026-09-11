@@ -1,8 +1,13 @@
 import { formatPrice } from "./format";
+import { canonStockCode, sameStockCode } from "./markets";
 import type { Plan, PlanSnapshot, Side, Trade } from "./types";
 
 export function findPlan(plans: Plan[], stockCode: string, market: string, side: Side) {
-  return plans.find((p) => p.stockCode === stockCode && p.market === market && p.side === side) ?? null;
+  return (
+    plans.find((p) => sameStockCode(p.stockCode, stockCode) && p.market === market && p.side === side) ??
+    plans.find((p) => sameStockCode(p.stockCode, stockCode) && p.side === side) ??
+    null
+  );
 }
 
 export function snapshotForStock(plans: Plan[], stockCode: string, market: string): PlanSnapshot | null {
@@ -53,7 +58,7 @@ export function migratePlan(raw: Record<string, unknown>): Plan {
   return {
     id: String(raw.id),
     side: (raw.side as Side) || side,
-    stockCode: String(raw.stockCode),
+    stockCode: canonStockCode(String(raw.stockCode), String(raw.market)),
     stockName: String(raw.stockName),
     market: String(raw.market),
     buyMin,
@@ -71,7 +76,7 @@ export function migrateTrade(raw: Record<string, unknown>): Trade {
     id: String(raw.id),
     planId: raw.planId ? String(raw.planId) : null,
     side: raw.side === "sell" ? "sell" : "buy",
-    stockCode: String(raw.stockCode),
+    stockCode: canonStockCode(String(raw.stockCode), String(raw.market)),
     stockName: String(raw.stockName),
     market: String(raw.market),
     price: Number(raw.price),

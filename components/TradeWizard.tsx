@@ -119,7 +119,12 @@ export function TradeWizard({
           <>
             <h1 className="step-title">이번 {side}는 무엇을 보고 결정하셨어요?</h1>
             <p className="sub">
-              {draft.side === "buy" ? "매수할 때 참고한 내용을 모두 선택해주세요. " : ""}
+              {draft.side === "buy" ? (
+                <>
+                  매수할 때 참고한 내용을 선택해 주세요.
+                  <br />
+                </>
+              ) : null}
               최대 3개까지 고를 수 있어요. ({draft.reasons.length}/3)
             </p>
             <div className="acc" style={{ marginTop: 16 }}>
@@ -133,9 +138,8 @@ export function TradeWizard({
                     type="button"
                     onClick={() => {
                       setOpen((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(g.group)) next.delete(g.group);
-                        else next.add(g.group);
+                        const next = new Set<string>();
+                        if (!prev.has(g.group)) next.add(g.group);
                         return next;
                       });
                     }}

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BackChevron } from "@/components/icons";
 import { PhoneShell } from "@/components/ui";
 import { StockSearch } from "@/components/StockSearch";
-import { currencyHint, isOverseas, priceUnit } from "@/lib/markets";
-import { displayPriceValue, parseNum } from "@/lib/money";
+import { currencyHint, isOverseas, sameStockCode } from "@/lib/markets";
+import { displayPriceValue, parseNum, sanitizePrice } from "@/lib/money";
 import { NumPad, PadField } from "@/components/NumPad";
 import { findPlan } from "@/lib/plans";
 import { findStock } from "@/lib/stocks";
@@ -30,22 +30,60 @@ function NewPlanInner() {
   const [stopLoss, setStopLoss] = useState("0");
   const [takeProfit, setTakeProfit] = useState("0");
   const [pad, setPad] = useState<"buyMin" | "buyMax" | "stopLoss" | "takeProfit" | null>(null);
+  const lockedOnce = useRef(false);
   const overseas = stock ? isOverseas(stock.market) : false;
-  const unit = stock ? priceUnit(stock.market) : "원";
+  const unitHint = stock ? (overseas ? "USD · $" : "KRW · 원") : "KRW · 원";
 
   useEffect(() => {
     const code = params.get("code");
     const market = params.get("market") || undefined;
-    if (code && !stock) {
-      const found = findStock(code, market);
-      if (found) setStock(found);
+    const name = params.get("name") || undefined;
+    if (!code || stock) return;
+    const fromList = findStock(code, market);
+    if (fromList) {
+      setStock(fromList);
+      return;
     }
-  }, [params, stock]);
+    const fromPlan =
+      plans.find((p) => sameStockCode(p.stockCode, code) && (!market || p.market === market)) ??
+      plans.find((p) => sameStockCode(p.stockCode, code));
+    if (fromPlan) {
+      const listed = findStock(fromPlan.stockCode, fromPlan.market);
+      setStock(
+        listed || {
+          code: fromPlan.stockCode,
+          name: fromPlan.stockName,
+          market: fromPlan.market,
+          marketName: fromPlan.market,
+        }
+      );
+      return;
+    }
+    if (name) {
+      setStock({ code, name, market: market || "KOSPI", marketName: market || "KOSPI" });
+    }
+  }, [params, stock, plans]);
 
   useEffect(() => {
-    if (stock && lockSide) chooseSide(lockSide);
+    if (!stock || !lockSide || lockedOnce.current) return;
+    lockedOnce.current = true;
+    chooseSide(lockSide);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stock, lockSide]);
+
+  useEffect(() => {
+    if (!stock || !lockSide || editingId) return;
+    const found = findPlan(plans, stock.code, stock.market, lockSide);
+    if (!found) return;
+    setEditingId(found.id);
+    setBuyMin(found.buyMin != null ? sanitizePrice(String(found.buyMin), stock.market) : "0");
+    setBuyMax(found.buyMax != null ? sanitizePrice(String(found.buyMax), stock.market) : "0");
+    setStopLoss(found.stopLoss != null ? sanitizePrice(String(found.stopLoss), stock.market) : "0");
+    setTakeProfit(found.takeProfit != null ? sanitizePrice(String(found.takeProfit), stock.market) : "0");
+    setAskDup(!returnTo);
+    setAskType(false);
+    setSide(lockSide);
+  }, [plans, stock, lockSide, editingId, returnTo]);
 
   function chooseSide(next: Side) {
     if (!stock) return;
@@ -54,10 +92,10 @@ function NewPlanInner() {
     setAskType(false);
     if (found) {
       setEditingId(found.id);
-      setBuyMin(found.buyMin != null ? String(found.buyMin) : "0");
-      setBuyMax(found.buyMax != null ? String(found.buyMax) : "0");
-      setStopLoss(found.stopLoss != null ? String(found.stopLoss) : "0");
-      setTakeProfit(found.takeProfit != null ? String(found.takeProfit) : "0");
+      setBuyMin(found.buyMin != null ? sanitizePrice(String(found.buyMin), stock.market) : "0");
+      setBuyMax(found.buyMax != null ? sanitizePrice(String(found.buyMax), stock.market) : "0");
+      setStopLoss(found.stopLoss != null ? sanitizePrice(String(found.stopLoss), stock.market) : "0");
+      setTakeProfit(found.takeProfit != null ? sanitizePrice(String(found.takeProfit), stock.market) : "0");
       setAskDup(!returnTo);
     } else {
       setAskDup(false);
@@ -167,13 +205,13 @@ function NewPlanInner() {
             <p className="currency-hint">{currencyHint(stock!.market)}</p>
             {side === "buy" ? (
               <>
-                <PadField label={`최소 희망가 (${unit})`} value={displayPriceValue(buyMin, stock!.market)} onOpen={() => setPad("buyMin")} />
-                <PadField label={`최대 희망가 (${unit})`} value={displayPriceValue(buyMax, stock!.market)} onOpen={() => setPad("buyMax")} />
+                <PadField label="최소 희망가" unit={unitHint} value={displayPriceValue(buyMin, stock!.market)} align="right" onOpen={() => setPad("buyMin")} />
+                <PadField label="최대 희망가" unit={unitHint} value={displayPriceValue(buyMax, stock!.market)} align="right" onOpen={() => setPad("buyMax")} />
               </>
             ) : (
               <>
-                <PadField label={`손절가 (${unit})`} value={displayPriceValue(stopLoss, stock!.market)} onOpen={() => setPad("stopLoss")} />
-                <PadField label={`목표가 (${unit})`} value={displayPriceValue(takeProfit, stock!.market)} onOpen={() => setPad("takeProfit")} />
+                <PadField label="손절가" unit={unitHint} value={displayPriceValue(stopLoss, stock!.market)} align="right" onOpen={() => setPad("stopLoss")} />
+                <PadField label="목표가" unit={unitHint} value={displayPriceValue(takeProfit, stock!.market)} align="right" onOpen={() => setPad("takeProfit")} />
               </>
             )}
           </>
