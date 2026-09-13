@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Chevron, StockTile } from "@/components/icons";
-import { ChartMark, PhoneShell, TabBar } from "@/components/ui";
+import { PlanEmptyMark, PhoneShell, TabBar } from "@/components/ui";
 import { sideLabel } from "@/lib/format";
 import { planSummary } from "@/lib/plans";
 import { useStore } from "@/lib/store";
@@ -42,7 +42,7 @@ export default function PlanListPage() {
         {sorted.length === 0 ? (
           <div className="empty hero">
             <div className="blob">
-              <ChartMark />
+              <PlanEmptyMark />
             </div>
             <h3>아직 등록한 계획이 없어요</h3>
             <p>
@@ -60,7 +60,6 @@ export default function PlanListPage() {
           </div>
         ) : (
           <>
-            <p className="sub">종목마다 매수 계획(희망 매수가 구간) · 매도 계획(목표가·손절가)을 따로 등록할 수 있어요</p>
             {visible.map((p) => (
               <button key={p.id} className="plan-row" type="button" onClick={() => router.push(`/plan/${p.id}`)}>
                 <StockTile name={p.stockName} code={p.stockCode} />

@@ -1,19 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrandMark, FolderIco, PencilIco, ProgressRing } from "@/components/icons";
 import { TradeRow } from "@/components/TradeRow";
-import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
+import { LegalFooter, Modal, PhoneShell, TabBar } from "@/components/ui";
 import { thisMonth } from "@/lib/format";
 import { insightHref } from "@/lib/insights";
 import { useStore } from "@/lib/store";
+
+const COACH_KEY = "inplot:seen-coach";
 
 export default function HomePage() {
   const router = useRouter();
   const { hydrated, nickname, trades, logout, withdraw, loggedIn, issuedCards } = useStore();
   const [profile, setProfile] = useState(false);
+  const [askWithdraw, setAskWithdraw] = useState(false);
+  const [coach, setCoach] = useState(false);
   const real = trades.filter((t) => !t.isPractice);
   const month = thisMonth();
   const monthTrades = real.filter((t) => new Date(t.createdAt).toISOString().slice(0, 7) === month);
@@ -25,6 +29,17 @@ export default function HomePage() {
   const issued = [...issuedCards].sort((a, b) => b.issuedAt - a.issuedAt).slice(0, 3);
   const buyCount = real.filter((t) => t.side === "buy").length;
   const sellCount = real.filter((t) => t.side === "sell").length;
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (localStorage.getItem(COACH_KEY)) return;
+    setCoach(true);
+  }, [hydrated]);
+
+  function dismissCoach() {
+    localStorage.setItem(COACH_KEY, "1");
+    setCoach(false);
+  }
 
   if (!hydrated) return <div className="shell" />;
 
@@ -129,9 +144,8 @@ export default function HomePage() {
                   className="btn btn-ghost"
                   type="button"
                   onClick={() => {
-                    withdraw();
                     setProfile(false);
-                    router.replace("/onboarding");
+                    setAskWithdraw(true);
                   }}
                 >
                   탈퇴
@@ -142,6 +156,51 @@ export default function HomePage() {
                 로그인
               </button>
             )}
+          </div>
+        </div>
+      ) : null}
+      {askWithdraw ? (
+        <Modal
+          title="정말 탈퇴하시겠어요?"
+          body="탈퇴 시 계정 정보와 모든 매매 계획·기록이 서버에서 삭제되며 복구할 수 없어요."
+          cancel="아니요"
+          confirm="네"
+          split
+          onCancel={() => setAskWithdraw(false)}
+          onConfirm={() => {
+            withdraw();
+            setAskWithdraw(false);
+            setProfile(false);
+            router.replace("/onboarding");
+          }}
+        />
+      ) : null}
+      {coach ? (
+        <div className="modal-back" onClick={dismissCoach}>
+          <div className="modal coach-sheet" onClick={(e) => e.stopPropagation()}>
+            <h3>메뉴를 이렇게 써 보세요</h3>
+            <p>온보딩이 끝나면 아래 탭으로 바로 이동할 수 있어요.</p>
+            <ul className="coach-list">
+              <li>
+                <b>홈</b>
+                <span>이번 달 기록과 새로 나온 인사이트</span>
+              </li>
+              <li>
+                <b>계획</b>
+                <span>희망 매수가 · 목표가 · 손절가</span>
+              </li>
+              <li>
+                <b>기록</b>
+                <span>매수·매도를 남기고 다시 보기</span>
+              </li>
+              <li>
+                <b>인사이트</b>
+                <span>반복된 판단과 마음 상태 통계</span>
+              </li>
+            </ul>
+            <button className="btn btn-primary" type="button" onClick={dismissCoach}>
+              확인
+            </button>
           </div>
         </div>
       ) : null}

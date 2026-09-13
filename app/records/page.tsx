@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PhoneShell, TabBar } from "@/components/ui";
 import { TradeRow } from "@/components/TradeRow";
@@ -11,11 +11,20 @@ export default function RecordsPage() {
   const router = useRouter();
   const { hydrated, trades } = useStore();
   const [filter, setFilter] = useState<"all" | Side>("all");
+  useEffect(() => {
+    const saved = sessionStorage.getItem("inplot:records-filter");
+    if (saved === "buy" || saved === "sell") setFilter(saved);
+  }, []);
   const list = useMemo(() => {
     const real = trades.filter((t) => !t.isPractice).sort((a, b) => (a.tradedAt < b.tradedAt ? 1 : a.tradedAt > b.tradedAt ? -1 : b.createdAt - a.createdAt));
     if (filter === "all") return real;
     return real.filter((t) => t.side === filter);
   }, [trades, filter]);
+
+  function setFilterPersist(next: "all" | Side) {
+    setFilter(next);
+    sessionStorage.setItem("inplot:records-filter", next);
+  }
 
   if (!hydrated) return <div className="shell" />;
 
@@ -34,7 +43,7 @@ export default function RecordsPage() {
             ["buy", "매수"],
             ["sell", "매도"],
           ] as const).map(([k, label]) => (
-            <button key={k} type="button" className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>
+            <button key={k} type="button" className={filter === k ? "on" : ""} onClick={() => setFilterPersist(k)}>
               {label}
             </button>
           ))}

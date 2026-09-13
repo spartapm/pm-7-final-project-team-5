@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BackChevron } from "@/components/icons";
-import { ChartMark, PhoneShell } from "@/components/ui";
+import { ChartMark, KakaoIcon, PhoneShell } from "@/components/ui";
+import { hasKakaoKey, startKakaoLogin } from "@/lib/kakao";
 import { reasonGroups, toPick } from "@/lib/categories";
 import { moodOptions } from "@/lib/categories";
 import { PRACTICE, SAMPLE_INSIGHT } from "@/lib/onboarding-data";
@@ -66,6 +66,15 @@ export default function OnboardingPage() {
   function goLogin() {
     skipOnboarding();
     router.push("/login");
+  }
+  function goKakao() {
+    skipOnboarding();
+    sessionStorage.setItem("kakao_intent", "login");
+    const started = startKakaoLogin();
+    if (!started) {
+      showToast("카카오 키를 확인해 주세요", "err");
+      router.push("/login");
+    }
   }
   function toReplay() {
     setStage("replay");
@@ -173,9 +182,6 @@ export default function OnboardingPage() {
     return (
       <PhoneShell>
         <div className="topbar wizard-head">
-          <button className="icon-btn" type="button" onClick={() => setStage(stage === "reason" ? "ex3" : "reason")} aria-label="뒤로">
-            <BackChevron />
-          </button>
           <span className="wizard-kicker">{kicker}</span>
           <button className="skip" type="button" onClick={toReplay}>
             건너뛰기
@@ -348,6 +354,10 @@ export default function OnboardingPage() {
       <div className="footer-cta">
         <button className="btn btn-primary" type="button" onClick={() => setStage("ex1")}>
           체험 시작하기
+        </button>
+        <button className="btn btn-kakao" type="button" onClick={goKakao} style={{ marginTop: 8 }}>
+          <KakaoIcon />
+          {hasKakaoKey() ? "카카오로 로그인" : "카카오 설정 필요"}
         </button>
         <div className="login-link center">
           이미 계정이 있나요?{" "}

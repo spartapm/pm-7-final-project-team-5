@@ -1,6 +1,6 @@
 import { comboKey, comboLabel, reasonGroups } from "./categories";
 import { sideLabel, todayKey, uid } from "./format";
-import { endingFor, fallbackNarrative1, fallbackNarrative2, isExcludedMood, moodMetaOf } from "./insight-copy";
+import { endingFor, fallbackNarrative1, fallbackNarrative2, isExcludedMood, moodChartOf, moodMetaOf } from "./insight-copy";
 import type { IssuedCard, Side, Trade } from "./types";
 
 export const INSIGHT_THRESHOLD = 3;
@@ -292,7 +292,8 @@ export function moodDistribution(trades: Trade[]) {
   for (const t of trades) {
     for (const m of t.moods) {
       if (isExcludedMood(m)) continue;
-      counts.set(m.label, (counts.get(m.label) ?? 0) + 1);
+      const key = moodChartOf(m);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
@@ -303,7 +304,8 @@ export function reasonSubDistribution(trades: Trade[], group: string) {
   for (const t of trades) {
     for (const r of t.reasons) {
       if ((r.group || "기타") !== group) continue;
-      counts.set(r.label, (counts.get(r.label) ?? 0) + 1);
+      const key = r.meta || r.label;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
@@ -313,7 +315,8 @@ export function comboTop3(trades: Trade[]) {
   const map = new Map<string, { n: number; latest: number }>();
   for (const t of realOf(trades)) {
     if (!t.reasons.length || !t.moods.length) continue;
-    const { reason, mood } = comboLabel(t);
+    const { reason } = comboLabel(t);
+    const mood = t.moods[0] ? moodChartOf(t.moods[0]) : "당시 상태 없음";
     const key = `${sideLabel(t.side)} · ${reason} · ${mood}`;
     const prev = map.get(key);
     map.set(key, { n: (prev?.n ?? 0) + 1, latest: Math.max(prev?.latest ?? 0, t.createdAt) });

@@ -6,7 +6,7 @@ import { BackChevron } from "@/components/icons";
 import { NumPad, PadField } from "@/components/NumPad";
 import { PhoneShell } from "@/components/ui";
 import { sideLabel } from "@/lib/format";
-import { currencyHint, isOverseas } from "@/lib/markets";
+import { isOverseas } from "@/lib/markets";
 import { displayPriceValue, parseNum, sanitizePrice } from "@/lib/money";
 import { planSummary } from "@/lib/plans";
 import { useStore } from "@/lib/store";
@@ -37,7 +37,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const unitHint = isOverseas(plan.market) ? "USD · $" : "KRW · 원";
+  const unit = isOverseas(plan.market) ? "$" : "원";
 
   function startEdit() {
     setBuyMin(plan!.buyMin != null ? sanitizePrice(String(plan!.buyMin), plan!.market) : "0");
@@ -68,16 +68,15 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
             <p className="sub">
               {plan.stockName} · {sideLabel(plan.side)} · {plan.market}
             </p>
-            <p className="currency-hint">{currencyHint(plan.market)}</p>
             {plan.side === "buy" ? (
               <>
-                <PadField label="최소 희망가" unit={unitHint} value={displayPriceValue(buyMin, plan.market)} align="right" onOpen={() => setPad("buyMin")} />
-                <PadField label="최대 희망가" unit={unitHint} value={displayPriceValue(buyMax, plan.market)} align="right" onOpen={() => setPad("buyMax")} />
+                <PadField label="최소 희망가" unit={unit} value={displayPriceValue(buyMin, plan.market)} align="right" onOpen={() => setPad("buyMin")} />
+                <PadField label="최대 희망가" unit={unit} value={displayPriceValue(buyMax, plan.market)} align="right" onOpen={() => setPad("buyMax")} />
               </>
             ) : (
               <>
-                <PadField label="손절가" unit={unitHint} value={displayPriceValue(stopLoss, plan.market)} align="right" onOpen={() => setPad("stopLoss")} />
-                <PadField label="목표가" unit={unitHint} value={displayPriceValue(takeProfit, plan.market)} align="right" onOpen={() => setPad("takeProfit")} />
+                <PadField label="손절가" unit={unit} value={displayPriceValue(stopLoss, plan.market)} align="right" onOpen={() => setPad("stopLoss")} />
+                <PadField label="목표가" unit={unit} value={displayPriceValue(takeProfit, plan.market)} align="right" onOpen={() => setPad("takeProfit")} />
               </>
             )}
           </>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { InsightCard } from "@/components/InsightCard";
+import { PieChart, PieLegend } from "@/components/PieChart";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
 import { reasonGroups } from "@/lib/categories";
 import { comboTop3, dateHref, groupedIssued, moodDistribution, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
@@ -11,7 +12,6 @@ import { buyCaption, sellCaption } from "@/lib/plans";
 import { useStore } from "@/lib/store";
 import type { IssuedCard, Side, Trade } from "@/lib/types";
 
-const PIE = ["#252F4A", "#476B9E", "#738CAD", "#A6B8D1", "#D9E3F0", "#EEF2FA"];
 const BUY_PIE = ["#476B9E", "#6382AD", "#8098BC", "#9CAFCB", "#B8C5DA", "#D4DCE8", "#F0F2F7"];
 const SELL_PIE = ["#C99A3D", "#D5AE60", "#DFC382", "#E9D6A6", "#F3E9CC"];
 const CHART_BUY = "#476B9E";
@@ -111,12 +111,20 @@ function EmptyDash() {
           <span className="ex-badge">예시</span>
           <b>매매 추이</b>
           <p className="sub">일자별 매수·매도 건수</p>
-          <div className="ex-bars">
-            <i style={{ height: "40%" }} />
-            <i style={{ height: "70%" }} />
-            <i style={{ height: "55%" }} />
-            <i style={{ height: "90%" }} />
-          </div>
+          <svg className="ex-line" viewBox="0 0 220 72" aria-hidden>
+            <polyline fill="none" stroke="#476B9E" strokeWidth="2" points="8,48 52,28 96,36 140,16 204,24" />
+            <polyline fill="none" stroke="#C99A3D" strokeWidth="2" points="8,56 52,52 96,44 140,32 204,20" />
+            <circle cx="8" cy="48" r="2.5" fill="#476B9E" />
+            <circle cx="52" cy="28" r="2.5" fill="#476B9E" />
+            <circle cx="96" cy="36" r="2.5" fill="#476B9E" />
+            <circle cx="140" cy="16" r="2.5" fill="#476B9E" />
+            <circle cx="204" cy="24" r="2.5" fill="#476B9E" />
+            <circle cx="8" cy="56" r="2.5" fill="#C99A3D" />
+            <circle cx="52" cy="52" r="2.5" fill="#C99A3D" />
+            <circle cx="96" cy="44" r="2.5" fill="#C99A3D" />
+            <circle cx="140" cy="32" r="2.5" fill="#C99A3D" />
+            <circle cx="204" cy="20" r="2.5" fill="#C99A3D" />
+          </svg>
         </div>
         <div className="example-card">
           <span className="ex-badge">예시</span>
@@ -138,21 +146,13 @@ function EmptyDash() {
           <span className="ex-badge">예시</span>
           <b>매수 마음</b>
           <p className="sub">매수할 때 자주 고른 마음</p>
-          <div className="ex-bars">
-            <i style={{ height: "80%" }} />
-            <i style={{ height: "45%" }} />
-            <i style={{ height: "30%" }} />
-          </div>
+          <div className="ex-pie buy-mood" />
         </div>
         <div className="example-card">
           <span className="ex-badge">예시</span>
           <b>매도 마음</b>
           <p className="sub">매도할 때 자주 고른 마음</p>
-          <div className="ex-bars">
-            <i style={{ height: "55%" }} />
-            <i style={{ height: "75%" }} />
-            <i style={{ height: "35%" }} />
-          </div>
+          <div className="ex-pie sell-mood" />
         </div>
       </div>
       <div className="dots">
@@ -262,13 +262,13 @@ function Dashboard({
         <div className="pie-pair">
           <div>
             <b className="chart-group">매수 · {buyCount}건</b>
-            <Pie slices={buyMoods} emptyLabel="아직 기록 없음" palette={BUY_PIE} size={64} />
-            <Legend slices={buyMoods} palette={BUY_PIE} compact />
+            <PieChart slices={buyMoods} emptyLabel="아직 기록 없음" palette={BUY_PIE} size={96} />
+            <PieLegend slices={buyMoods} palette={BUY_PIE} compact />
           </div>
           <div>
             <b className="chart-group">매도 · {sellCount}건</b>
-            <Pie slices={sellMoods} emptyLabel="아직 기록 없음" palette={SELL_PIE} size={64} />
-            <Legend slices={sellMoods} palette={SELL_PIE} compact />
+            <PieChart slices={sellMoods} emptyLabel="아직 기록 없음" palette={SELL_PIE} size={96} />
+            <PieLegend slices={sellMoods} palette={SELL_PIE} compact />
           </div>
         </div>
       </div>
@@ -443,74 +443,22 @@ function ReasonToggle({ real, reasons }: { real: Trade[]; reasons: [string, numb
           if (!slices.length) return null;
           const count = slices.reduce((s, x) => s + x[1], 0);
           return (
-            <div key={g.group} className="pie-wrap" style={{ marginTop: 12 }}>
-              <div>
-                <b className="chart-group">{g.group} · {count}건</b>
-                <Pie slices={slices} size={56} />
+            <div key={g.group} className="pie-block">
+              <b className="chart-group">{g.group} · {count}건</b>
+              <div className="pie-wrap compact">
+                <PieChart slices={slices} size={88} />
+                <PieLegend slices={slices} compact />
               </div>
-              <Legend slices={slices} compact />
             </div>
           );
         })
       ) : (
-        <div className="pie-wrap">
-          <Pie slices={reasons} size={120} />
-          <Legend slices={reasons} />
+        <div className="pie-wrap overview">
+          <PieChart slices={reasons} size={132} />
+          <PieLegend slices={reasons} />
         </div>
       )}
     </>
   );
 }
 
-function Legend({ slices, palette = PIE, compact = false }: { slices: [string, number][]; palette?: string[]; compact?: boolean }) {
-  const total = slices.reduce((s, x) => s + x[1], 0) || 1;
-  return (
-    <div className={compact ? "pie-legend compact" : "pie-legend"}>
-      {slices.slice(0, compact ? 7 : 5).map(([name, n], i) => (
-        <div key={name}>
-          <i className="swatch" style={{ background: palette[i % palette.length] }} />
-          {compact ? (
-            <span className="legend-meta">{name} {n}건·{Math.round((n / total) * 100)}%</span>
-          ) : (
-            <>
-              <span className="legend-name">{name}</span>
-              <span className="legend-meta">{n}건 · {Math.round((n / total) * 100)}%</span>
-            </>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Pie({ slices, emptyLabel, palette = PIE, size = 96 }: { slices: [string, number][]; emptyLabel?: string; palette?: string[]; size?: number }) {
-  const total = slices.reduce((s, x) => s + x[1], 0) || 1;
-  let acc = 0;
-  const r = Math.round(size * 0.375);
-  const stroke = Math.max(10, Math.round(size * 0.14));
-  const c = 2 * Math.PI * r;
-  const mid = size / 2;
-  if (!slices.length) {
-    return (
-      <div className="pie-empty">
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <circle cx={mid} cy={mid} r={r} fill="none" stroke="#EAEDF0" strokeWidth={stroke} />
-        </svg>
-        <p className="sub">{emptyLabel || "아직 기록 없음"}</p>
-      </div>
-    );
-  }
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <g transform={`translate(${mid},${mid}) rotate(-90)`}>
-        {slices.slice(0, 6).map(([, n], i) => {
-          const dash = (n / total) * c;
-          const gap = c - dash;
-          const offset = -acc;
-          acc += dash;
-          return <circle key={i} r={r} fill="none" stroke={palette[i % palette.length]} strokeWidth={stroke} strokeDasharray={`${dash} ${gap}`} strokeDashoffset={offset} strokeLinecap="butt" />;
-        })}
-      </g>
-    </svg>
-  );
-}

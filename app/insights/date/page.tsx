@@ -30,7 +30,7 @@ function DateInner() {
         {cards.map((c) => (
           <InsightCard key={c.id} card={c} />
         ))}
-        <p className="sub" style={{ marginTop: 16 }}>
+        <p className="sub" style={{ marginTop: 12 }}>
           카드 내용은 발행 당시 그대로 보존돼요. 메인 화면(경향해석 탭)에는 매수·매도 슬롯당 최신 카드 1장만 노출돼요.
         </p>
       </div>

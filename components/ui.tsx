@@ -66,6 +66,21 @@ export function ChartMark() {
   );
 }
 
+export function PlanEmptyMark() {
+  return (
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden>
+      <circle cx="60" cy="60" r="56" fill="#EEF2FA" />
+      <rect x="34" y="28" width="52" height="64" rx="10" fill="#fff" stroke="#476B9E" strokeWidth="2" />
+      <rect x="48" y="22" width="24" height="12" rx="4" fill="#C99A3D" />
+      <rect x="44" y="46" width="14" height="6" rx="3" fill="#476B9E" />
+      <rect x="62" y="47" width="16" height="4" rx="2" fill="#D9E3F0" />
+      <rect x="44" y="62" width="14" height="6" rx="3" fill="#C99A3D" />
+      <rect x="62" y="63" width="16" height="4" rx="2" fill="#F3E9CC" />
+      <rect x="44" y="78" width="32" height="4" rx="2" fill="#EAEDF0" />
+    </svg>
+  );
+}
+
 export function KakaoIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -109,6 +124,7 @@ export function Modal({
   body,
   cancel = "돌아가기",
   confirm,
+  split = false,
   onCancel,
   onConfirm,
 }: {
@@ -116,6 +132,7 @@ export function Modal({
   body: string;
   cancel?: string;
   confirm: string;
+  split?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -124,12 +141,25 @@ export function Modal({
       <div className="modal">
         <h3>{title}</h3>
         <p>{body}</p>
-        <button className="btn btn-primary" type="button" onClick={onConfirm} style={{ marginBottom: 8 }}>
-          {confirm}
-        </button>
-        <button className="btn btn-ghost" type="button" onClick={onCancel}>
-          {cancel}
-        </button>
+        {split ? (
+          <div className="modal-split">
+            <button className="btn btn-ghost" type="button" onClick={onCancel}>
+              {cancel}
+            </button>
+            <button className="btn btn-primary" type="button" onClick={onConfirm}>
+              {confirm}
+            </button>
+          </div>
+        ) : (
+          <>
+            <button className="btn btn-primary" type="button" onClick={onConfirm} style={{ marginBottom: 8 }}>
+              {confirm}
+            </button>
+            <button className="btn btn-ghost" type="button" onClick={onCancel}>
+              {cancel}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -83,7 +83,7 @@ export function TradeWizard({
               <div style={{ flex: 1 }}>
                 <PadField
                   label={draft.side === "buy" ? "매수가" : "매도가"}
-                  unit={draft.stock ? (unit === "원" ? "KRW · 원" : "USD · $") : unit}
+                  unit={unit}
                   value={displayPriceValue(draft.price, market)}
                   placeholder={pricePlaceholder(market)}
                   align="right"
