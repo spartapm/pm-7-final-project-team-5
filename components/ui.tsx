@@ -67,17 +67,41 @@ export function ChartMark() {
 }
 
 export function PlanEmptyMark() {
+  return <img src="/figma/plan-empty-icon.png" alt="" width={115} height={115} className="plan-empty-ico" />;
+}
+
+export function ChoiceSheet({
+  title,
+  left,
+  right,
+  onLeft,
+  onRight,
+  onClose,
+}: {
+  title: string;
+  left: string;
+  right: string;
+  onLeft: () => void;
+  onRight: () => void;
+  onClose: () => void;
+}) {
   return (
-    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden>
-      <circle cx="60" cy="60" r="56" fill="#EEF2FA" />
-      <rect x="34" y="28" width="52" height="64" rx="10" fill="#fff" stroke="#476B9E" strokeWidth="2" />
-      <rect x="48" y="22" width="24" height="12" rx="4" fill="#C99A3D" />
-      <rect x="44" y="46" width="14" height="6" rx="3" fill="#476B9E" />
-      <rect x="62" y="47" width="16" height="4" rx="2" fill="#D9E3F0" />
-      <rect x="44" y="62" width="14" height="6" rx="3" fill="#C99A3D" />
-      <rect x="62" y="63" width="16" height="4" rx="2" fill="#F3E9CC" />
-      <rect x="44" y="78" width="32" height="4" rx="2" fill="#EAEDF0" />
-    </svg>
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal choice-sheet" onClick={(e) => e.stopPropagation()}>
+        <button className="sheet-x" type="button" onClick={onClose} aria-label="닫기">
+          ✕
+        </button>
+        <h3 className="choice-title">{title}</h3>
+        <div className="modal-split">
+          <button className="btn btn-ghost" type="button" onClick={onLeft}>
+            {left}
+          </button>
+          <button className="btn btn-primary" type="button" onClick={onRight}>
+            {right}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

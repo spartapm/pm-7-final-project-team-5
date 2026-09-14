@@ -6,15 +6,14 @@ import { BackChevron, PencilIco } from "@/components/icons";
 import { PlanCards } from "@/components/PlanCards";
 import { TradeWizard } from "@/components/TradeWizard";
 import { Modal, PhoneShell } from "@/components/ui";
-import { formatPrice, formatQty, formatWhen, sideLabel } from "@/lib/format";
+import { formatPrice, formatQty } from "@/lib/format";
 import { findStock } from "@/lib/stocks";
 import { draftFromTrade, useStore } from "@/lib/store";
 
 export default function RecordDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { hydrated, trades, deleteTrade, hidePlanOnTrade, updateTrade } = useStore();
-  const [askDelete, setAskDelete] = useState(false);
+  const { hydrated, trades, hidePlanOnTrade, updateTrade } = useStore();
   const [hideSide, setHideSide] = useState<"buy" | "sell" | null>(null);
   const [editing, setEditing] = useState(false);
   const trade = trades.find((t) => t.id === id);
@@ -80,47 +79,34 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
       </div>
       <div className="scroll">
         <div className="card">
-          <div className="section-head" style={{ marginTop: 0 }}>
-            <b>매매 정보</b>
-          </div>
           <dl className="detail-kv">
-            <dt>구분</dt>
-            <dd className={trade.side === "buy" ? "side-buy" : "side-sell"}>{sideLabel(trade.side)}</dd>
             <dt>종목</dt>
+            <dd>{trade.stockName}</dd>
+            <dt>수량 · {trade.side === "sell" ? "매도가" : "매수가"}</dt>
             <dd>
-              {trade.stockName} ({trade.stockCode})
+              {formatQty(trade.qty)} · {formatPrice(trade.price, trade.market)}
             </dd>
-            <dt>가격</dt>
-            <dd>{formatPrice(trade.price, trade.market)}</dd>
-            <dt>수량</dt>
-            <dd>{formatQty(trade.qty)}</dd>
-            <dt>일자</dt>
-            <dd>{formatWhen(trade.tradedAt, trade.tradedTime)}</dd>
+            <dt>{trade.side === "sell" ? "매도일시" : "매수일시"}</dt>
+            <dd>
+              {trade.tradedAt}
+              {trade.tradedTime ? ` ${trade.tradedTime}` : ""}
+            </dd>
           </dl>
         </div>
-        <div className="card">
+        <div className="fact-card">
           <b>매매 이유</b>
-          <div className="chips-read stack">
-            {trade.reasons.length ? (
-              trade.reasons.map((r) => (
-                <span key={r.label}>
-                  {r.group} · {r.label}
-                </span>
-              ))
-            ) : (
-              <span className="sub">선택하지 않음</span>
-            )}
-          </div>
+          <p className="keep">
+            {trade.reasons.length
+              ? groupedPicks(trade.reasons)
+                  .map((g) => `${g.group}・${g.labels.join("・")}`)
+                  .join(" ")
+              : "선택하지 않음"}
+          </p>
         </div>
-        <div className="card">
+        <div className="fact-card">
           <b>그때 마음</b>
-          <div className="chips-read stack">
-            {trade.moods.length ? trade.moods.map((m) => <span key={m.label}>{m.label}</span>) : <span className="sub">선택하지 않음</span>}
-          </div>
+          <p className="keep">{trade.moods.length ? trade.moods.map((m) => m.label).join("・") : "선택하지 않음"}</p>
         </div>
-        <button className="skip" type="button" onClick={() => setAskDelete(true)} style={{ display: "block", margin: "8px auto 0" }}>
-          기록 삭제
-        </button>
         <PlanCards
           trade={trade}
           onHide={(side) => setHideSide(side)}
@@ -130,11 +116,6 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
             )
           }
         />
-      </div>
-      <div className="footer-cta">
-        <button className="btn btn-primary" type="button" onClick={() => router.push("/records")}>
-          기록 목록 확인하기
-        </button>
       </div>
       {hideSide ? (
         <Modal
@@ -148,18 +129,20 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
           }}
         />
       ) : null}
-      {askDelete ? (
-        <Modal
-          title="이 기록을 삭제할까요?"
-          body="삭제한 기록은 되돌릴 수 없어요. 이미 발행된 인사이트 카드는 그대로 남습니다."
-          confirm="삭제"
-          onCancel={() => setAskDelete(false)}
-          onConfirm={() => {
-            deleteTrade(trade.id);
-            router.replace("/records");
-          }}
-        />
-      ) : null}
     </PhoneShell>
   );
+}
+
+function groupedPicks(items: { group: string | null; label: string }[]) {
+  const order: string[] = [];
+  const map = new Map<string, string[]>();
+  items.forEach((item) => {
+    const group = item.group || "기타";
+    if (!map.has(group)) {
+      order.push(group);
+      map.set(group, []);
+    }
+    map.get(group)!.push(item.label);
+  });
+  return order.map((group) => ({ group, labels: map.get(group) || [] }));
 }

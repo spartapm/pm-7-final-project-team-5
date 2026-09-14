@@ -93,13 +93,27 @@ function CallbackInner() {
     })();
   }, [params, login, markWelcomeSeen, router]);
 
+  const failed = hint !== "카카오 로그인 확인 중...";
+
   return (
     <PhoneShell>
-      <div className="hero">
-        <h1>{hint}</h1>
-        <button className="btn btn-ghost" type="button" onClick={() => router.replace("/login")}>
-          로그인으로 돌아가기
-        </button>
+      <div className="kakao-wait">
+        <div className="kakao-wait-body">
+          {failed ? null : <i className="spinner" aria-hidden />}
+          <h1>{failed ? hint : "카카오 로그인 확인 중"}</h1>
+          {failed ? null : (
+            <p className="sub">
+              계정 정보를 받아오고 있어요
+              <br />
+              잠시만 기다려 주세요
+            </p>
+          )}
+        </div>
+        <div className="footer-cta">
+          <button className="btn btn-ghost" type="button" onClick={() => router.replace("/login")}>
+            로그인으로 돌아가기
+          </button>
+        </div>
       </div>
     </PhoneShell>
   );

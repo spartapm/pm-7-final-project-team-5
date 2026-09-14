@@ -49,7 +49,7 @@ export function PieChart({
         const start = acc;
         const end = acc + sweep;
         acc = end;
-        return <path key={i} d={wedge(mid, mid, r, start, end)} fill={palette[i % palette.length]} stroke="#fff" strokeWidth="2" />;
+        return <path key={i} d={wedge(mid, mid, r, start, end)} fill={palette[i % palette.length]} />;
       })}
     </svg>
   );
@@ -67,17 +67,26 @@ export function PieLegend({
   const total = slices.reduce((s, x) => s + x[1], 0) || 1;
   return (
     <div className={compact ? "pie-legend compact" : "pie-legend"}>
-      {slices.slice(0, compact ? 7 : 5).map(([name, n], i) => (
-        <div key={name}>
-          <i className="swatch" style={{ background: palette[i % palette.length] }} />
-          <span className="legend-copy">
-            <span className="legend-name">{name}</span>
-            <span className="legend-meta">
-              {n}건 · {Math.round((n / total) * 100)}%
-            </span>
-          </span>
-        </div>
-      ))}
+      {slices.slice(0, compact ? 7 : 5).map(([name, n], i) => {
+        const pct = Math.round((n / total) * 100);
+        return (
+          <div key={name}>
+            <i className="swatch" style={{ background: palette[i % palette.length] }} />
+            {compact ? (
+              <span className="legend-flat">
+                {name} {n}건·{pct}%
+              </span>
+            ) : (
+              <span className="legend-copy row">
+                <span className="legend-name">{name}</span>
+                <span className="legend-meta">
+                  {n}건 · {pct}%
+                </span>
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

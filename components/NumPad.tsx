@@ -68,15 +68,14 @@ export function NumPad({
       ? ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0", "back"]
       : ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "back"];
 
-  const title = kind === "price" ? "가격" : kind === "qty" ? "수량" : kind === "date" ? "매매일자" : "매매 시각";
-
   return (
     <div className="num-pad-back" onClick={onClose}>
       <div className="num-pad" onClick={(e) => e.stopPropagation()}>
-        <div className="num-pad-head">
-          <span>{title}</span>
-          {kind === "price" || kind === "qty" ? <b>{shown()}</b> : null}
-        </div>
+        {kind === "price" || kind === "qty" ? (
+          <div className="num-pad-head value-only">
+            <b>{shown()}</b>
+          </div>
+        ) : null}
         {kind === "date" ? (
           <DateCal
             value={value}
@@ -248,17 +247,18 @@ function TimeWheel({ value, onPick, onSkip }: { value: string; onPick: (next: st
         <span className="wheel-colon">:</span>
         <WheelCol items={minutes} value={mm} onChange={setMm} label="분" />
       </div>
-      <button
-        className="btn btn-primary"
-        type="button"
-        style={{ marginTop: 10 }}
-        onClick={() => onPick(`${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`)}
-      >
-        완료
-      </button>
-      <button className="btn btn-ghost" type="button" style={{ marginTop: 8 }} onClick={onSkip}>
-        시각 생략
-      </button>
+      <div className="modal-split time-cta">
+        <button className="btn btn-ghost" type="button" onClick={onSkip}>
+          시간 없이 저장
+        </button>
+        <button
+          className="btn btn-primary"
+          type="button"
+          onClick={() => onPick(`${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`)}
+        >
+          선택 완료
+        </button>
+      </div>
     </div>
   );
 }
@@ -278,13 +278,14 @@ export function PadField({
   align?: "left" | "right";
   onOpen: () => void;
 }) {
+  const empty = !value;
   return (
     <div className="field">
       <label className="pad-label">
         <span>{label}</span>
         {unit ? <span className="pad-unit">{unit}</span> : null}
       </label>
-      <button className={`pad-value ${align === "right" ? "end" : ""}`} type="button" onClick={onOpen}>
+      <button className={`pad-value ${align === "right" ? "end" : ""} ${empty ? "placeholder" : ""}`} type="button" onClick={onOpen}>
         {value || placeholder || "0"}
       </button>
     </div>

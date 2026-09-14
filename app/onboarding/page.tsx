@@ -48,6 +48,18 @@ function OnbTrade({ name, side, price, qty }: { name: string; side: string; pric
   );
 }
 
+function OnbReportDash() {
+  return (
+    <img
+      src="/figma/insight-report.png"
+      alt="인사이트 리포트"
+      className="example-report"
+      width={360}
+      height={1278}
+    />
+  );
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const { skipOnboarding, showToast } = useStore();
@@ -98,17 +110,22 @@ export default function OnboardingPage() {
             </button>
           </div>
           {tab === "dash" ? (
-            <img src="/brand/insight-report-sample.png" alt="첫 인사이트 리포트 예시" className="example-report" width={375} height={1519} />
+            <OnbReportDash />
           ) : (
             <>
-              <div className="card">
-                <p className="sub" style={{ fontWeight: 700, color: "#264d80" }}>{SAMPLE_INSIGHT.policy}</p>
-                <p className="sub">{SAMPLE_INSIGHT.policySub}</p>
+              <div className="insight-policy">
+                <p className="policy-title">{SAMPLE_INSIGHT.policy}</p>
+                <p className="policy-sub">{SAMPLE_INSIGHT.policySub}</p>
               </div>
-              <div className="card insight-card">
-                <span className="badge">📉 매수 · 차트 패턴 · 2건</span>
-                <h3>최근 매수 기록 중 2건에서 “차트에서 자주 멈추던 가격대를 뚫고 움직였다"는 이유가 반복됐어요.</h3>
-                <p>가격이 크게 떨어졌을 때 반사적으로 매수하는 경향이 보여요.</p>
+              <div className="date-group">
+                <div className="date-group-h">
+                  <b>오늘 발행</b>
+                </div>
+                <div className="card insight-card accent">
+                  <span className="badge">📉 매수 · 차트 패턴 · 2건</span>
+                  <p className="narrative1 keep">{SAMPLE_INSIGHT.narrative1}</p>
+                  <p className="narrative2 keep">{SAMPLE_INSIGHT.narrative2}</p>
+                </div>
               </div>
             </>
           )}

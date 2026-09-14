@@ -38,34 +38,18 @@ export function TradeRow({
       </p>
       {showReason ? (
         <div className="trade-meta">
-          {trade.reasons.length ? (
-            trade.reasons.map((r) => (
-              <div className="kv-mini" key={r.label}>
-                <span>매매 이유</span>
-                <p>
-                  {r.group} · {r.label}
-                </p>
-              </div>
-            ))
-          ) : (
-            <div className="kv-mini">
-              <span>매매 이유</span>
-              <p>선택하지 않음</p>
-            </div>
-          )}
-          {trade.moods.length ? (
-            trade.moods.map((m) => (
-              <div className="kv-mini" key={m.label}>
-                <span>그때 마음</span>
-                <p>{m.label}</p>
-              </div>
-            ))
-          ) : (
-            <div className="kv-mini">
-              <span>그때 마음</span>
-              <p>선택하지 않음</p>
-            </div>
-          )}
+          <div className="kv-mini">
+            <span>매매 이유</span>
+            <p className="stack-lines keep">
+              {trade.reasons.length ? trade.reasons.map((r) => <span key={r.label}>{r.label}</span>) : "선택하지 않음"}
+            </p>
+          </div>
+          <div className="kv-mini">
+            <span>그때 마음</span>
+            <p className="stack-lines keep">
+              {trade.moods.length ? trade.moods.map((m) => <span key={m.label}>{m.label}</span>) : "선택하지 않음"}
+            </p>
+          </div>
         </div>
       ) : null}
     </button>

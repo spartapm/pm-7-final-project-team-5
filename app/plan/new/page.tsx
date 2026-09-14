@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BackChevron } from "@/components/icons";
-import { PhoneShell } from "@/components/ui";
+import { ChoiceSheet, PhoneShell } from "@/components/ui";
 import { StockSearch } from "@/components/StockSearch";
 import { isOverseas, sameStockCode } from "@/lib/markets";
 import { displayPriceValue, parseNum, sanitizePrice } from "@/lib/money";
@@ -84,22 +84,34 @@ function NewPlanInner() {
     setSide(lockSide);
   }, [plans, stock, lockSide, editingId, returnTo]);
 
-  function chooseSide(next: Side) {
-    if (!stock) return;
-    const found = findPlan(plans, stock.code, stock.market, next);
+  function chooseSide(next: Side, picked: Stock | null = stock) {
+    if (!picked) return;
+    const found = findPlan(plans, picked.code, picked.market, next);
     setSide(next);
     setAskType(false);
     if (found) {
       setEditingId(found.id);
-      setBuyMin(found.buyMin != null ? sanitizePrice(String(found.buyMin), stock.market) : "0");
-      setBuyMax(found.buyMax != null ? sanitizePrice(String(found.buyMax), stock.market) : "0");
-      setStopLoss(found.stopLoss != null ? sanitizePrice(String(found.stopLoss), stock.market) : "0");
-      setTakeProfit(found.takeProfit != null ? sanitizePrice(String(found.takeProfit), stock.market) : "0");
+      setBuyMin(found.buyMin != null ? sanitizePrice(String(found.buyMin), picked.market) : "0");
+      setBuyMax(found.buyMax != null ? sanitizePrice(String(found.buyMax), picked.market) : "0");
+      setStopLoss(found.stopLoss != null ? sanitizePrice(String(found.stopLoss), picked.market) : "0");
+      setTakeProfit(found.takeProfit != null ? sanitizePrice(String(found.takeProfit), picked.market) : "0");
       setAskDup(!returnTo);
     } else {
       setAskDup(false);
       setEditingId(null);
     }
+  }
+
+  function pickStock(next: Stock) {
+    setStock(next);
+    setAskDup(false);
+    setEditingId(null);
+    if (lockSide) {
+      chooseSide(lockSide, next);
+      return;
+    }
+    setSide(null);
+    setAskType(true);
   }
 
   function save() {
@@ -185,17 +197,17 @@ function NewPlanInner() {
         <span />
       </div>
       <div className="scroll">
-        {!stock || (!side && !askType && !askDup) ? (
+        {!formReady ? (
           <>
             <div className="step-kicker">계획 등록</div>
             <h1 className="step-title">종목 검색</h1>
             <StockSearch
               emptyText="종목을 찾지 못했어요, 입력한 내용을 다시 확인해 주세요"
               selected={stock}
-              onPick={setStock}
+              onPick={pickStock}
             />
           </>
-        ) : formReady ? (
+        ) : (
           <>
             <p className="sub">
               {stock!.name} · {stock!.code} · {stock!.marketName}
@@ -203,27 +215,18 @@ function NewPlanInner() {
             {overseas ? <p className="overseas-hint">해외 종목은 가격을 달러(USD)로 입력하고, 소수점도 쓸 수 있어요.</p> : null}
             {side === "buy" ? (
               <>
-                <PadField label="최소 희망가" unit={overseas ? "$" : "원"} value={displayPriceValue(buyMin, stock!.market)} align="right" onOpen={() => setPad("buyMin")} />
-                <PadField label="최대 희망가" unit={overseas ? "$" : "원"} value={displayPriceValue(buyMax, stock!.market)} align="right" onOpen={() => setPad("buyMax")} />
+                <PadField label="최소 희망가" value={displayPriceValue(buyMin, stock!.market)} align="right" onOpen={() => setPad("buyMin")} />
+                <PadField label="최대 희망가" value={displayPriceValue(buyMax, stock!.market)} align="right" onOpen={() => setPad("buyMax")} />
               </>
             ) : (
               <>
-                <PadField label="손절가" unit={overseas ? "$" : "원"} value={displayPriceValue(stopLoss, stock!.market)} align="right" onOpen={() => setPad("stopLoss")} />
-                <PadField label="목표가" unit={overseas ? "$" : "원"} value={displayPriceValue(takeProfit, stock!.market)} align="right" onOpen={() => setPad("takeProfit")} />
+                <PadField label="손절가" value={displayPriceValue(stopLoss, stock!.market)} align="right" onOpen={() => setPad("stopLoss")} />
+                <PadField label="목표가" value={displayPriceValue(takeProfit, stock!.market)} align="right" onOpen={() => setPad("takeProfit")} />
               </>
             )}
           </>
-        ) : (
-          <p className="sub">{stock?.name} 종목이 선택됐어요.</p>
         )}
       </div>
-      {!formReady ? (
-        <div className="footer-cta">
-          <button className="btn btn-primary" type="button" disabled={!stock} onClick={() => stock && setAskType(true)}>
-            다음
-          </button>
-        </div>
-      ) : null}
       {formReady ? (
         <div className="footer-cta">
           <button className="btn btn-primary" type="button" onClick={save}>
@@ -232,20 +235,14 @@ function NewPlanInner() {
         </div>
       ) : null}
       {askType ? (
-        <div className="modal-back">
-          <div className="modal">
-            <h3>어떤 매매 계획인가요?</h3>
-            <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={() => chooseSide("buy")}>
-              매수 계획
-            </button>
-            <button className="btn btn-ghost" type="button" style={{ marginBottom: 8 }} onClick={() => chooseSide("sell")}>
-              매도 계획
-            </button>
-            <button className="btn btn-ghost" type="button" onClick={() => setAskType(false)}>
-              닫기
-            </button>
-          </div>
-        </div>
+        <ChoiceSheet
+          title="어떤 매매 계획인가요?"
+          left="매수 계획"
+          right="매도 계획"
+          onLeft={() => chooseSide("buy")}
+          onRight={() => chooseSide("sell")}
+          onClose={() => setAskType(false)}
+        />
       ) : null}
       {askDup ? (
         <div className="modal-back">
@@ -260,7 +257,7 @@ function NewPlanInner() {
               네
             </button>
             <button className="btn btn-ghost" type="button" onClick={() => { setAskDup(false); setSide(null); }}>
-              아니요
+              아니오
             </button>
           </div>
         </div>

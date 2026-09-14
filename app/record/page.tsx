@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackChevron } from "@/components/icons";
-import { Modal, PhoneShell } from "@/components/ui";
+import { ChoiceSheet, Modal, PhoneShell } from "@/components/ui";
 import { StockSearch } from "@/components/StockSearch";
 import { TradeWizard } from "@/components/TradeWizard";
 import { emptyDraft, useStore } from "@/lib/store";
@@ -66,31 +66,19 @@ export default function RecordPage() {
           selected={stock}
           onPick={(s) => {
             setStock(s);
-            setPickSide(false);
+            setPickSide(true);
           }}
         />
       </div>
-      <div className="footer-cta">
-        <button className="btn btn-primary" type="button" disabled={!stock} onClick={() => stock && setPickSide(true)}>
-          기록 시작하기
-        </button>
-      </div>
       {pickSide && stock ? (
-        <div className="modal-back">
-          <div className="modal">
-            <h3>어떤 매매인가요?</h3>
-            <p>{stock.name} 기록을 남길까요?</p>
-            <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={() => start("buy", stock)}>
-              매수 기록
-            </button>
-            <button className="btn btn-ghost" type="button" style={{ marginBottom: 8 }} onClick={() => start("sell", stock)}>
-              매도 기록
-            </button>
-            <button className="btn btn-ghost" type="button" onClick={() => setPickSide(false)}>
-              닫기
-            </button>
-          </div>
-        </div>
+        <ChoiceSheet
+          title="어떤 기록을 시작할까요?"
+          left="매수 기록"
+          right="매도 기록"
+          onLeft={() => start("buy", stock)}
+          onRight={() => start("sell", stock)}
+          onClose={() => setPickSide(false)}
+        />
       ) : null}
     </PhoneShell>
   );

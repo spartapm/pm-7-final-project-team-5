@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { moodOptions, reasonGroups, toPick } from "@/lib/categories";
 import { formatPrice, formatQty, formatWhen, sideLabel, todayKey } from "@/lib/format";
-import { priceUnit } from "@/lib/markets";
+import { tradePriceCaption } from "@/lib/markets";
 import { bumpQty, displayPriceValue, parseNum, pricePlaceholder } from "@/lib/money";
 import { BackChevron } from "@/components/icons";
 import { NumPad, PadField, type PadKind } from "@/components/NumPad";
@@ -33,8 +33,8 @@ export function TradeWizard({
   const groups = reasonGroups();
   const moods = moodOptions(draft.side);
   const side = sideLabel(draft.side);
-  const unit = draft.stock ? priceUnit(draft.stock.market) : "원";
   const market = draft.stock?.market || "KOSPI";
+  const priceLabel = tradePriceCaption(draft.side, market);
   const canInfo = Boolean(draft.stock) && parseNum(draft.price) > 0 && parseNum(draft.qty) > 0 && Boolean(draft.tradedAt);
 
   function pickReason(item: CategoryPick) {
@@ -82,8 +82,7 @@ export function TradeWizard({
             <div className="field-row">
               <div style={{ flex: 1 }}>
                 <PadField
-                  label={draft.side === "buy" ? "매수가" : "매도가"}
-                  unit={unit}
+                  label={priceLabel}
                   value={displayPriceValue(draft.price, market)}
                   placeholder={pricePlaceholder(market)}
                   align="right"
@@ -107,10 +106,10 @@ export function TradeWizard({
             </div>
             <div className="field-row">
               <div style={{ flex: 1 }}>
-                <PadField label="매매일자" value={draft.tradedAt} onOpen={() => setPad("date")} />
+                <PadField label="매매일자" value={draft.tradedAt} align="right" onOpen={() => setPad("date")} />
               </div>
               <div style={{ flex: 1 }}>
-                <PadField label="시간" unit="선택" value={draft.tradedTime || "00:00"} placeholder="00:00" onOpen={() => setPad("time")} />
+                <PadField label="시간 (선택)" value={draft.tradedTime} placeholder="00:00" align="right" onOpen={() => setPad("time")} />
               </div>
             </div>
           </>

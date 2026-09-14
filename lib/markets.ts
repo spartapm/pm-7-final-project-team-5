@@ -13,7 +13,12 @@ export function currencyLabel(market: string) {
 }
 
 export function priceUnit(market: string) {
-  return isOverseas(market) ? "달러" : "원";
+  return isOverseas(market) ? "$" : "원";
+}
+
+export function tradePriceCaption(side: "buy" | "sell", market: string) {
+  const name = side === "buy" ? "매수가" : "매도가";
+  return isOverseas(market) ? `${name} (USD · $)` : `${name} (KRW · 원)`;
 }
 
 export function currencyHint(market: string) {

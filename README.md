@@ -4,6 +4,8 @@
 
 화면은 [피그마 5조](https://www.figma.com/design/4vkt1I8oKaDETSNRHXF4ns/5%EC%A1%B0?node-id=50-2293) **인플롯 0.2**를 기준으로 맞췄습니다. 작업 로그는 `docs/PROGRESS.md`.
 
+프로덕션: [inplot.co.kr](https://inplot.co.kr) · [www.inplot.co.kr](https://www.inplot.co.kr)
+
 ## 실행
 
 ```bash
@@ -58,4 +60,4 @@ npm run db:schema
 
 - `http://localhost:3005/auth/kakao/callback`
 - `https://inplot.co.kr/auth/kakao/callback`
-- `https://pm-7-final-project-team-5.vercel.app/auth/kakao/callback`
+- `https://www.inplot.co.kr/auth/kakao/callback`

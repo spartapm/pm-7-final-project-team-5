@@ -69,7 +69,11 @@ export function pricePlaceholder(market: string) {
 }
 
 export function displayPriceValue(value: string, market: string) {
-  const shown = value || "0";
-  if (isOverseas(market)) return shown.startsWith("$") ? shown : `$${shown}`;
-  return shown.endsWith("원") ? shown : `${shown}원`;
+  if (isOverseas(market)) {
+    const shown = value.replace(/^\$/, "") || "0";
+    return shown.startsWith("$") ? shown : `$${shown}`;
+  }
+  const digits = value.replace(/[^\d]/g, "");
+  if (!digits) return "0원";
+  return `${Number(digits).toLocaleString("ko-KR")}원`;
 }

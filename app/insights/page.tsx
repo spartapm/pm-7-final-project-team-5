@@ -7,6 +7,7 @@ import { PieChart, PieLegend } from "@/components/PieChart";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
 import { reasonGroups } from "@/lib/categories";
 import { comboTop3, dateHref, groupedIssued, moodDistribution, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
+import { todayKey } from "@/lib/format";
 import { SAMPLE_INSIGHT } from "@/lib/onboarding-data";
 import { buyCaption, sellCaption } from "@/lib/plans";
 import { useStore } from "@/lib/store";
@@ -201,9 +202,9 @@ function SegBox({ label, count }: { label: string; count: number }) {
 function TrendList({ groups }: { groups: [string, IssuedCard[]][] }) {
   return (
     <>
-      <div className="card">
-        <p className="sub">기록 3개가 쌓일 때마다 새 카드 발행을 시도해요</p>
-        <p className="sub">뚜렷한 경향이 안 보이면 이번엔 카드가 발행되지 않을 수 있어요</p>
+      <div className="insight-policy">
+        <p className="policy-title">{SAMPLE_INSIGHT.policy}</p>
+        <p className="policy-sub">{SAMPLE_INSIGHT.policySub}</p>
       </div>
       {groups.map(([date, cards]) => {
         const buy = cards.filter((c) => c.side === "buy").sort((a, b) => b.issuedAt - a.issuedAt)[0];
@@ -212,7 +213,7 @@ function TrendList({ groups }: { groups: [string, IssuedCard[]][] }) {
         return (
           <div className="date-group" key={date}>
             <div className="date-group-h">
-              <b>{date} 발행</b>
+              <b>{date === todayKey() ? "오늘 발행" : `${date} 발행`}</b>
               <a href={dateHref(date)}>이 날짜의 카드 전체보기</a>
             </div>
             {shown.map((c) => (
@@ -262,12 +263,12 @@ function Dashboard({
         <div className="pie-pair">
           <div>
             <b className="chart-group">매수 · {buyCount}건</b>
-            <PieChart slices={buyMoods} emptyLabel="아직 기록 없음" palette={BUY_PIE} size={96} />
+            <PieChart slices={buyMoods} emptyLabel="아직 기록 없음" palette={BUY_PIE} size={64} />
             <PieLegend slices={buyMoods} palette={BUY_PIE} compact />
           </div>
           <div>
             <b className="chart-group">매도 · {sellCount}건</b>
-            <PieChart slices={sellMoods} emptyLabel="아직 기록 없음" palette={SELL_PIE} size={96} />
+            <PieChart slices={sellMoods} emptyLabel="아직 기록 없음" palette={SELL_PIE} size={64} />
             <PieLegend slices={sellMoods} palette={SELL_PIE} compact />
           </div>
         </div>
@@ -438,23 +439,30 @@ function ReasonToggle({ real, reasons }: { real: Trade[]; reasons: [string, numb
       {reasons.length === 0 ? (
         <p className="sub">판단 근거를 고른 기록이 아직 없어요.</p>
       ) : detail ? (
-        reasonGroups().map((g) => {
-          const slices = reasonSubDistribution(real, g.group);
-          if (!slices.length) return null;
-          const count = slices.reduce((s, x) => s + x[1], 0);
-          return (
-            <div key={g.group} className="pie-block">
-              <b className="chart-group">{g.group} · {count}건</b>
-              <div className="pie-wrap compact">
-                <PieChart slices={slices} size={88} />
-                <PieLegend slices={slices} compact />
+        <div className="pie-detail">
+          {reasonGroups()
+            .map((g) => {
+              const slices = reasonSubDistribution(real, g.group);
+              if (!slices.length) return null;
+              const count = slices.reduce((s, x) => s + x[1], 0);
+              return { group: g.group, slices, count };
+            })
+            .filter((x): x is { group: string; slices: [string, number][]; count: number } => Boolean(x))
+            .map((g, i) => (
+              <div key={g.group} className={`pie-block ${i === 0 ? "lead" : ""}`}>
+                <b className="chart-group">
+                  {g.group} · {g.count}건
+                </b>
+                <div className={i === 0 ? "pie-wrap compact" : "pie-mini"}>
+                  <PieChart slices={g.slices} size={i === 0 ? 90 : 56} />
+                  <PieLegend slices={g.slices} compact />
+                </div>
               </div>
-            </div>
-          );
-        })
+            ))}
+        </div>
       ) : (
         <div className="pie-wrap overview">
-          <PieChart slices={reasons} size={132} />
+          <PieChart slices={reasons} size={120} />
           <PieLegend slices={reasons} />
         </div>
       )}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BrandMark, FolderIco, PencilIco, ProgressRing } from "@/components/icons";
+import { BrandMark, ProgressRing } from "@/components/icons";
 import { TradeRow } from "@/components/TradeRow";
 import { LegalFooter, Modal, PhoneShell, TabBar } from "@/components/ui";
 import { thisMonth } from "@/lib/format";
@@ -93,14 +93,14 @@ export default function HomePage() {
 
         <div className="cta-grid">
           <button className="cta" type="button" onClick={() => router.push("/record")}>
-            <span className="cta-ico pencil">
-              <PencilIco />
+            <span className="cta-emoji" aria-hidden>
+              ✍️
             </span>
             <span>매매 기록하기</span>
           </button>
           <button className="cta" type="button" onClick={() => router.push("/plan/new")}>
-            <span className="cta-ico plan">
-              <FolderIco />
+            <span className="cta-emoji" aria-hidden>
+              🎯
             </span>
             <span>계획 등록하기</span>
           </button>
@@ -162,8 +162,8 @@ export default function HomePage() {
       {askWithdraw ? (
         <Modal
           title="정말 탈퇴하시겠어요?"
-          body="탈퇴 시 계정 정보와 모든 매매 계획·기록이 서버에서 삭제되며 복구할 수 없어요."
-          cancel="아니요"
+          body="탈퇴 시 계정 정보와 모든 매매 계획과 기록이 삭제되며 재가입하더라도 복구할 수 없어요."
+          cancel="아니오"
           confirm="네"
           split
           onCancel={() => setAskWithdraw(false)}

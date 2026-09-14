@@ -32,6 +32,7 @@ export function PlanCards({
       {oppSnap && !hideOpp ? (
         <PreviewCard
           side={opposite}
+          stockName={trade.stockName}
           snap={snap!}
           market={trade.market}
           onHide={() => onHide(opposite)}
@@ -49,20 +50,25 @@ export function PlanCards({
 function CompareBuy({ trade, snap, onHide }: { trade: Trade; snap: { min: number; max: number }; onHide: () => void }) {
   const judge = buyCaption(trade.price, snap.min, snap.max);
   return (
-    <div className="card plan-compare" onClick={(e) => e.preventDefault()}>
-      <button className="x" type="button" onClick={onHide}>
-        ✕
-      </button>
-      <b>매수 계획 대조</b>
-      <p className="sub">{judge.caption}</p>
+    <div className="card plan-compare">
+      <div className="plan-compare-head">
+        <b>{trade.stockName} 매수 계획</b>
+        <button className="x" type="button" onClick={onHide} aria-label="닫기">
+          ✕
+        </button>
+      </div>
+      <div className="plan-compare-kv">
+        <span>희망 매수 구간</span>
+        <b>
+          {formatPrice(snap.min, trade.market)} ~ {formatPrice(snap.max, trade.market)}
+        </b>
+      </div>
       {judge.inRange ? (
         <div className="range-bar">
           <i style={{ left: `${Math.min(100, Math.max(0, judge.pct))}%` }} />
         </div>
       ) : null}
-      <p className="sub">
-        희망 {formatPrice(snap.min, trade.market)} ~ {formatPrice(snap.max, trade.market)}
-      </p>
+      <p className="plan-compare-foot">{judge.caption}</p>
     </div>
   );
 }
@@ -79,49 +85,68 @@ function CompareSell({
   const judge = sellCaption(trade.price, snap.stopLoss, snap.takeProfit);
   return (
     <div className="card plan-compare">
-      <button className="x" type="button" onClick={onHide}>
-        ✕
-      </button>
-      <b>매도 계획 대조</b>
-      <p className="sub">{judge.caption}</p>
-      {judge.inRange ? (
-        <div className="range-bar">
-          <i style={{ left: `${Math.min(100, Math.max(0, judge.pct))}%` }} />
-        </div>
-      ) : null}
-      <p className="sub">
-        손절 {formatPrice(snap.stopLoss, trade.market)} · 목표 {formatPrice(snap.takeProfit, trade.market)}
-      </p>
+      <div className="plan-compare-head">
+        <b>{trade.stockName} 매도 계획</b>
+        <button className="x" type="button" onClick={onHide} aria-label="닫기">
+          ✕
+        </button>
+      </div>
+      <div className="plan-compare-kv">
+        <span>손절가</span>
+        <b>{formatPrice(snap.stopLoss, trade.market)}</b>
+      </div>
+      <div className="plan-compare-kv">
+        <span>목표가</span>
+        <b>{formatPrice(snap.takeProfit, trade.market)}</b>
+      </div>
+      <p className="plan-compare-foot">{judge.caption}</p>
     </div>
   );
 }
 
 function PreviewCard({
   side,
+  stockName,
   snap,
   market,
   onHide,
 }: {
   side: "buy" | "sell";
+  stockName: string;
   snap: PlanSnapshot;
   market: string;
   onHide: () => void;
 }) {
   return (
     <div className="card plan-compare">
-      <button className="x" type="button" onClick={onHide}>
-        ✕
-      </button>
-      <b>{side === "sell" ? "매도 시 참고돼요" : "다음 매수 시 참고돼요"}</b>
+      <div className="plan-compare-head">
+        <b>
+          {stockName} {side === "sell" ? "매도" : "매수"} 계획
+        </b>
+        <button className="x" type="button" onClick={onHide} aria-label="닫기">
+          ✕
+        </button>
+      </div>
       {side === "buy" && snap.buy ? (
-        <p className="sub">
-          희망 {formatPrice(snap.buy.min, market)} ~ {formatPrice(snap.buy.max, market)}
-        </p>
+        <div className="plan-compare-kv">
+          <span>희망 매수 구간</span>
+          <b>
+            {formatPrice(snap.buy.min, market)} ~ {formatPrice(snap.buy.max, market)}
+          </b>
+        </div>
       ) : snap.sell ? (
-        <p className="sub">
-          손절 {formatPrice(snap.sell.stopLoss, market)} · 목표 {formatPrice(snap.sell.takeProfit, market)}
-        </p>
+        <>
+          <div className="plan-compare-kv">
+            <span>손절가</span>
+            <b>{formatPrice(snap.sell.stopLoss, market)}</b>
+          </div>
+          <div className="plan-compare-kv">
+            <span>목표가</span>
+            <b>{formatPrice(snap.sell.takeProfit, market)}</b>
+          </div>
+        </>
       ) : null}
+      <p className="plan-compare-foot">{side === "sell" ? "다음 매도 시 참고돼요" : "다음 매수 시 참고돼요"}</p>
     </div>
   );
 }

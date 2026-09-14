@@ -328,7 +328,7 @@ export function comboTop3(trades: Trade[]) {
 }
 
 export function reasonChip(card: IssuedCard) {
-  return `${sideLabel(card.side)}·${card.reasonMeta}·${card.count}건`;
+  return `${sideLabel(card.side)} · ${card.reasonMeta} · ${card.count}건`;
 }
 
 export { endingFor };
