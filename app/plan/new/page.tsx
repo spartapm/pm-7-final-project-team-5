@@ -232,7 +232,6 @@ function NewPlanInner() {
             <p className="sub">
               {stock!.name} · {stock!.code} · {stock!.marketName}
             </p>
-            {overseas ? <p className="overseas-hint">해외 종목은 가격을 달러(USD)로 입력하고, 소수점도 쓸 수 있어요.</p> : null}
             {side === "buy" ? (
               <>
                 <PadField label="최소 희망가" value={displayPriceValue(buyMin, stock!.market)} align="right" onOpen={() => setPad("buyMin")} />

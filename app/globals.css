@@ -93,6 +93,8 @@ img { display: block; max-width: 100%; }
 .shell {
   width: 100%;
   max-width: var(--phone);
+  height: 100dvh;
+  max-height: 100dvh;
   min-height: 100dvh;
   margin: 0 auto;
   background: var(--bg);
@@ -130,6 +132,7 @@ img { display: block; max-width: 100%; }
 
 .tabbar {
   position: absolute; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom));
+  flex-shrink: 0;
   height: 62px;
   background: #fff; border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
@@ -353,7 +356,7 @@ img { display: block; max-width: 100%; }
 .btn-ghost { background: var(--color-surface-light); color: var(--color-text-secondary); font-size: 14px; height: 47px; }
 .footer-cta {
   flex-shrink: 0; padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
-  background: var(--bg); position: sticky; bottom: 0; z-index: 3;
+  background: var(--bg); position: sticky; bottom: 0; z-index: 6;
 }
 .footer-cta.over-tabs { bottom: 64px; padding-bottom: 12px; }
 
@@ -659,8 +662,11 @@ img { display: block; max-width: 100%; }
   width: 100%;
   align-items: center;
 }
+.detail-block-title { display: block; font-size: 14px; font-weight: 700; color: #253247; margin: 0 0 12px; }
 .detail-kv dt { color: #8B93A5; font-weight: 400; font-size: 12px; }
 .detail-kv dd { margin: 0; text-align: right; font-weight: 600; color: #253247; font-size: 13px; }
+.detail-kv dd.side-buy { color: var(--color-badge-buy-text); }
+.detail-kv dd.side-sell { color: var(--color-badge-sell-text); }
 .chips-read { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .chips-read .chip.read {
   display: inline-flex;
@@ -896,6 +902,11 @@ img { display: block; max-width: 100%; }
 .cta-emoji { font-size: 20px; line-height: 26px; }
 .choice-sheet { position: relative; padding: 24px 20px 20px; }
 .choice-title { text-align: center; font-size: 16px; font-weight: 600; margin: 0 0 20px; color: #253247; }
+.choice-opt {
+  background: #EEF2FA; color: #26314B; height: 47px; border-radius: var(--radius-control);
+  font-size: 14px; font-weight: 600; width: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
 .sheet-x {
   position: absolute; top: 12px; right: 12px; width: 32px; height: 32px;
   color: #B9C0CC; font-size: 16px; background: transparent;
@@ -920,4 +931,8 @@ img { display: block; max-width: 100%; }
 .kv-mini .stack-lines span { width: auto; font-size: 12px; color: #6B7488; line-height: 17px; }
 .pad-value.placeholder { color: #B9C0CC; }
 .example-report { width: 100%; height: auto; display: block; }
+.onb-insight .narrative1,
+.onb-insight .narrative2 { font-size: 13px; font-weight: 400; color: #253247; line-height: 1.5; margin: 8px 0 0; }
+.survey-banner { display: block; margin: 4px 0 16px; }
+.survey-banner img { width: 100%; height: auto; display: block; border-radius: 16px; }
 

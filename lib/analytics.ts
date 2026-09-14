@@ -10,6 +10,7 @@ const ONB_START_KEY = "inplot:ga:onboarding_started_at";
 const RECORD_KEY = "inplot:ga:record_session";
 const RECORD_START_KEY = "inplot:ga:record_started_at";
 const PLAN_KEY = "inplot:ga:plan_session";
+const EDIT_KEY = "inplot:ga:edit_session";
 const FIRST_INSIGHT_KEY = "inplot:ga:first_insight_viewed";
 const VIEWED_INSIGHTS_KEY = "inplot:ga:viewed_insights";
 
@@ -131,6 +132,16 @@ export function ensurePlanSession(entrySource = "direct") {
 
 export function planSessionId() {
   return typeof window === "undefined" ? "" : sessionStorage.getItem(PLAN_KEY) || "";
+}
+
+export function startEditSession() {
+  const id = uuid();
+  writeSession(EDIT_KEY, id);
+  return id;
+}
+
+export function editSessionId() {
+  return typeof window === "undefined" ? "" : sessionStorage.getItem(EDIT_KEY) || "";
 }
 
 export function setAnalyticsUserId(userId: string | null) {

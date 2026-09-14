@@ -31,14 +31,17 @@ export function StockSearch({
 }) {
   const { recentSearches, rememberSearch } = useStore();
   const [q, setQ] = useState("");
+  const [editing, setEditing] = useState(false);
   const [region, setRegion] = useState<StockRegion>("all");
   const results = useMemo(() => searchStocks(q, 20, region), [q, region]);
   const recents = recentSearches.filter((s) => inRegion(s, region)).slice(0, 5);
-  const hideList = Boolean(selected && !q);
+  const hideList = Boolean(selected && !editing && !q);
+  const value = editing ? q : q || selected?.name || "";
 
   function pick(stock: Stock) {
     rememberSearch(stock);
     setQ("");
+    setEditing(false);
     onPick(stock);
   }
 
@@ -56,11 +59,17 @@ export function StockSearch({
           <SearchIcon />
           <input
             className="search-input"
-            value={q || (selected && !q ? selected.name : "")}
-            onChange={(e) => setQ(e.target.value)}
+            value={value}
+            onChange={(e) => {
+              setEditing(true);
+              setQ(e.target.value);
+            }}
             placeholder={placeholder}
             onFocus={() => {
-              if (selected) setQ(selected.name);
+              if (!editing) {
+                setEditing(true);
+                if (selected && !q) setQ(selected.name);
+              }
             }}
           />
         </div>
@@ -85,7 +94,16 @@ export function StockSearch({
             results.map((s) => <StockRow key={`${s.market}-${s.code}`} stock={s} onPick={pick} selected={selected} />)
           )}
         </>
-      ) : null}
+      ) : recents.length === 0 ? null : (
+        <>
+          <div className="section-head">
+            <h2>최근 검색</h2>
+          </div>
+          {recents.map((s) => (
+            <StockRow key={`recent-${s.market}-${s.code}`} stock={s} onPick={pick} selected={selected} />
+          ))}
+        </>
+      )}
     </>
   );
 }

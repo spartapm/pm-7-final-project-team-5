@@ -93,10 +93,10 @@ export function ChoiceSheet({
         </button>
         <h3 className="choice-title">{title}</h3>
         <div className="modal-split">
-          <button className="btn btn-ghost" type="button" onClick={onLeft}>
+          <button className="choice-opt" type="button" onClick={onLeft}>
             {left}
           </button>
-          <button className="btn btn-primary" type="button" onClick={onRight}>
+          <button className="choice-opt" type="button" onClick={onRight}>
             {right}
           </button>
         </div>

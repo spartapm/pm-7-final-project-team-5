@@ -70,6 +70,17 @@ export default function InsightsPage() {
           </button>
         </div>
 
+        {real.length >= 3 ? (
+          <a
+            className="survey-banner"
+            href="https://docs.google.com/forms/d/e/1FAIpQLSfXQNu83adNp0nUhYyWEc1r2I2K6sbB6QnQnvOoraNbOccrvg/viewform"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <img src="/figma/survey-banner.png" alt="인플롯 사용 경험 설문 · 3분" width={950} height={208} />
+          </a>
+        ) : null}
+
         {tab === "dash" ? (
           real.length === 0 ? (
             <EmptyDash />

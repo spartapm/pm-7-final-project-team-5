@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChartMark, KakaoIcon, PhoneShell } from "@/components/ui";
+import { PhoneShell } from "@/components/ui";
+import { BrandMark } from "@/components/icons";
 import { onboardingElapsedSec, onboardingSessionId, trackOnce } from "@/lib/analytics";
-import { hasKakaoKey, startKakaoLogin } from "@/lib/kakao";
 import { reasonGroups, toPick } from "@/lib/categories";
 import { moodOptions } from "@/lib/categories";
 import { PRACTICE, SAMPLE_INSIGHT } from "@/lib/onboarding-data";
@@ -52,11 +52,11 @@ function OnbTrade({ name, side, price, qty }: { name: string; side: string; pric
 function OnbReportDash() {
   return (
     <img
-      src="/figma/insight-report.png"
+      src="/figma/insight-report-2x.png"
       alt="인사이트 리포트"
       className="example-report"
-      width={360}
-      height={1278}
+      width={750}
+      height={3038}
     />
   );
 }
@@ -93,16 +93,6 @@ export default function OnboardingPage() {
     skipOnboarding();
     router.push("/login");
   }
-  function goKakao() {
-    skipOnboarding();
-    sessionStorage.setItem("kakao_intent", "login");
-    sessionStorage.setItem("signup_source", "onboarding");
-    const started = startKakaoLogin();
-    if (!started) {
-      showToast("카카오 키를 확인해 주세요", "err");
-      router.push("/login");
-    }
-  }
   function toReplay() {
     setStage("replay");
   }
@@ -136,7 +126,7 @@ export default function OnboardingPage() {
                 <div className="date-group-h">
                   <b>오늘 발행</b>
                 </div>
-                <div className="card insight-card accent">
+                <div className="card insight-card accent onb-insight">
                   <span className="badge">📉 매수 · 차트 패턴 · 2건</span>
                   <p className="narrative1 keep">{SAMPLE_INSIGHT.narrative1}</p>
                   <p className="narrative2 keep">{SAMPLE_INSIGHT.narrative2}</p>
@@ -176,11 +166,11 @@ export default function OnboardingPage() {
     ];
     return (
       <PhoneShell>
-        <div className="topbar">
-          <span className="h1" style={{ fontSize: 16 }}>
-            연습 기록 3건 완료
-          </span>
-          <span />
+        <div className="topbar wizard-head">
+          <span className="wizard-kicker">연습 기록 3건 완료</span>
+        </div>
+        <div className="step-track slim" aria-hidden>
+          <i style={{ width: "100%" }} />
         </div>
         <div className="scroll">
           <h1 className="step-title">3건을 이렇게 기록했어요</h1>
@@ -386,7 +376,7 @@ export default function OnboardingPage() {
   return (
     <PhoneShell>
       <div className="hero">
-        <ChartMark />
+        <BrandMark size={64} />
         <h1>
           3번만 기록하면,
           <br />
@@ -401,10 +391,6 @@ export default function OnboardingPage() {
       <div className="footer-cta">
         <button className="btn btn-primary" type="button" onClick={() => setStage("ex1")}>
           체험 시작하기
-        </button>
-        <button className="btn btn-kakao" type="button" onClick={goKakao} style={{ marginTop: 8 }}>
-          <KakaoIcon />
-          {hasKakaoKey() ? "카카오로 로그인" : "카카오 설정 필요"}
         </button>
         <div className="login-link center">
           이미 계정이 있나요?{" "}

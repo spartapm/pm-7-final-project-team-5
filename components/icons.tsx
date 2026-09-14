@@ -116,9 +116,19 @@ export function ProgressRing({
           </text>
         </svg>
         <p>
-          기록이 3건 쌓일 때마다
-          <br />
-          새 인사이트 카드 발행을 시도해요
+          {count >= INSIGHT_THRESHOLD ? (
+            <>
+              아직 눈에 띄는 경향이 확인되지 않았어요.
+              <br />
+              기록을 추가해보세요
+            </>
+          ) : (
+            <>
+              기록이 3건 쌓일 때마다
+              <br />
+              새 인사이트 카드 발행을 시도해요
+            </>
+          )}
         </p>
       </div>
     </div>

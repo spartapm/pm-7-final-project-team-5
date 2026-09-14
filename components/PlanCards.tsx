@@ -73,9 +73,11 @@ function CompareBuy({ trade, snap, onHide }: { trade: Trade; snap: { min: number
         <span>실제 매수가</span>
         <b>{formatPrice(trade.price, trade.market)}</b>
       </div>
-      <div className="range-bar">
-        <i style={{ left: `${Math.min(100, Math.max(0, judge.pct))}%` }} />
-      </div>
+      {judge.inRange ? (
+        <div className="range-bar">
+          <i style={{ left: `${Math.min(100, Math.max(0, judge.pct))}%` }} />
+        </div>
+      ) : null}
       <p className="plan-compare-foot">{judge.caption}</p>
     </div>
   );
@@ -111,9 +113,11 @@ function CompareSell({
         <span>실제 매도가</span>
         <b>{formatPrice(trade.price, trade.market)}</b>
       </div>
-      <div className="range-bar">
-        <i style={{ left: `${Math.min(100, Math.max(0, judge.pct))}%` }} />
-      </div>
+      {judge.inRange ? (
+        <div className="range-bar">
+          <i style={{ left: `${Math.min(100, Math.max(0, judge.pct))}%` }} />
+        </div>
+      ) : null}
       <p className="plan-compare-foot">{judge.caption}</p>
     </div>
   );

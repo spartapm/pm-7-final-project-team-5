@@ -2,12 +2,12 @@
 
 import { Suspense, use, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BackChevron } from "@/components/icons";
+import { BackChevron, PencilIco } from "@/components/icons";
 import { PlanCards } from "@/components/PlanCards";
 import { ReadChips } from "@/components/TradeRow";
 import { Modal, PhoneShell } from "@/components/ui";
-import { startPlanSession, trackOnce } from "@/lib/analytics";
-import { formatPrice, formatQty } from "@/lib/format";
+import { startEditSession, startPlanSession, track, trackOnce } from "@/lib/analytics";
+import { formatPrice, formatQty, sideLabel } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
 function RecordDetailInner({ id }: { id: string }) {
@@ -63,18 +63,37 @@ function RecordDetailInner({ id }: { id: string }) {
           <BackChevron />
         </button>
         <h1 className="h1">기록 상세</h1>
-        <span />
+        <button
+          className="icon-btn"
+          type="button"
+          aria-label="매매정보 수정"
+          onClick={() => {
+            const sid = startEditSession();
+            track("record_edit_start", {
+              record_id: trade.id,
+              trade_type: trade.side,
+              edit_session_id: sid,
+              screen_name: "record_detail",
+            });
+            router.push(`/records/${trade.id}/edit`);
+          }}
+        >
+          <PencilIco />
+        </button>
       </div>
       <div className="scroll">
         <div className="card">
+          <b className="detail-block-title">매매 정보</b>
           <dl className="detail-kv">
+            <dt>구분</dt>
+            <dd className={trade.side === "buy" ? "side-buy" : "side-sell"}>{sideLabel(trade.side)}</dd>
             <dt>종목</dt>
             <dd>{trade.stockName}</dd>
             <dt>수량 · {trade.side === "sell" ? "매도가" : "매수가"}</dt>
             <dd>
               {formatQty(trade.qty)} · {formatPrice(trade.price, trade.market)}
             </dd>
-            <dt>매매일시</dt>
+            <dt>{trade.side === "sell" ? "매도일시" : "매수일시"}</dt>
             <dd>
               {trade.tradedAt}
               {trade.tradedTime ? ` ${trade.tradedTime}` : ""}
@@ -99,6 +118,22 @@ function RecordDetailInner({ id }: { id: string }) {
             );
           }}
         />
+      </div>
+      <div className="footer-cta">
+        <button
+          className="btn btn-primary"
+          type="button"
+          onClick={() => {
+            track("record_detail_list_cta_click", {
+              record_id: trade.id,
+              trade_type: trade.side,
+              detail_source: src,
+            });
+            router.push("/records");
+          }}
+        >
+          기록 목록 확인하기
+        </button>
       </div>
       {hideSide ? (
         <Modal
