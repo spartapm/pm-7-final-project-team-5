@@ -73,8 +73,8 @@ export default function RecordPage() {
       {pickSide && stock ? (
         <ChoiceSheet
           title="어떤 기록을 시작할까요?"
-          left="매수 기록"
-          right="매도 기록"
+          left="매수"
+          right="매도"
           onLeft={() => start("buy", stock)}
           onRight={() => start("sell", stock)}
           onClose={() => setPickSide(false)}

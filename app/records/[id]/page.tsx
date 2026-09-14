@@ -86,7 +86,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
             <dd>
               {formatQty(trade.qty)} · {formatPrice(trade.price, trade.market)}
             </dd>
-            <dt>{trade.side === "sell" ? "매도일시" : "매수일시"}</dt>
+            <dt>매매일시</dt>
             <dd>
               {trade.tradedAt}
               {trade.tradedTime ? ` ${trade.tradedTime}` : ""}
@@ -96,11 +96,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         <div className="fact-card">
           <b>매매 이유</b>
           <p className="keep">
-            {trade.reasons.length
-              ? groupedPicks(trade.reasons)
-                  .map((g) => `${g.group}・${g.labels.join("・")}`)
-                  .join(" ")
-              : "선택하지 않음"}
+            {trade.reasons.length ? trade.reasons.map((r) => r.label).join("・") : "선택하지 않음"}
           </p>
         </div>
         <div className="fact-card">
@@ -133,16 +129,3 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
   );
 }
 
-function groupedPicks(items: { group: string | null; label: string }[]) {
-  const order: string[] = [];
-  const map = new Map<string, string[]>();
-  items.forEach((item) => {
-    const group = item.group || "기타";
-    if (!map.has(group)) {
-      order.push(group);
-      map.set(group, []);
-    }
-    map.get(group)!.push(item.label);
-  });
-  return order.map((group) => ({ group, labels: map.get(group) || [] }));
-}

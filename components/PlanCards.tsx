@@ -39,8 +39,14 @@ export function PlanCards({
         />
       ) : null}
       {!oppSnap || hideOpp ? (
-        <button className="card induce" type="button" onClick={() => onInduce(opposite)}>
-          + {opposite === "sell" ? "매도" : "매수"} 계획 등록하기
+        <button className="induce-card" type="button" onClick={() => onInduce(opposite)}>
+          <span className="induce-plus" aria-hidden>
+            +
+          </span>
+          <span>
+            <b>{opposite === "sell" ? "매도" : "매수"} 계획 등록하기</b>
+            <small>이 종목에 대한 {opposite === "sell" ? "매도" : "매수"} 계획을 등록해 보세요</small>
+          </span>
         </button>
       ) : null}
     </div>
@@ -63,11 +69,13 @@ function CompareBuy({ trade, snap, onHide }: { trade: Trade; snap: { min: number
           {formatPrice(snap.min, trade.market)} ~ {formatPrice(snap.max, trade.market)}
         </b>
       </div>
-      {judge.inRange ? (
-        <div className="range-bar">
-          <i style={{ left: `${Math.min(100, Math.max(0, judge.pct))}%` }} />
-        </div>
-      ) : null}
+      <div className="plan-compare-kv">
+        <span>실제 매수가</span>
+        <b>{formatPrice(trade.price, trade.market)}</b>
+      </div>
+      <div className="range-bar">
+        <i style={{ left: `${Math.min(100, Math.max(0, judge.pct))}%` }} />
+      </div>
       <p className="plan-compare-foot">{judge.caption}</p>
     </div>
   );
@@ -98,6 +106,13 @@ function CompareSell({
       <div className="plan-compare-kv">
         <span>목표가</span>
         <b>{formatPrice(snap.takeProfit, trade.market)}</b>
+      </div>
+      <div className="plan-compare-kv">
+        <span>실제 매도가</span>
+        <b>{formatPrice(trade.price, trade.market)}</b>
+      </div>
+      <div className="range-bar">
+        <i style={{ left: `${Math.min(100, Math.max(0, judge.pct))}%` }} />
       </div>
       <p className="plan-compare-foot">{judge.caption}</p>
     </div>
@@ -146,7 +161,7 @@ function PreviewCard({
           </div>
         </>
       ) : null}
-      <p className="plan-compare-foot">{side === "sell" ? "다음 매도 시 참고돼요" : "다음 매수 시 참고돼요"}</p>
+      <p className="plan-compare-foot preview">{side === "sell" ? "다음 매도 시 참고돼요" : "다음 매수 시 참고돼요"}</p>
     </div>
   );
 }

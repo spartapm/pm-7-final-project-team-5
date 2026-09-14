@@ -42,6 +42,18 @@ export function upsertRegistry(row: RegistryAccount) {
   save(rows);
 }
 
+export function removeRegistry(opts: { id?: string; email?: string | null; kakaoId?: string | null }) {
+  const email = opts.email?.trim().toLowerCase();
+  save(
+    load().filter((a) => {
+      if (opts.id && a.id === opts.id) return false;
+      if (email && a.email?.toLowerCase() === email) return false;
+      if (opts.kakaoId && a.kakaoId === opts.kakaoId) return false;
+      return true;
+    })
+  );
+}
+
 export function passwordValid(pw: string) {
   if (pw.length < 10 || /\s/.test(pw)) return false;
   const kinds = [/[A-Za-z]/, /\d/, /[^A-Za-z0-9\s]/].filter((r) => r.test(pw)).length;

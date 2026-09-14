@@ -81,12 +81,10 @@ export function StockTile({ name, code }: { name: string; code: string }) {
 export function ProgressRing({
   side,
   count,
-  remain,
-  stalled = false,
 }: {
   side: "buy" | "sell";
   count: number;
-  remain: number;
+  remain?: number;
   stalled?: boolean;
 }) {
   const max = INSIGHT_THRESHOLD;
@@ -118,15 +116,9 @@ export function ProgressRing({
           </text>
         </svg>
         <p>
-          {remain === 0 ? (
-            <>
-              기록이 3건 쌓일 때마다
-              <br />
-              새 인사이트 카드 발행을 시도해요
-            </>
-          ) : (
-            `인사이트 카드 발행까지 ${remain}건 남아 있어요`
-          )}
+          기록이 3건 쌓일 때마다
+          <br />
+          새 인사이트 카드 발행을 시도해요
         </p>
       </div>
     </div>

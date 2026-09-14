@@ -19,7 +19,7 @@ function NewPlanInner() {
   const params = useSearchParams();
   const returnTo = params.get("return");
   const lockSide = params.get("side") === "sell" ? "sell" : params.get("side") === "buy" ? "buy" : null;
-  const { plans, addPlan, updatePlan, showToast } = useStore();
+  const { plans, addPlan, updatePlan, showToast, attachPlanToTrade } = useStore();
   const [stock, setStock] = useState<Stock | null>(null);
   const [side, setSide] = useState<Side | null>(lockSide);
   const [askType, setAskType] = useState(false);
@@ -116,6 +116,7 @@ function NewPlanInner() {
 
   function save() {
     if (!stock || !side) return;
+    let piece: { buy?: { min: number; max: number }; sell?: { stopLoss: number; takeProfit: number } } | null = null;
     if (side === "buy") {
       const min = parseNum(buyMin);
       const max = parseNum(buyMax);
@@ -136,6 +137,7 @@ function NewPlanInner() {
       };
       if (editingId) updatePlan(editingId, payload);
       else addPlan(payload);
+      piece = { buy: { min, max } };
     } else {
       const stop = parseNum(stopLoss);
       const take = parseNum(takeProfit);
@@ -156,7 +158,10 @@ function NewPlanInner() {
       };
       if (editingId) updatePlan(editingId, payload);
       else addPlan(payload);
+      piece = { sell: { stopLoss: stop, takeProfit: take } };
     }
+    const tradeId = returnTo?.startsWith("/records/") ? returnTo.slice("/records/".length).split("?")[0] : "";
+    if (tradeId && piece) attachPlanToTrade(tradeId, piece);
     router.replace(returnTo || "/plan");
   }
 
@@ -237,8 +242,8 @@ function NewPlanInner() {
       {askType ? (
         <ChoiceSheet
           title="어떤 매매 계획인가요?"
-          left="매수 계획"
-          right="매도 계획"
+          left="매수"
+          right="매도"
           onLeft={() => chooseSide("buy")}
           onRight={() => chooseSide("sell")}
           onClose={() => setAskType(false)}

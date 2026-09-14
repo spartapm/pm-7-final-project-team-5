@@ -20,7 +20,7 @@ export default function HomePage() {
   const [coach, setCoach] = useState(false);
   const real = trades.filter((t) => !t.isPractice);
   const month = thisMonth();
-  const monthTrades = real.filter((t) => new Date(t.createdAt).toISOString().slice(0, 7) === month);
+  const monthTrades = real.filter((t) => t.tradedAt.slice(0, 7) === month);
   const monthBuy = monthTrades.filter((t) => t.side === "buy").length;
   const monthSell = monthTrades.filter((t) => t.side === "sell").length;
   const recent = [...real]
@@ -48,13 +48,11 @@ export default function HomePage() {
       <div className="scroll tabbed">
         <div className="home-head">
           <button className="brand-btn" type="button" onClick={() => setProfile(true)} aria-label="프로필">
-            <BrandMark size={40} />
+            <BrandMark size={22} />
           </button>
-          <div className="home-hello">
-            <div className="brand-kicker">인플롯</div>
-            <h1 className="hello">안녕하세요, {nickname}님</h1>
-          </div>
+          <div className="brand-kicker">인플롯</div>
         </div>
+        <h1 className="hello">안녕하세요, {nickname}님</h1>
 
         {issued.length > 0 ? (
           <div className="insight-rail-wrap">
@@ -64,9 +62,6 @@ export default function HomePage() {
                 <button key={c.id} className="insight-tile" type="button" onClick={() => router.push(insightHref(c.id))}>
                   <span className="when">{c.dateKey.slice(5).replace("-", ".")}</span>
                   <p>{c.narrative2}</p>
-                  <span className="meta">
-                    최근 {c.windowSize}건 중 {c.count}건
-                  </span>
                 </button>
               ))}
             </div>
@@ -96,17 +91,17 @@ export default function HomePage() {
             <span className="cta-emoji" aria-hidden>
               ✍️
             </span>
-            <span>매매 기록하기</span>
+            <span className="cta-label">매매 기록하기</span>
           </button>
           <button className="cta" type="button" onClick={() => router.push("/plan/new")}>
             <span className="cta-emoji" aria-hidden>
               🎯
             </span>
-            <span>계획 등록하기</span>
+            <span className="cta-label">계획 등록하기</span>
           </button>
         </div>
 
-        <div className="section-head">
+        <div className="section-head home-records">
           <h2>최근 기록</h2>
           <Link href="/records">전체보기</Link>
         </div>

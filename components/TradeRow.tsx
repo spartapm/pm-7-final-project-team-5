@@ -18,39 +18,49 @@ export function TradeRow({
   blurMoney?: boolean;
 }) {
   const [open, setOpen] = useState(!blurMoney);
+  const compact = !showReason;
+  const reasonText = trade.reasons.length ? trade.reasons.map((r) => r.label).join("・") : "선택하지 않음";
+  const moodText = trade.moods.length ? trade.moods.map((m) => m.label).join("・") : "선택하지 않음";
   return (
-    <button className="trade-card" type="button" onClick={onClick}>
+    <button className={`trade-card${compact ? " compact" : ""}`} type="button" onClick={onClick}>
       <div className="trade-card-top">
-        <b>{trade.stockName}</b>
-        <span className={trade.side === "buy" ? "badge" : "badge sell-badge"}>{sideLabel(trade.side)}</span>
-        <span className="trade-date">{formatMd(trade.tradedAt)}</span>
-      </div>
-      <p
-        className={`trade-amt ${blurMoney && !open ? "blurred" : ""}`}
-        onClick={(e) => {
-          if (!blurMoney) return;
-          e.stopPropagation();
-          setOpen(true);
-        }}
-      >
-        {showQty ? `${formatQty(trade.qty)} · ` : ""}
-        {formatPrice(trade.price, trade.market)}
-      </p>
-      {showReason ? (
-        <div className="trade-meta">
-          <div className="kv-mini">
-            <span>매매 이유</span>
-            <p className="stack-lines keep">
-              {trade.reasons.length ? trade.reasons.map((r) => <span key={r.label}>{r.label}</span>) : "선택하지 않음"}
-            </p>
-          </div>
-          <div className="kv-mini">
-            <span>그때 마음</span>
-            <p className="stack-lines keep">
-              {trade.moods.length ? trade.moods.map((m) => <span key={m.label}>{m.label}</span>) : "선택하지 않음"}
-            </p>
-          </div>
+        <div className="trade-card-lead">
+          <b>{trade.stockName}</b>
+          <span className={trade.side === "buy" ? "badge" : "badge sell-badge"}>{sideLabel(trade.side)}</span>
         </div>
+        <div className="trade-card-end">
+          <span className="trade-date">{formatMd(trade.tradedAt)}</span>
+          {compact ? (
+            <p
+              className={`trade-amt ${blurMoney && !open ? "blurred" : ""}`}
+              onClick={(e) => {
+                if (!blurMoney) return;
+                e.stopPropagation();
+                setOpen(true);
+              }}
+            >
+              {formatPrice(trade.price, trade.market)}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      {!compact ? (
+        <>
+          <p className="trade-amt">
+            {showQty ? `${formatQty(trade.qty)} · ` : ""}
+            {formatPrice(trade.price, trade.market)}
+          </p>
+          <div className="trade-meta">
+            <div className="kv-mini">
+              <span>매매 이유</span>
+              <p className="keep">{reasonText}</p>
+            </div>
+            <div className="kv-mini">
+              <span>그때 마음</span>
+              <p className="keep">{moodText}</p>
+            </div>
+          </div>
+        </>
       ) : null}
     </button>
   );

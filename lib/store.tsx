@@ -19,6 +19,7 @@ import {
   type CloudStatus,
 } from "./cloud";
 import { uid, todayKey } from "./format";
+import { removeRegistry } from "./registry";
 import {
   applyIssueCooldown,
   candidateToCard,
@@ -28,7 +29,7 @@ import {
 } from "./insights";
 import { fallbackNarrative1, fallbackNarrative2 } from "./insight-copy";
 import { migratePlan, migrateTrade, snapshotForStock } from "./plans";
-import type { AppState, DraftTrade, IssuedCard, Plan, Side, Stock, ToastKind, Trade } from "./types";
+import type { AppState, DraftTrade, IssuedCard, Plan, PlanSnapshot, Side, Stock, ToastKind, Trade } from "./types";
 import { TERMS_VERSION } from "./types";
 
 const KEY = "patternnote:v1";
@@ -119,6 +120,7 @@ type Store = AppState & {
   updateTrade: (id: string, draft: DraftTrade) => Trade | null;
   deleteTrade: (id: string) => void;
   hidePlanOnTrade: (tradeId: string, side: Side) => void;
+  attachPlanToTrade: (tradeId: string, piece: PlanSnapshot) => void;
   addPlan: (plan: Omit<Plan, "id" | "createdAt" | "updatedAt">) => Plan;
   updatePlan: (id: string, patch: Partial<Plan>) => void;
   deletePlan: (id: string) => void;
@@ -346,8 +348,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const withdraw = useCallback(() => {
-    const id = stateRef.current.accountId;
-    void deleteAccount(id);
+    const cur = stateRef.current;
+    removeRegistry({ id: cur.accountId, email: cur.email, kakaoId: cur.kakaoId });
+    void deleteAccount(cur.accountId);
     touch();
     const fresh = empty();
     setState(fresh);
@@ -464,6 +467,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setState((s) => ({
           ...s,
           trades: s.trades.map((t) => (t.id === tradeId ? { ...t, hiddenPlan: { ...t.hiddenPlan, [side]: true } } : t)),
+        }));
+      },
+      attachPlanToTrade: (tradeId, piece) => {
+        touch();
+        setState((s) => ({
+          ...s,
+          trades: s.trades.map((t) => {
+            if (t.id !== tradeId) return t;
+            const hiddenPlan = { ...t.hiddenPlan };
+            if (piece.buy) delete hiddenPlan.buy;
+            if (piece.sell) delete hiddenPlan.sell;
+            return { ...t, planSnapshot: { ...(t.planSnapshot || {}), ...piece }, hiddenPlan };
+          }),
         }));
       },
       addPlan: (plan) => {
