@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { moodOptions, reasonGroups, toPick } from "@/lib/categories";
+import { ensureRecordSession, TAXONOMY_VERSION, trackOnce } from "@/lib/analytics";
 import { formatPrice, formatQty, formatWhen, sideLabel, todayKey } from "@/lib/format";
 import { tradePriceCaption } from "@/lib/markets";
 import { bumpQty, displayPriceValue, parseNum, pricePlaceholder } from "@/lib/money";
@@ -36,6 +37,34 @@ export function TradeWizard({
   const market = draft.stock?.market || "KOSPI";
   const priceLabel = tradePriceCaption(draft.side, market);
   const canInfo = Boolean(draft.stock) && parseNum(draft.price) > 0 && parseNum(draft.qty) > 0 && Boolean(draft.tradedAt);
+  const fired = useRef({ reason: false, state: false });
+
+  useEffect(() => {
+    if (mode !== "create") return;
+    const sid = ensureRecordSession("direct");
+    const reasonCount = reasonGroups().reduce((n, g) => n + g.items.length, 0);
+    if (step === 2 && !fired.current.reason) {
+      fired.current.reason = true;
+      trackOnce(`reason_axis:${sid}`, "reason_axis_start", {
+        record_session_id: sid,
+        trade_type: draft.side,
+        reason_option_count: reasonCount,
+        screen_name: "reason_axis",
+      });
+    }
+    if (step === 3 && !fired.current.state) {
+      fired.current.state = true;
+      trackOnce(`state_axis:${sid}`, "state_axis_start", {
+        record_session_id: sid,
+        trade_type: draft.side,
+        reason_category_ids: draft.reasons.map((r) => r.meta || r.label),
+        reason_count: draft.reasons.length,
+        state_option_count: moodOptions(draft.side).length,
+        taxonomy_version: TAXONOMY_VERSION,
+        screen_name: "state_axis",
+      });
+    }
+  }, [step, mode, draft.side, draft.reasons]);
 
   function pickReason(item: CategoryPick) {
     const exists = draft.reasons.some((r) => r.label === item.label);

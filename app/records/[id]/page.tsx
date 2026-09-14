@@ -1,20 +1,46 @@
 "use client";
 
-import { use, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, use, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BackChevron } from "@/components/icons";
 import { PlanCards } from "@/components/PlanCards";
 import { ReadChips } from "@/components/TradeRow";
 import { Modal, PhoneShell } from "@/components/ui";
+import { startPlanSession, trackOnce } from "@/lib/analytics";
 import { formatPrice, formatQty } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
-export default function RecordDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function RecordDetailInner({ id }: { id: string }) {
   const router = useRouter();
+  const params = useSearchParams();
   const { hydrated, trades, hidePlanOnTrade } = useStore();
   const [hideSide, setHideSide] = useState<"buy" | "sell" | null>(null);
   const trade = trades.find((t) => t.id === id);
+  const src = params.get("src") === "insight_related_list" ? "insight_related_list" : "record_list";
+  const insightId = params.get("insight") || undefined;
+
+  useEffect(() => {
+    if (!hydrated || !trade) return;
+    trackOnce(`record_detail_view:${trade.id}`, "record_detail_view", {
+      record_id: trade.id,
+      trade_type: trade.side,
+      detail_source: src,
+      insight_id: insightId,
+      screen_id: "5-3",
+      screen_name: "record_detail",
+    });
+    const same = trade.side === "buy" ? trade.planSnapshot?.buy : trade.planSnapshot?.sell;
+    if (same && !trade.hiddenPlan[trade.side]) {
+      trackOnce(`plan_compare_view:${trade.id}`, "plan_compare_view", {
+        plan_id: trade.planId,
+        record_id: trade.id,
+        snapshot_id: `${trade.id}_snap`,
+        compare_source: "record_detail",
+        snapshot_exists: true,
+        screen_name: "record_detail",
+      });
+    }
+  }, [hydrated, trade, src, insightId]);
 
   if (!hydrated) return <div className="shell" />;
   if (!trade) {
@@ -66,11 +92,12 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         <PlanCards
           trade={trade}
           onHide={(side) => setHideSide(side)}
-          onInduce={(side) =>
+          onInduce={(side) => {
+            startPlanSession("record_detail", trade.stockCode);
             router.push(
               `/plan/new?side=${side}&code=${encodeURIComponent(trade.stockCode)}&market=${encodeURIComponent(trade.market)}&name=${encodeURIComponent(trade.stockName)}&return=${encodeURIComponent(`/records/${trade.id}`)}`
-            )
-          }
+            );
+          }}
         />
       </div>
       {hideSide ? (
@@ -86,5 +113,14 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         />
       ) : null}
     </PhoneShell>
+  );
+}
+
+export default function RecordDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return (
+    <Suspense fallback={<div className="shell" />}>
+      <RecordDetailInner id={id} />
+    </Suspense>
   );
 }

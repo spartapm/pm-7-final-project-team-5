@@ -29,6 +29,16 @@ import {
 } from "./insights";
 import { fallbackNarrative1, fallbackNarrative2 } from "./insight-copy";
 import { migratePlan, migrateTrade, snapshotForStock } from "./plans";
+import {
+  pairId,
+  planSessionId,
+  recordElapsedSec,
+  recordSessionId,
+  RULE_VERSION,
+  setAnalyticsUserId,
+  TAXONOMY_VERSION,
+  track,
+} from "./analytics";
 import type { AppState, DraftTrade, IssuedCard, Plan, PlanSnapshot, Side, Stock, ToastKind, Trade } from "./types";
 import { TERMS_VERSION } from "./types";
 
@@ -269,11 +279,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       nextBaseline[side] = count;
     }
     if (!nextCards.length) return;
+    const before = stateRef.current.issuedCards;
     setState((s) => ({
       ...s,
       issuedCards: [...s.issuedCards, ...nextCards],
       issueBaseline: nextBaseline,
     }));
+    for (const card of nextCards) {
+      const firstForSide = !before.some((c) => c.side === card.side);
+      if (!firstForSide) continue;
+      track("insight_first_generated", {
+        insight_id: card.id,
+        pair_id: pairId(card.side, card.reasonGroup, card.moodMeta),
+        trade_type: card.side,
+        pair_count: card.count,
+        trade_type_record_count_at_generation: sideTrades(trades, card.side).length,
+        trigger_record_id: card.relatedTradeIds[0],
+        taxonomy_version: TAXONOMY_VERSION,
+        rule_version: RULE_VERSION,
+        insight_type: "repeated_pair",
+      });
+    }
   }, []);
 
   const login = useCallback((opts?: { kakaoId?: string; nickname?: string; email?: string; accountId?: string; passwordHash?: string }) => {
@@ -302,6 +328,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       };
     });
     if (opts?.kakaoId || opts?.email || opts?.accountId) void runPull(nextId);
+    setAnalyticsUserId(nextId);
   }, [runPull]);
 
   const completeSignup = useCallback(
@@ -333,6 +360,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       if (status === "ok") setActionError(false);
       if (status !== "off") setCloudStatus(status);
+      setAnalyticsUserId(opts.accountId);
+      const method = opts.kakaoId ? "kakao" : opts.email ? "email" : "unknown";
+      const source =
+        (typeof window !== "undefined" && sessionStorage.getItem("signup_source")) ||
+        (typeof window !== "undefined" && sessionStorage.getItem("kakao_intent") === "signup" ? "onboarding" : "login_screen");
+      track("signup_complete", {
+        signup_method: method,
+        onboarding_session_id: typeof window !== "undefined" ? sessionStorage.getItem("inplot:ga:onboarding_session") : undefined,
+        signup_source: source,
+        screen_name: "signup",
+      });
       return status;
     },
     []
@@ -340,6 +378,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     touch();
+    setAnalyticsUserId(null);
     setState((s) => ({
       ...empty(),
       seenOnboarding: s.seenOnboarding,
@@ -421,7 +460,46 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         });
         setToast({ message: draft.isPractice ? "연습 기록을 저장했어요" : "매매 기록을 저장했어요", kind: "ok" });
         if (!draft.isPractice) {
-          const nextTrades = [trade, ...stateRef.current.trades];
+          const nextTrades = [trade, ...stateRef.current.trades.filter((t) => !t.isPractice)];
+          const real = nextTrades.filter((t) => !t.isPractice);
+          const sideSeq = real.filter((t) => t.side === trade.side).length;
+          track("record_save_success", {
+            record_id: trade.id,
+            record_session_id: recordSessionId(),
+            trade_type: trade.side,
+            stock_code: trade.stockCode,
+            trade_date: `${trade.tradedAt} ${trade.tradedTime || "00-00"}`.replace(":", "-"),
+            reason_category_ids: trade.reasons.map((r) => r.meta || r.label),
+            reason_count: trade.reasons.length,
+            state_category_ids: trade.moods.map((m) => m.meta || m.label),
+            state_count: trade.moods.length,
+            reason_state_pairs: trade.reasons.flatMap((r) => trade.moods.map((m) => `${r.group || r.meta}|${m.meta}`)),
+            record_sequence: real.length,
+            trade_type_record_sequence: sideSeq,
+            elapsed_active_sec: recordElapsedSec(),
+            plan_snapshot_exists: Boolean(snap && (trade.side === "buy" ? snap.buy : snap.sell)),
+            impulsive_grade: "none",
+            taxonomy_version: TAXONOMY_VERSION,
+            rule_version: RULE_VERSION,
+            screen_name: "record_save",
+          });
+          if (snap && (trade.side === "buy" ? snap.buy : snap.sell)) {
+            const fieldCount = trade.side === "buy" ? 2 : 2;
+            track("plan_snapshot_save_success", {
+              plan_id: trade.planId,
+              record_id: trade.id,
+              snapshot_id: `${trade.id}_snap`,
+              snapshot_field_count: fieldCount,
+            });
+          }
+          if (sideSeq === 3) {
+            track("insight_eligible", {
+              trade_type: trade.side,
+              trade_type_record_count: sideSeq,
+              trigger_record_id: trade.id,
+              eligible_at: new Date().toISOString(),
+            });
+          }
           void tryIssue(nextTrades, stateRef.current.issueBaseline);
         }
         return trade;
@@ -490,15 +568,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return { ...s, plans };
         });
         setToast({ message: "계획을 등록했어요", kind: "ok" });
+        track("plan_save_success", {
+          plan_id: row.id,
+          plan_session_id: planSessionId(),
+          stock_code: row.stockCode,
+          has_buy_price: row.buyMin != null && row.buyMax != null,
+          has_stop_price: row.stopLoss != null,
+          has_target_price: row.takeProfit != null,
+          screen_name: "plan_new",
+        });
         return row;
       },
       updatePlan: (id, patch) => {
+        let row: Plan | undefined;
         touch();
         setState((s) => {
-          const plans = s.plans.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: Date.now() } : p));
+          const plans = s.plans.map((p) => {
+            if (p.id !== id) return p;
+            row = { ...p, ...patch, updatedAt: Date.now() };
+            return row;
+          });
           return { ...s, plans };
         });
         setToast({ message: "계획을 저장했어요", kind: "ok" });
+        if (row) {
+          track("plan_save_success", {
+            plan_id: row.id,
+            plan_session_id: planSessionId(),
+            stock_code: row.stockCode,
+            has_buy_price: row.buyMin != null && row.buyMax != null,
+            has_stop_price: row.stopLoss != null,
+            has_target_price: row.takeProfit != null,
+            screen_name: "plan_edit",
+          });
+        }
       },
       deletePlan: (id) => {
         touch();

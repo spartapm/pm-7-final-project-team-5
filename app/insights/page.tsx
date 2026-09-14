@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { InsightCard } from "@/components/InsightCard";
 import { PieChart, PieLegend } from "@/components/PieChart";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
+import { startRecordSession, track, trackOnce } from "@/lib/analytics";
 import { reasonGroups } from "@/lib/categories";
 import { comboTop3, dateHref, groupedIssued, moodDistribution, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
 import { todayKey } from "@/lib/format";
@@ -31,6 +32,19 @@ export default function InsightsPage() {
   const groups = groupedIssued(issuedCards);
   const hasCard = issuedCards.length > 0;
   const waiting = !hasCard && real.length > 0 && ((buyCount > 0 && buyCount < 3) || (sellCount > 0 && sellCount < 3));
+
+  useEffect(() => {
+    if (!hydrated || tab !== "dash") return;
+    const dashboardState = real.length === 0 ? "empty" : hasCard ? "available" : "insufficient_records";
+    trackOnce(`dashboard_view:${dashboardState}`, "dashboard_view", {
+      dashboard_state: dashboardState,
+      record_count: real.length,
+      available_chart_ids: real.length === 0 ? [] : ["trade_trend", "plan_follow", "reason_pie", "mood_pie", "combo_top3"],
+      insight_available: hasCard,
+      screen_id: "4-1",
+      screen_name: "insight_dashboard",
+    });
+  }, [hydrated, tab, real.length, hasCard]);
 
   if (!hydrated) return <div className="shell" />;
 
@@ -71,7 +85,14 @@ export default function InsightsPage() {
             />
           )
         ) : waiting ? (
-          <Waiting buyCount={buyCount} sellCount={sellCount} onRecord={() => router.push("/record")} />
+          <Waiting
+            buyCount={buyCount}
+            sellCount={sellCount}
+            onRecord={() => {
+              startRecordSession("insight_waiting", real.length);
+              router.push("/record");
+            }}
+          />
         ) : hasCard ? (
           <TrendList groups={groups} />
         ) : (
@@ -84,7 +105,14 @@ export default function InsightsPage() {
       </div>
       {tab === "dash" && real.length === 0 ? (
         <div className="footer-cta over-tabs">
-          <button className="btn btn-primary" type="button" onClick={() => router.push("/record")}>
+          <button
+            className="btn btn-primary"
+            type="button"
+            onClick={() => {
+              startRecordSession("dashboard", real.length);
+              router.push("/record");
+            }}
+          >
             첫 매매 기록하기
           </button>
         </div>
@@ -96,6 +124,21 @@ export default function InsightsPage() {
 
 function EmptyDash() {
   const [dot, setDot] = useState(0);
+  const prev = useRef(0);
+  function moveTo(next: number, method: "swipe" | "button") {
+    const to = Math.min(4, Math.max(0, next));
+    const from = prev.current;
+    if (to === from) return;
+    track("insight_preview_carousel_change", {
+      from_slide_index: from,
+      to_slide_index: to,
+      change_method: method,
+      total_slide_count: 5,
+      screen_name: "insight_dashboard",
+    });
+    prev.current = to;
+    setDot(to);
+  }
   return (
     <>
       <h3>아직 기록이 없어요</h3>
@@ -105,7 +148,7 @@ function EmptyDash() {
         onScroll={(e) => {
           const el = e.currentTarget;
           const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth * 0.78));
-          setDot(Math.min(4, Math.max(0, i)));
+          moveTo(Math.min(4, Math.max(0, i)), "swipe");
         }}
       >
         <div className="example-card">

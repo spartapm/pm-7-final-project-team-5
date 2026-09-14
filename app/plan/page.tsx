@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Chevron, StockTile } from "@/components/icons";
 import { PlanEmptyMark, PhoneShell, TabBar } from "@/components/ui";
+import { startPlanSession } from "@/lib/analytics";
 import { sideLabel } from "@/lib/format";
 import { planSummary } from "@/lib/plans";
 import { useStore } from "@/lib/store";
@@ -31,7 +32,14 @@ export default function PlanListPage() {
       <div className="topbar">
         <h1 className="h1">계획</h1>
         {plans.length > 0 ? (
-          <button className="new-pill" type="button" onClick={() => router.push("/plan/new")}>
+          <button
+            className="new-pill"
+            type="button"
+            onClick={() => {
+              startPlanSession("plan_list");
+              router.push("/plan/new");
+            }}
+          >
             + 새 계획
           </button>
         ) : (
@@ -54,7 +62,15 @@ export default function PlanListPage() {
               <li>매수 계획・이 가격대에서 사고 싶어요 (희망 매수가 구간)</li>
               <li>매도 계획・목표가와 손절가를 미리 정해 둘 수 있어요</li>
             </ul>
-            <button className="btn btn-primary" type="button" style={{ marginTop: 24 }} onClick={() => router.push("/plan/new")}>
+            <button
+              className="btn btn-primary"
+              type="button"
+              style={{ marginTop: 24 }}
+              onClick={() => {
+                startPlanSession("plan_list");
+                router.push("/plan/new");
+              }}
+            >
               첫 계획 등록하기
             </button>
           </div>

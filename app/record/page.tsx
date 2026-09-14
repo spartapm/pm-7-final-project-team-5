@@ -7,6 +7,7 @@ import { ChoiceSheet, Modal, PhoneShell } from "@/components/ui";
 import { StockSearch } from "@/components/StockSearch";
 import { TradeWizard } from "@/components/TradeWizard";
 import { emptyDraft, useStore } from "@/lib/store";
+import { recordSessionId, track } from "@/lib/analytics";
 import type { Side, Stock } from "@/lib/types";
 
 export default function RecordPage() {
@@ -33,10 +34,20 @@ export default function RecordPage() {
           onSave={() => {
             if (!loggedIn) {
               setGate(true);
+              sessionStorage.setItem("signup_source", "record_save");
               return;
             }
             const saved = addTrade(draft);
             if (saved) router.replace(`/records/${saved.id}`);
+            else {
+              track("record_save_error", {
+                record_session_id: recordSessionId(),
+                trade_type: draft.side,
+                error_code: "validation_error",
+                failed_step: "save",
+                retryable: true,
+              });
+            }
           }}
         />
         {gate ? (

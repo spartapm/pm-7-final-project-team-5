@@ -13,6 +13,7 @@ export default function SignupChoicePage() {
   const { showToast } = useStore();
 
   useEffect(() => {
+    if (!sessionStorage.getItem("signup_source")) sessionStorage.setItem("signup_source", "login_screen");
     const oauth = peekOAuthToast();
     if (!oauth) return;
     showToast(oauth, "info");

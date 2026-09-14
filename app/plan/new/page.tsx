@@ -11,6 +11,7 @@ import { NumPad, PadField } from "@/components/NumPad";
 import { findPlan } from "@/lib/plans";
 import { findStock } from "@/lib/stocks";
 import { useStore } from "@/lib/store";
+import { ensurePlanSession, planSessionId, track } from "@/lib/analytics";
 import type { Side, Stock } from "@/lib/types";
 import { Suspense } from "react";
 
@@ -32,6 +33,10 @@ function NewPlanInner() {
   const [pad, setPad] = useState<"buyMin" | "buyMax" | "stopLoss" | "takeProfit" | null>(null);
   const lockedOnce = useRef(false);
   const overseas = stock ? isOverseas(stock.market) : false;
+
+  useEffect(() => {
+    ensurePlanSession("direct");
+  }, []);
 
   useEffect(() => {
     const code = params.get("code");
@@ -122,6 +127,11 @@ function NewPlanInner() {
       const max = parseNum(buyMax);
       if (!(min > 0) || !(max > 0) || min > max) {
         showToast("최소 희망가는 최대 희망가보다 작거나 같아야해요", "err");
+        track("plan_save_error", {
+          plan_session_id: planSessionId(),
+          error_code: "validation_error",
+          retryable: true,
+        });
         return;
       }
       const payload = {
@@ -143,6 +153,11 @@ function NewPlanInner() {
       const take = parseNum(takeProfit);
       if (!(stop > 0) || !(take > 0) || take < stop) {
         showToast("손절가는 목표가보다 낮거나 같아야해요", "err");
+        track("plan_save_error", {
+          plan_session_id: planSessionId(),
+          error_code: "validation_error",
+          retryable: true,
+        });
         return;
       }
       const payload = {

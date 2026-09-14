@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChartMark, KakaoIcon, PhoneShell } from "@/components/ui";
+import { onboardingElapsedSec, onboardingSessionId, trackOnce } from "@/lib/analytics";
 import { hasKakaoKey, startKakaoLogin } from "@/lib/kakao";
 import { reasonGroups, toPick } from "@/lib/categories";
 import { moodOptions } from "@/lib/categories";
@@ -70,9 +71,22 @@ export default function OnboardingPage() {
   const [moods, setMoods] = useState<CategoryPick[]>([]);
   const groups = reasonGroups();
   const moodList = moodOptions("buy");
+  const stepsDone = useRef(0);
+
+  useEffect(() => {
+    if (stage !== "intro") return;
+    const sid = onboardingSessionId();
+    trackOnce(`onboarding_view:${sid}`, "onboarding_view", {
+      onboarding_session_id: sid,
+      entry_source: "app_open",
+      screen_id: "0-1",
+      screen_name: "onboarding_intro",
+    });
+  }, [stage]);
 
   function goSignup() {
     skipOnboarding();
+    sessionStorage.setItem("signup_source", "onboarding");
     router.push("/signup");
   }
   function goLogin() {
@@ -82,6 +96,7 @@ export default function OnboardingPage() {
   function goKakao() {
     skipOnboarding();
     sessionStorage.setItem("kakao_intent", "login");
+    sessionStorage.setItem("signup_source", "onboarding");
     const started = startKakaoLogin();
     if (!started) {
       showToast("카카오 키를 확인해 주세요", "err");
@@ -312,7 +327,22 @@ export default function OnboardingPage() {
     const data = stage === "ex1" ? PRACTICE.samsung : stage === "ex2" ? PRACTICE.kakao : PRACTICE.naver;
     const step = stage === "ex3" ? "3 / 3" : stage === "ex2" ? "2 / 3" : "1 / 3";
     const head = stage === "ex3" ? "연습 매매" : "예시 과거 기록";
-    const next = () => setStage(stage === "ex1" ? "ex2" : stage === "ex2" ? "ex3" : "reason");
+    const next = () => {
+      stepsDone.current += 1;
+      if (stage === "ex3") {
+        const sid = onboardingSessionId();
+        trackOnce(`onboarding_complete:${sid}`, "onboarding_complete", {
+          onboarding_session_id: sid,
+          completed_step_count: Math.max(4, stepsDone.current + 1),
+          elapsed_active_sec: onboardingElapsedSec(),
+          screen_id: "0-5",
+          screen_name: "onboarding_reason",
+        });
+        setStage("reason");
+        return;
+      }
+      setStage(stage === "ex1" ? "ex2" : "ex3");
+    };
     const title = stage === "ex3" ? "이번 연습 매매 정보예요" : "이렇게 기록했어요";
     const situation = "situation" in data ? data.situation : "";
     return (

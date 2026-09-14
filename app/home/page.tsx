@@ -8,6 +8,7 @@ import { TradeRow } from "@/components/TradeRow";
 import { LegalFooter, Modal, PhoneShell, TabBar } from "@/components/ui";
 import { thisMonth } from "@/lib/format";
 import { insightHref } from "@/lib/insights";
+import { startPlanSession, startRecordSession, track } from "@/lib/analytics";
 import { useStore } from "@/lib/store";
 
 const COACH_KEY = "inplot:seen-coach";
@@ -87,13 +88,19 @@ export default function HomePage() {
         </div>
 
         <div className="cta-grid">
-          <button className="cta" type="button" onClick={() => router.push("/record")}>
+          <button className="cta" type="button" onClick={() => {
+            startRecordSession("home", real.length);
+            router.push("/record");
+          }}>
             <span className="cta-emoji" aria-hidden>
               ✍️
             </span>
             <span className="cta-label">매매 기록하기</span>
           </button>
-          <button className="cta" type="button" onClick={() => router.push("/plan/new")}>
+          <button className="cta" type="button" onClick={() => {
+            startPlanSession("home");
+            router.push("/plan/new");
+          }}>
             <span className="cta-emoji" aria-hidden>
               🎯
             </span>
@@ -111,7 +118,21 @@ export default function HomePage() {
             <p>방금 매매한 종목을 남겨 보세요.</p>
           </div>
         ) : (
-          recent.map((t) => <TradeRow key={t.id} trade={t} blurMoney onClick={() => router.push(`/records/${t.id}`)} />)
+          recent.map((t, i) => (
+            <TradeRow
+              key={t.id}
+              trade={t}
+              blurMoney
+              onClick={() => {
+                track("record_item_click", {
+                  row_index: i,
+                  entry_source: "record_list",
+                  screen_name: "home",
+                });
+                router.push(`/records/${t.id}?src=record_list`);
+              }}
+            />
+          ))
         )}
         <LegalFooter />
       </div>
