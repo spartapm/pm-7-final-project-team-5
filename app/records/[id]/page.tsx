@@ -2,22 +2,19 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BackChevron, PencilIco } from "@/components/icons";
+import { BackChevron } from "@/components/icons";
 import { PlanCards } from "@/components/PlanCards";
-import { TradeWizard } from "@/components/TradeWizard";
+import { ReadChips } from "@/components/TradeRow";
 import { Modal, PhoneShell } from "@/components/ui";
 import { formatPrice, formatQty } from "@/lib/format";
-import { findStock } from "@/lib/stocks";
-import { draftFromTrade, useStore } from "@/lib/store";
+import { useStore } from "@/lib/store";
 
 export default function RecordDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { hydrated, trades, hidePlanOnTrade, updateTrade } = useStore();
+  const { hydrated, trades, hidePlanOnTrade } = useStore();
   const [hideSide, setHideSide] = useState<"buy" | "sell" | null>(null);
-  const [editing, setEditing] = useState(false);
   const trade = trades.find((t) => t.id === id);
-  const [draft, setDraft] = useState<ReturnType<typeof draftFromTrade> | null>(null);
 
   if (!hydrated) return <div className="shell" />;
   if (!trade) {
@@ -33,24 +30,6 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
     );
   }
 
-  if (editing && draft) {
-    return (
-      <PhoneShell>
-        <TradeWizard
-          mode="edit"
-          draft={draft}
-          setDraft={setDraft}
-          savingLabel="저장하기"
-          onClose={() => setEditing(false)}
-          onSave={() => {
-            const saved = updateTrade(trade.id, draft);
-            if (saved) setEditing(false);
-          }}
-        />
-      </PhoneShell>
-    );
-  }
-
   return (
     <PhoneShell>
       <div className="topbar">
@@ -58,24 +37,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
           <BackChevron />
         </button>
         <h1 className="h1">기록 상세</h1>
-        <button
-          className="icon-btn"
-          type="button"
-          aria-label="수정"
-          onClick={() => {
-            const found = findStock(trade.stockCode, trade.market);
-            const stock = found || {
-              code: trade.stockCode,
-              name: trade.stockName,
-              market: trade.market,
-              marketName: trade.market,
-            };
-            setDraft(draftFromTrade(trade, stock));
-            setEditing(true);
-          }}
-        >
-          <PencilIco />
-        </button>
+        <span />
       </div>
       <div className="scroll">
         <div className="card">
@@ -95,13 +57,11 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         </div>
         <div className="fact-card">
           <b>매매 이유</b>
-          <p className="keep">
-            {trade.reasons.length ? trade.reasons.map((r) => r.label).join("・") : "선택하지 않음"}
-          </p>
+          <ReadChips items={trade.reasons} />
         </div>
         <div className="fact-card">
           <b>그때 마음</b>
-          <p className="keep">{trade.moods.length ? trade.moods.map((m) => m.label).join("・") : "선택하지 않음"}</p>
+          <ReadChips items={trade.moods} />
         </div>
         <PlanCards
           trade={trade}
@@ -128,4 +88,3 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
     </PhoneShell>
   );
 }
-

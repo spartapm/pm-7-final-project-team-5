@@ -2,7 +2,20 @@
 
 import { useState } from "react";
 import { formatMd, formatPrice, formatQty, sideLabel } from "@/lib/format";
-import type { Trade } from "@/lib/types";
+import type { CategoryPick, Trade } from "@/lib/types";
+
+export function ReadChips({ items }: { items: CategoryPick[] }) {
+  if (!items.length) return <p className="keep">선택하지 않음</p>;
+  return (
+    <div className="chips-read">
+      {items.map((item) => (
+        <span key={item.label} className="chip read">
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export function TradeRow({
   trade,
@@ -19,8 +32,6 @@ export function TradeRow({
 }) {
   const [open, setOpen] = useState(!blurMoney);
   const compact = !showReason;
-  const reasonText = trade.reasons.length ? trade.reasons.map((r) => r.label).join("・") : "선택하지 않음";
-  const moodText = trade.moods.length ? trade.moods.map((m) => m.label).join("・") : "선택하지 않음";
   return (
     <button className={`trade-card${compact ? " compact" : ""}`} type="button" onClick={onClick}>
       <div className="trade-card-top">
@@ -53,11 +64,11 @@ export function TradeRow({
           <div className="trade-meta">
             <div className="kv-mini">
               <span>매매 이유</span>
-              <p className="keep">{reasonText}</p>
+              <ReadChips items={trade.reasons} />
             </div>
             <div className="kv-mini">
               <span>그때 마음</span>
-              <p className="keep">{moodText}</p>
+              <ReadChips items={trade.moods} />
             </div>
           </div>
         </>

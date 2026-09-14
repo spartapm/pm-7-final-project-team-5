@@ -21,7 +21,7 @@ export function PlanCards({
   const hideOpp = trade.hiddenPlan[opposite];
 
   return (
-    <div style={{ marginTop: 12 }}>
+    <div style={{ marginTop: 24 }}>
       {sameSnap && !hideSame ? (
         trade.side === "buy" && snap?.buy ? (
           <CompareBuy trade={trade} snap={snap.buy} onHide={() => onHide("buy")} />
