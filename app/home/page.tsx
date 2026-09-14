@@ -158,7 +158,7 @@ export default function HomePage() {
         <Modal
           title="정말 탈퇴하시겠어요?"
           body="탈퇴 시 계정 정보와 모든 매매 계획과 기록이 삭제되며 재가입하더라도 복구할 수 없어요."
-          cancel="아니오"
+          cancel="아니요"
           confirm="네"
           split
           onCancel={() => setAskWithdraw(false)}

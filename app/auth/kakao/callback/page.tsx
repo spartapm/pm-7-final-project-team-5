@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PhoneShell } from "@/components/ui";
+import { BrandMark } from "@/components/icons";
 import { needsNickname } from "@/lib/format";
 import { takeNext } from "@/lib/next-path";
 import { kakaoRedirectUri } from "@/lib/kakao";
@@ -99,6 +100,7 @@ function CallbackInner() {
     <PhoneShell>
       <div className="kakao-wait">
         <div className="kakao-wait-body">
+          {failed ? null : <BrandMark size={36} />}
           {failed ? null : <i className="spinner" aria-hidden />}
           <h1>{failed ? hint : "카카오 로그인 확인 중"}</h1>
           {failed ? null : (
@@ -109,11 +111,13 @@ function CallbackInner() {
             </p>
           )}
         </div>
-        <div className="footer-cta">
-          <button className="btn btn-ghost" type="button" onClick={() => router.replace("/login")}>
-            로그인으로 돌아가기
-          </button>
-        </div>
+        {failed ? (
+          <div className="footer-cta">
+            <button className="btn btn-ghost" type="button" onClick={() => router.replace("/login")}>
+              로그인으로 돌아가기
+            </button>
+          </div>
+        ) : null}
       </div>
     </PhoneShell>
   );
