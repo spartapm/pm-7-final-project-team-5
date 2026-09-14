@@ -561,10 +561,10 @@ img { display: block; max-width: 100%; }
 
 .insight-card .narrative1,
 .insight-card .narrative2 {
-  margin: 8px 0 0; color: #253247; font-size: 12.5px; line-height: 1.5;
+  margin: 8px 0 0; color: #253247; line-height: 1.5;
 }
-.insight-card .narrative1 { font-weight: 400; }
-.insight-card .narrative2 { font-weight: 600; }
+.insight-card .narrative1 { font-size: 13px; font-weight: 400; }
+.insight-card .narrative2 { font-size: 15px; font-weight: 700; }
 .insight-card h3 { margin: 8px 0 0; font-size: 12.5px; font-weight: 600; color: #253247; }
 .insight-card p { margin: 8px 0 0; }
 .insight-card .badge { margin-bottom: 0; }
@@ -649,7 +649,7 @@ img { display: block; max-width: 100%; }
 .login-link.right { text-align: right; margin-top: 8px; }
 .req { color: #d12921; margin-left: 2px; }
 .example-report { width: 100%; height: auto; display: block; border-radius: 12px; }
-.report-cta-title { text-align: center; font-size: 16px; font-weight: 600; color: #253247; letter-spacing: -0.02em; margin: 8px 0 12px; line-height: 22px; }
+.report-cta-title { text-align: center; font-size: 16px; font-weight: 700; color: #253247; letter-spacing: -0.02em; margin: 8px 0 12px; line-height: 22px; }
 .detail-kv {
   display: grid;
   grid-template-columns: auto 1fr;

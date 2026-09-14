@@ -13,7 +13,7 @@ export default function RecordsPage() {
   const [filter, setFilter] = useState<"all" | Side>("all");
   useEffect(() => {
     const saved = sessionStorage.getItem("inplot:records-filter");
-    if (saved === "buy" || saved === "sell") setFilter(saved);
+    if (saved === "buy" || saved === "sell" || saved === "all") setFilter(saved);
   }, []);
   const list = useMemo(() => {
     const real = trades.filter((t) => !t.isPractice).sort((a, b) => (a.tradedAt < b.tradedAt ? 1 : a.tradedAt > b.tradedAt ? -1 : b.createdAt - a.createdAt));
