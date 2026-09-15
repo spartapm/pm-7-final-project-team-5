@@ -14,10 +14,18 @@ import { buyCaption, sellCaption } from "@/lib/plans";
 import { useStore } from "@/lib/store";
 import type { IssuedCard, Side, Trade } from "@/lib/types";
 
+const EMPTY_PREVIEWS = [
+  { src: "/figma/preview/trend.png", alt: "매매 추이 예시" },
+  { src: "/figma/preview/plan.png", alt: "계획 이행 현황 예시" },
+  { src: "/figma/preview/reason-overview.png", alt: "판단 이유 한눈에 보기 예시" },
+  { src: "/figma/preview/reason-detail.png", alt: "판단 이유 자세히 보기 예시" },
+  { src: "/figma/preview/combo.png", alt: "자주 겹치는 조합 TOP 3 예시" },
+];
 const BUY_PIE = ["#476B9E", "#6382AD", "#8098BC", "#9CAFCB", "#B8C5DA", "#D4DCE8", "#F0F2F7"];
 const SELL_PIE = ["#C99A3D", "#D5AE60", "#DFC382", "#E9D6A6", "#F3E9CC"];
 const CHART_BUY = "#476B9E";
 const CHART_SELL = "#C99A3D";
+
 export default function InsightsPage() {
   const router = useRouter();
   const { hydrated, trades, issuedCards, markCardsRead } = useStore();
@@ -162,53 +170,11 @@ function EmptyDash() {
           moveTo(Math.min(4, Math.max(0, i)), "swipe");
         }}
       >
-        <div className="example-card">
-          <span className="ex-badge">예시</span>
-          <b>매매 추이</b>
-          <p className="sub">일자별 매수·매도 건수</p>
-          <svg className="ex-line" viewBox="0 0 220 72" aria-hidden>
-            <polyline fill="none" stroke="#476B9E" strokeWidth="2" points="8,48 52,28 96,36 140,16 204,24" />
-            <polyline fill="none" stroke="#C99A3D" strokeWidth="2" points="8,56 52,52 96,44 140,32 204,20" />
-            <circle cx="8" cy="48" r="2.5" fill="#476B9E" />
-            <circle cx="52" cy="28" r="2.5" fill="#476B9E" />
-            <circle cx="96" cy="36" r="2.5" fill="#476B9E" />
-            <circle cx="140" cy="16" r="2.5" fill="#476B9E" />
-            <circle cx="204" cy="24" r="2.5" fill="#476B9E" />
-            <circle cx="8" cy="56" r="2.5" fill="#C99A3D" />
-            <circle cx="52" cy="52" r="2.5" fill="#C99A3D" />
-            <circle cx="96" cy="44" r="2.5" fill="#C99A3D" />
-            <circle cx="140" cy="32" r="2.5" fill="#C99A3D" />
-            <circle cx="204" cy="20" r="2.5" fill="#C99A3D" />
-          </svg>
-        </div>
-        <div className="example-card">
-          <span className="ex-badge">예시</span>
-          <b>판단 근거</b>
-          <p className="sub">자주 고른 근거 비중</p>
-          <div className="ex-pie" />
-        </div>
-        <div className="example-card">
-          <span className="ex-badge">예시</span>
-          <b>계획 이행</b>
-          <p className="sub">계획이 있었던 기록 비율</p>
-          <div className="ex-plan">
-            <span />
-            <span style={{ width: "62%" }} />
-            <span style={{ width: "38%" }} />
+        {EMPTY_PREVIEWS.map((card) => (
+          <div className="example-card preview" key={card.src}>
+            <img src={card.src} alt={card.alt} width={260} height={170} />
           </div>
-        </div>
-        <div className="example-card">
-          <span className="ex-badge">예시</span>
-          <b>매수 마음</b>
-          <p className="sub">매수할 때 자주 고른 마음</p>
-          <div className="ex-pie buy-mood" />
-        </div>
-        <div className="example-card">
-          <span className="ex-badge">예시</span>
-          <b>매도 마음</b>
-          <p className="sub">매도할 때 자주 고른 마음</p>
-          <div className="ex-pie sell-mood" />
-        </div>
+        ))}
       </div>
       <div className="dots">
         {[0, 1, 2, 3, 4].map((i) => (

@@ -55,10 +55,10 @@ export const VAGUE_POINTERS = [
 ];
 
 export const NARRATIVE2_SHOTS = [
-  "최근 매수 3건 중 2건에서 차트에서 자주 멈추던 가격대를 뚫고 움직였다는 이유가 반복됐어요.",
-  "가격이 크게 떨어졌을 때 반사적으로 매수하는 경향이 보여요.",
-  "최근 매수 3건 중 2건에서 거래량이 갑자기 크게 늘거나 줄었다는 이유가 반복됐어요.",
-  "오르는 흐름을 놓칠까 봐 추격 매수하는 경향이 보여요.",
+  "가격이 떨어진 구간에서 지지선 부근 신호를 근거로 매수를 결정하는 패턴이 여러 하락 국면에서 반복되는 경향이 보여요",
+  "차트나 거래량에서 나타난 신호를 보고 방향 전환을 감지했다고 판단되면, 가격이 급락하는 상황에서 곧바로 매도로 이어지는 패턴이 여러 하락 구간에서 반복되는 경향이 보여요",
+  "커뮤니티나 지인에게 들은 정보를 접한 직후, 다른 사람들이 몰리는 시점에 맞춰 매수로 이어지는 흐름이 여러 차례 반복되는 경향이 보여요",
+  "수익이 발생한 구간에서 차트 신호를 근거로 매도 타이밍을 잡는 패턴이 여러 거래에서 반복되는 경향이 보여요",
 ];
 
 export function isExcludedMood(pick: CategoryPick) {
@@ -78,7 +78,7 @@ export function moodExpose(pick: CategoryPick) {
 }
 
 export function endingFor(n: number) {
-  return n >= 6 ? "한 패턴이 반복되고 있어요" : "한 경향이 보여요";
+  return n >= 6 ? "패턴이 반복되고 있어요" : "경향이 보여요";
 }
 
 export function swapEnding(sentence: string, ending: string) {
@@ -95,7 +95,7 @@ export function fallbackNarrative2(moodLabel: string, n: number, reasonLabels: s
   const trigger = reasonLabels.filter(Boolean).slice(0, 2).join("·");
   const ending = endingFor(n);
   if (trigger) {
-    return `${trigger} 보고 매매한 흐름이 한 건이 아니라 ${n}건에 걸쳐 ${ending}`;
+    return `${trigger} 보고 매매한 흐름이 여러 거래에서 ${ending}`;
   }
   return `같은 신호와 마음이 여러 거래에 걸쳐 ${ending}`;
 }

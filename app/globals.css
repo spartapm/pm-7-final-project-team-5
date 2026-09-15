@@ -887,6 +887,8 @@ img { display: block; max-width: 100%; }
 }
 .example-card b { display: block; padding-right: 48px; }
 .example-card.on { outline: 1.5px solid var(--blue); }
+.example-card.preview { padding: 0; min-height: 0; overflow: hidden; }
+.example-card.preview img { width: 100%; height: auto; display: block; }
 .pie-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 
 .kakao-wait {
@@ -945,7 +947,9 @@ img { display: block; max-width: 100%; }
 .kv-mini .stack-lines span { width: auto; font-size: 12px; color: #6B7488; line-height: 17px; }
 .pad-value.placeholder { color: #B9C0CC; }
 .onb-insight .narrative1,
-.onb-insight .narrative2 { font-size: 13px; font-weight: 400; color: #253247; line-height: 1.5; margin: 8px 0 0; }
+.onb-insight .narrative2 { color: #253247; line-height: 1.5; margin: 8px 0 0; }
+.onb-insight .narrative1 { font-size: 13px; font-weight: 400; }
+.onb-insight .narrative2 { font-size: 15px; font-weight: 700; }
 .survey-banner { display: block; margin: 4px 0 16px; }
 .survey-banner img { width: 100%; height: auto; display: block; }
 

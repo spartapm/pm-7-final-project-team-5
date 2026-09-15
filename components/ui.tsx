@@ -203,7 +203,9 @@ export function LegalFooter() {
         <a href={TERMS_VIEW.privacy} target="_blank" rel="noreferrer">
           개인정보 처리방침
         </a>
-        <a href="mailto:hello@patternnote.app">문의하기(contact)</a>
+        <a href="https://www.instagram.com/inplot_official/" target="_blank" rel="noreferrer">
+          문의하기(contact)
+        </a>
       </div>
       <p className="copy">© 2026 인플롯</p>
     </div>
