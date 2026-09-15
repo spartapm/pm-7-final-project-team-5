@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BANNED_WORDS, endingFor, fallbackNarrative1, fallbackNarrative2, HIDDEN_TAGS, NARRATIVE2_SHOTS, VAGUE_POINTERS } from "@/lib/insight-copy";
+import { BANNED_WORDS, endingFor, fallbackNarrative1, fallbackNarrative2, HIDDEN_TAGS, NARRATIVE1_SHOTS, NARRATIVE2_SHOTS, VAGUE_POINTERS } from "@/lib/insight-copy";
 import { sideLabel } from "@/lib/format";
 import type { Side } from "@/lib/types";
 
@@ -104,7 +104,8 @@ export async function POST(req: Request) {
 판단근거 소분류 원문: ${reasonLabels.join(" · ")}
 판단근거 메타데이터: ${reasonMeta}
 필수 어미: ${ending}
-참고 예시: 차트에서 지지선 근처라고 판단했을 때, 가격이 떨어진 상태에서 매수하는 경향이 보여요
+참고 예시:
+${NARRATIVE1_SHOTS.map((s, i) => `${i + 1}. ${s}`).join("\n")}
 위 정보를 바탕으로 narrative1 문장 하나를 작성하세요.`;
 
   let narrative1 = n1fb;
