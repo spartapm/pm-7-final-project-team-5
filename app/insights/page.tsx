@@ -172,7 +172,7 @@ function EmptyDash() {
       >
         {EMPTY_PREVIEWS.map((card) => (
           <div className="example-card preview" key={card.src}>
-            <img src={card.src} alt={card.alt} width={260} height={170} />
+            <img src={card.src} alt={card.alt} width={780} height={510} />
           </div>
         ))}
       </div>
