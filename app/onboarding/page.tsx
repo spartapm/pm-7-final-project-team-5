@@ -51,15 +51,13 @@ function OnbTrade({ name, side, price, qty }: { name: string; side: string; pric
 
 function OnbReportDash() {
   return (
-    <div className="example-report-crop">
-      <img
-        src="/figma/insight-report-2x.png"
-        alt="인사이트 리포트"
-        className="example-report"
-        width={750}
-        height={3038}
-      />
-    </div>
+    <img
+      src="/figma/insight-report-2x.png"
+      alt="인사이트 리포트"
+      className="example-report"
+      width={750}
+      height={2666}
+    />
   );
 }
 
