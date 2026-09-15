@@ -652,7 +652,21 @@ img { display: block; max-width: 100%; }
 .login-link.center { text-align: center; }
 .login-link.right { text-align: right; margin-top: 8px; }
 .req { color: #d12921; margin-left: 2px; }
-.example-report { width: 100%; height: auto; display: block; border-radius: 12px; }
+.example-report { width: 100%; height: auto; display: block; }
+.example-report-crop {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 750 / 2666;
+  overflow: hidden;
+}
+.example-report-crop .example-report {
+  position: absolute;
+  left: 0;
+  top: -13.95%;
+  width: 100%;
+  height: 113.95%;
+  max-width: none;
+}
 .report-cta-title { text-align: center; font-size: 16px; font-weight: 700; color: #253247; letter-spacing: -0.02em; margin: 8px 0 12px; line-height: 22px; }
 .detail-kv {
   display: grid;
@@ -930,9 +944,8 @@ img { display: block; max-width: 100%; }
 .kv-mini .stack-lines { margin: 0; gap: 0; line-height: 17px; }
 .kv-mini .stack-lines span { width: auto; font-size: 12px; color: #6B7488; line-height: 17px; }
 .pad-value.placeholder { color: #B9C0CC; }
-.example-report { width: 100%; height: auto; display: block; }
 .onb-insight .narrative1,
 .onb-insight .narrative2 { font-size: 13px; font-weight: 400; color: #253247; line-height: 1.5; margin: 8px 0 0; }
 .survey-banner { display: block; margin: 4px 0 16px; }
-.survey-banner img { width: 100%; height: auto; display: block; border-radius: 16px; }
+.survey-banner img { width: 100%; height: auto; display: block; }
 
