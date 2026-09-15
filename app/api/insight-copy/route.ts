@@ -21,7 +21,7 @@ function clean(text: string) {
 
 function valid(text: string, ending: string, tags: string[], opts?: { narrative2?: boolean }) {
   if (!text || text.length < 8 || text.length > 180) return false;
-  if (!text.endsWith("요") && !text.endsWith(ending)) return false;
+  if (!text.endsWith(ending)) return false;
   if (text.includes("한 경향이 보여요") || text.includes("한 패턴이 반복되고 있어요")) return false;
   if (REPEAT_EOJEOL.test(text)) return false;
   const banned = [...BANNED_WORDS, ...HIDDEN_TAGS, ...tags];
@@ -110,7 +110,7 @@ ${NARRATIVE1_SHOTS.map((s, i) => `${i + 1}. ${s}`).join("\n")}
 
   let narrative1 = n1fb;
   for (const model of MODELS) {
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 3; i++) {
       try {
         const text = await once(key, model, SYS1, user1);
         if (valid(text, ending, [moodMeta])) {
@@ -137,7 +137,7 @@ ${NARRATIVE2_SHOTS.map((s, i) => `${i + 1}. ${s}`).join("\n")}
 
   let narrative2 = n2fb;
   for (const model of MODELS) {
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 3; i++) {
       try {
         const text = await once(key, model, SYS2, user2);
         if (valid(text, ending, [moodMeta], { narrative2: true })) {
