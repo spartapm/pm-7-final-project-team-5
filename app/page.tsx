@@ -17,10 +17,8 @@ export default function SplashPage() {
       setShow(false);
       if (loggedIn) {
         router.replace(afterAuthPath(nickname, seenWelcome));
-      } else if (!seenOnboarding) {
-        router.replace("/onboarding");
       } else {
-        router.replace("/signup");
+        router.replace("/home");
       }
     }, 1400);
     return () => clearTimeout(t);

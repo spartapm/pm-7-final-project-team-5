@@ -8,8 +8,8 @@ export function ReadChips({ items }: { items: CategoryPick[] }) {
   if (!items.length) return <p className="keep">선택하지 않음</p>;
   return (
     <div className="chips-read">
-      {items.map((item) => (
-        <span key={item.label} className="chip read">
+      {items.map((item, i) => (
+        <span key={`${item.meta || item.label}-${i}`} className="chip read">
           {item.label}
         </span>
       ))}

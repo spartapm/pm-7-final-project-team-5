@@ -13,6 +13,7 @@ export type CategoryPick = {
   group: string | null;
   label: string;
   meta: string;
+  subtitle?: string;
 };
 
 export type PlanSnapshot = {

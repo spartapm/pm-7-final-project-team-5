@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackChevron } from "@/components/icons";
-import { ChoiceSheet, Modal, PhoneShell } from "@/components/ui";
+import { ChoiceSheet, PhoneShell } from "@/components/ui";
 import { StockSearch } from "@/components/StockSearch";
 import { TradeWizard } from "@/components/TradeWizard";
+import { rememberNext } from "@/lib/next-path";
+import { setPendingTrade } from "@/lib/pending";
 import { emptyDraft, useStore } from "@/lib/store";
 import { recordSessionId, track } from "@/lib/analytics";
 import type { Side, Stock } from "@/lib/types";
@@ -16,7 +18,6 @@ export default function RecordPage() {
   const [stock, setStock] = useState<Stock | null>(null);
   const [draft, setDraft] = useState(() => emptyDraft("buy", null, false));
   const [pickSide, setPickSide] = useState(false);
-  const [gate, setGate] = useState(false);
 
   function start(side: Side, picked: Stock) {
     setDraft(emptyDraft(side, picked, false));
@@ -29,12 +30,14 @@ export default function RecordPage() {
         <TradeWizard
           draft={draft}
           setDraft={setDraft}
-          savingLabel="저장하기"
+          savingLabel={loggedIn ? "저장하기" : "로그인/회원가입하고 저장하기"}
           onClose={() => setDraft(emptyDraft("buy", null, false))}
           onSave={() => {
             if (!loggedIn) {
-              setGate(true);
+              setPendingTrade(draft);
+              rememberNext("/home");
               sessionStorage.setItem("signup_source", "record_save");
+              router.push("/login");
               return;
             }
             const saved = addTrade(draft);
@@ -50,15 +53,6 @@ export default function RecordPage() {
             }
           }}
         />
-        {gate ? (
-          <Modal
-            title="실제 기록을 남기려면 가입이 필요해요"
-            body="연습은 비회원으로 가능하지만, 실제 매매 기록은 계정에 저장됩니다."
-            confirm="회원가입"
-            onConfirm={() => router.push("/signup")}
-            onCancel={() => setGate(false)}
-          />
-        ) : null}
       </PhoneShell>
     );
   }

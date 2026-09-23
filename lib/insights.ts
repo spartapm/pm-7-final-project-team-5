@@ -1,3 +1,4 @@
+import { isActiveMood, isActiveReason } from "./categories";
 import { comboKey, comboLabel, reasonGroups } from "./categories";
 import { sideLabel, todayKey, uid } from "./format";
 import { endingFor, fallbackNarrative1, fallbackNarrative2, isExcludedMood, moodChartOf, moodMetaOf } from "./insight-copy";
@@ -280,6 +281,7 @@ export function reasonDistribution(trades: Trade[]) {
   const counts = new Map<string, number>();
   for (const t of trades) {
     for (const r of t.reasons) {
+      if (!isActiveReason(r)) continue;
       const key = r.group || r.meta;
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
@@ -291,7 +293,7 @@ export function moodDistribution(trades: Trade[]) {
   const counts = new Map<string, number>();
   for (const t of trades) {
     for (const m of t.moods) {
-      if (isExcludedMood(m)) continue;
+      if (isExcludedMood(m) || !isActiveMood(m)) continue;
       const key = moodChartOf(m);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
@@ -303,8 +305,9 @@ export function reasonSubDistribution(trades: Trade[], group: string) {
   const counts = new Map<string, number>();
   for (const t of trades) {
     for (const r of t.reasons) {
+      if (!isActiveReason(r)) continue;
       if ((r.group || "기타") !== group) continue;
-      const key = r.meta || r.label;
+      const key = r.label || r.meta;
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
@@ -314,10 +317,10 @@ export function reasonSubDistribution(trades: Trade[], group: string) {
 export function comboTop3(trades: Trade[]) {
   const map = new Map<string, { n: number; latest: number }>();
   for (const t of realOf(trades)) {
-    if (!t.reasons.length || !t.moods.length) continue;
-    const { reason } = comboLabel(t);
-    const mood = t.moods[0] ? moodChartOf(t.moods[0]) : "당시 상태 없음";
-    const key = `${sideLabel(t.side)} · ${reason} · ${mood}`;
+    const reason = t.reasons.find(isActiveReason);
+    const mood = t.moods.find((m) => isActiveMood(m) && !isExcludedMood(m));
+    if (!reason || !mood) continue;
+    const key = `${reason.label} · ${mood.label}`;
     const prev = map.get(key);
     map.set(key, { n: (prev?.n ?? 0) + 1, latest: Math.max(prev?.latest ?? 0, t.createdAt) });
   }

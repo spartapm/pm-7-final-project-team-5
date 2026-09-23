@@ -2,17 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { InsightCard } from "@/components/InsightCard";
 import { PieChart, PieLegend } from "@/components/PieChart";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
 import { startRecordSession, track, trackOnce } from "@/lib/analytics";
 import { reasonGroups } from "@/lib/categories";
-import { comboTop3, dateHref, groupedIssued, moodDistribution, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
-import { todayKey } from "@/lib/format";
-import { SAMPLE_INSIGHT } from "@/lib/onboarding-data";
+import { comboTop3, moodDistribution, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
 import { buyCaption, sellCaption } from "@/lib/plans";
 import { useStore } from "@/lib/store";
-import type { IssuedCard, Side, Trade } from "@/lib/types";
+import type { Side, Trade } from "@/lib/types";
 
 const EMPTY_PREVIEWS = [
   { src: "/figma/preview/trend.png", alt: "매매 추이 예시" },
@@ -28,8 +25,7 @@ const CHART_SELL = "#C99A3D";
 
 export default function InsightsPage() {
   const router = useRouter();
-  const { hydrated, trades, issuedCards, markCardsRead } = useStore();
-  const [tab, setTab] = useState<"dash" | "trend">("dash");
+  const { hydrated, trades } = useStore();
   const real = trades.filter((t) => !t.isPractice);
   const buyCount = sideTrades(trades, "buy").length;
   const sellCount = sideTrades(trades, "sell").length;
@@ -37,46 +33,28 @@ export default function InsightsPage() {
   const buyMoods = moodDistribution(real.filter((t) => t.side === "buy"));
   const sellMoods = moodDistribution(real.filter((t) => t.side === "sell"));
   const top3 = comboTop3(trades);
-  const groups = groupedIssued(issuedCards);
-  const hasCard = issuedCards.length > 0;
-  const waiting = !hasCard && real.length > 0 && ((buyCount > 0 && buyCount < 3) || (sellCount > 0 && sellCount < 3));
 
   useEffect(() => {
-    if (!hydrated || tab !== "dash") return;
-    const dashboardState = real.length === 0 ? "empty" : hasCard ? "available" : "insufficient_records";
+    if (!hydrated) return;
+    const dashboardState = real.length === 0 ? "empty" : "available";
     trackOnce(`dashboard_view:${dashboardState}`, "dashboard_view", {
       dashboard_state: dashboardState,
       record_count: real.length,
       available_chart_ids: real.length === 0 ? [] : ["trade_trend", "plan_follow", "reason_pie", "mood_pie", "combo_top3"],
-      insight_available: hasCard,
+      insight_available: false,
       screen_id: "4-1",
       screen_name: "insight_dashboard",
     });
-  }, [hydrated, tab, real.length, hasCard]);
+  }, [hydrated, real.length]);
 
   if (!hydrated) return <div className="shell" />;
-
-  function goTrend() {
-    if (real.length === 0) return;
-    setTab("trend");
-    markCardsRead();
-  }
 
   return (
     <PhoneShell>
       <div className="scroll tabbed">
         <div className="brand-kicker insight-kicker">인사이트</div>
-        <h1 className="hello insight-hello">{tab === "dash" ? "나의 기록 통계" : "경향해석"}</h1>
-        {tab === "dash" ? <p className="sub dash-lead">전체 매매 기록을 기준으로 정리했어요</p> : null}
-        <div className="tabs">
-          <button type="button" className={tab === "dash" ? "on" : ""} onClick={() => setTab("dash")}>
-            대시보드
-          </button>
-          <button type="button" className={tab === "trend" ? "on" : ""} onClick={goTrend} disabled={real.length === 0} aria-disabled={real.length === 0}>
-            경향해석
-            {issuedCards.some((c) => !c.read) ? <i className="dot" /> : null}
-          </button>
-        </div>
+        <h1 className="hello insight-hello">나의 기록 통계</h1>
+        <p className="sub dash-lead">전체 매매 기록을 기준으로 정리했어요</p>
 
         {real.length >= 3 ? (
           <a
@@ -89,40 +67,22 @@ export default function InsightsPage() {
           </a>
         ) : null}
 
-        {tab === "dash" ? (
-          real.length === 0 ? (
-            <EmptyDash />
-          ) : (
-            <Dashboard
-              real={real}
-              buyCount={buyCount}
-              sellCount={sellCount}
-              reasons={reasons}
-              buyMoods={buyMoods}
-              sellMoods={sellMoods}
-              top3={top3}
-            />
-          )
-        ) : waiting ? (
-          <Waiting
+        {real.length === 0 ? (
+          <EmptyDash />
+        ) : (
+          <Dashboard
+            real={real}
             buyCount={buyCount}
             sellCount={sellCount}
-            onRecord={() => {
-              startRecordSession("insight_waiting", real.length);
-              router.push("/record");
-            }}
+            reasons={reasons}
+            buyMoods={buyMoods}
+            sellMoods={sellMoods}
+            top3={top3}
           />
-        ) : hasCard ? (
-          <TrendList groups={groups} />
-        ) : (
-          <div className="card">
-            <p className="sub">{SAMPLE_INSIGHT.policy}</p>
-            <p className="sub">{SAMPLE_INSIGHT.policySub}</p>
-          </div>
         )}
         <LegalFooter />
       </div>
-      {tab === "dash" && real.length === 0 ? (
+      {real.length === 0 ? (
         <div className="footer-cta over-tabs">
           <button
             className="btn btn-primary"
@@ -185,67 +145,6 @@ function EmptyDash() {
   );
 }
 
-function Waiting({ buyCount, sellCount, onRecord }: { buyCount: number; sellCount: number; onRecord: () => void }) {
-  return (
-    <>
-      <h2>{SAMPLE_INSIGHT.policy}</h2>
-      <p className="sub">{SAMPLE_INSIGHT.policySub}</p>
-      <SegBox label="매수" count={buyCount} />
-      <SegBox label="매도" count={sellCount} />
-      <button className="btn btn-primary" type="button" style={{ marginTop: 20 }} onClick={onRecord}>
-        매매 기록하기
-      </button>
-    </>
-  );
-}
-
-function SegBox({ label, count }: { label: string; count: number }) {
-  const filled = Math.min(count, 3);
-  return (
-    <div className="card">
-      <div className="section-head" style={{ margin: 0 }}>
-        <h2>{label}</h2>
-        <b>
-          {Math.min(count, 3)}/3건
-        </b>
-      </div>
-      <div className="seg-bar">
-        {[0, 1, 2].map((i) => (
-          <i key={i} className={i < filled ? "on" : ""} />
-        ))}
-      </div>
-      <p className="sub">같은 유형 기록이 3건 모이면 카드가 발행돼요</p>
-    </div>
-  );
-}
-
-function TrendList({ groups }: { groups: [string, IssuedCard[]][] }) {
-  return (
-    <>
-      <div className="insight-policy">
-        <p className="policy-title">{SAMPLE_INSIGHT.policy}</p>
-        <p className="policy-sub">{SAMPLE_INSIGHT.policySub}</p>
-      </div>
-      {groups.map(([date, cards]) => {
-        const buy = cards.filter((c) => c.side === "buy").sort((a, b) => b.issuedAt - a.issuedAt)[0];
-        const sell = cards.filter((c) => c.side === "sell").sort((a, b) => b.issuedAt - a.issuedAt)[0];
-        const shown = [buy, sell].filter(Boolean) as IssuedCard[];
-        return (
-          <div className="date-group" key={date}>
-            <div className="date-group-h">
-              <b>{date === todayKey() ? "오늘 발행" : `${date} 발행`}</b>
-              <a href={dateHref(date)}>이 날짜의 카드 전체보기</a>
-            </div>
-            {shown.map((c) => (
-              <InsightCard key={c.id} card={c} />
-            ))}
-          </div>
-        );
-      })}
-    </>
-  );
-}
-
 function Dashboard({
   real,
   buyCount,
@@ -263,16 +162,25 @@ function Dashboard({
   sellMoods: [string, number][];
   top3: [string, number][];
 }) {
+  const [openCount, setOpenCount] = useState(false);
   return (
     <>
-      <div className="card chart-card stat-card">
-        <div className="stat-num">{real.length}건</div>
-        <div className="sub">지금까지 기록한 매매</div>
-        <div className="stat-split">매수 {buyCount}건 · 매도 {sellCount}건</div>
-      </div>
       <div className="card chart-card">
-        <h2 className="chart-title">📈 매매 추이 · 매매유형별 (일자별)</h2>
-        <LineChart trades={real} />
+        <button className={openCount ? "acc-h open" : "acc-h"} type="button" onClick={() => setOpenCount((v) => !v)}>
+          매매개요
+          <span>{openCount ? "▾" : "▸"}</span>
+        </button>
+        {openCount ? (
+          <>
+            <div className="stat-num">{real.length}건</div>
+            <div className="sub">지금까지 기록한 매매</div>
+            <div className="stat-split">매수 {buyCount}건 · 매도 {sellCount}건</div>
+            <h2 className="chart-title">📈 매매 추이 · 주간</h2>
+            <LineChart trades={real} />
+          </>
+        ) : (
+          <p className="sub">매매 건수와 주간 추이를 접어 두었어요</p>
+        )}
       </div>
       <PlanFollowCard trades={real} />
       <div className="card chart-card">
@@ -352,18 +260,33 @@ function HBar({ rank, label, value, max, tone = "default" }: { rank: number; lab
   );
 }
 
+function startOfWeek(base: Date) {
+  const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  return d;
+}
+
+function ymd(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function LineChart({ trades }: { trades: Trade[] }) {
-  const days = [...new Set(trades.map((t) => t.tradedAt))].sort();
   const [shift, setShift] = useState(0);
-  const end = days.length - 1 - shift;
-  const slice = days.slice(Math.max(0, end - 4), end + 1);
+  const week = startOfWeek(new Date());
+  week.setDate(week.getDate() - shift * 7);
+  const slice = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(week);
+    d.setDate(week.getDate() + i);
+    return ymd(d);
+  });
   const w = 320;
   const h = 140;
   const pad = 28;
   const max = Math.max(1, ...slice.map((d) => trades.filter((t) => t.tradedAt === d).length));
   function xy(d: string, i: number, side: Side) {
     const n = trades.filter((t) => t.tradedAt === d && t.side === side).length;
-    const x = slice.length === 1 ? w / 2 : pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
+    const x = pad + (i * (w - pad * 2)) / 6;
     const y = h - pad - (n / max) * (h - pad * 2);
     return { x, y, n };
   }
@@ -375,7 +298,7 @@ function LineChart({ trades }: { trades: Trade[] }) {
   }
   const from = slice[0]?.slice(5).replace("-", ".") || "";
   const to = slice[slice.length - 1]?.slice(5).replace("-", ".") || "";
-  const range = from === to ? from : `${from} ~ ${to}`;
+  const range = `${from} ~ ${to}`;
   const ticks = max <= 2 ? [0, max] : [0, Math.round(max / 2), max];
   return (
     <>
@@ -385,7 +308,7 @@ function LineChart({ trades }: { trades: Trade[] }) {
           <span className="sell"><i />매도</span>
         </div>
         <span className="chart-range">
-          <button type="button" disabled={end <= 4} onClick={() => setShift((s) => s + 1)}>
+          <button type="button" onClick={() => setShift((s) => s + 1)}>
             ‹
           </button>
           <b>{range || "매매일자"}</b>
@@ -409,12 +332,6 @@ function LineChart({ trades }: { trades: Trade[] }) {
               </g>
             );
           })}
-          {slice.length === 1 ? (
-            <>
-              <circle cx={xy(slice[0]!, 0, "buy").x} cy={xy(slice[0]!, 0, "buy").y} r="3" fill={CHART_BUY} />
-              <circle cx={xy(slice[0]!, 0, "sell").x} cy={xy(slice[0]!, 0, "sell").y} r="3" fill={CHART_SELL} />
-            </>
-          ) : (
             <>
               <polyline fill="none" stroke={CHART_BUY} strokeWidth="2" points={pts("buy")} />
               <polyline fill="none" stroke={CHART_SELL} strokeWidth="2" points={pts("sell")} />
@@ -429,9 +346,8 @@ function LineChart({ trades }: { trades: Trade[] }) {
                 );
               })}
             </>
-          )}
           {slice.map((d, i) => {
-            const x = slice.length === 1 ? w / 2 : pad + (i * (w - pad * 2)) / Math.max(1, slice.length - 1);
+            const x = pad + (i * (w - pad * 2)) / 6;
             return (
               <text key={d} x={x} y={h - 6} textAnchor="middle" fontSize="10" fill="#8594A9">
                 {d.slice(5).replace("-", ".")}

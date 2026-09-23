@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { moodOptions, reasonGroups, toPick } from "@/lib/categories";
+import { MoodPicker, ReasonPicker } from "@/components/ReasonPicker";
+import { moodOptions } from "@/lib/categories";
 import { ensureRecordSession, TAXONOMY_VERSION, trackOnce } from "@/lib/analytics";
 import { formatPrice, formatQty, formatWhen, sideLabel, todayKey } from "@/lib/format";
 import { tradePriceCaption } from "@/lib/markets";
@@ -28,10 +29,8 @@ export function TradeWizard({
 }) {
   const { showToast } = useStore();
   const [step, setStep] = useState(1);
-  const [open, setOpen] = useState<Set<string>>(new Set());
   const [ask, setAsk] = useState(false);
   const [pad, setPad] = useState<PadKind | null>(null);
-  const groups = reasonGroups();
   const moods = moodOptions(draft.side);
   const side = sideLabel(draft.side);
   const market = draft.stock?.market || "KOSPI";
@@ -42,7 +41,7 @@ export function TradeWizard({
   useEffect(() => {
     if (mode !== "create") return;
     const sid = ensureRecordSession("direct");
-    const reasonCount = reasonGroups().reduce((n, g) => n + g.items.length, 0);
+    const reasonCount = 33;
     if (step === 2 && !fired.current.reason) {
       fired.current.reason = true;
       trackOnce(`reason_axis:${sid}`, "reason_axis_start", {
@@ -66,22 +65,20 @@ export function TradeWizard({
     }
   }, [step, mode, draft.side, draft.reasons]);
 
-  function pickReason(item: CategoryPick) {
-    const exists = draft.reasons.some((r) => r.label === item.label);
-    if (!exists && draft.reasons.length >= 3) {
+  function setReasons(next: CategoryPick[]) {
+    if (next.length > 3) {
       showToast("이 옵션을 선택하려면 하나를 해제해주세요", "info");
       return;
     }
-    setDraft({ ...draft, reasons: exists ? draft.reasons.filter((r) => r.label !== item.label) : [...draft.reasons, item] });
+    setDraft({ ...draft, reasons: next });
   }
 
-  function pickMood(item: CategoryPick) {
-    const exists = draft.moods.some((m) => m.label === item.label);
-    if (!exists && draft.moods.length >= 2) {
+  function setMoods(next: CategoryPick[]) {
+    if (next.length > 2) {
       showToast("이 옵션을 선택하려면 하나를 해제해주세요", "info");
       return;
     }
-    setDraft({ ...draft, moods: exists ? draft.moods.filter((m) => m.label !== item.label) : [...draft.moods, item] });
+    setDraft({ ...draft, moods: next });
   }
 
   return (
@@ -97,146 +94,107 @@ export function TradeWizard({
       <div className="step-track slim" aria-hidden>
         <i style={{ width: `${(step / 3) * 100}%` }} />
       </div>
-      <div className="scroll">
-        {step === 1 && (
-          <>
-            <h1 className="step-title">어떤 {side}였나요?</h1>
-            <p className="step-kicker">종목명</p>
-            <p className="stock-line">
-              <b>{draft.stock?.name} </b>
-              <span>
-                ({draft.stock?.code} · {draft.stock?.marketName})
-              </span>
-            </p>
-            <div className="field-row">
-              <div style={{ flex: 1 }}>
-                <PadField
-                  label={priceLabel}
-                  value={displayPriceValue(draft.price, market)}
-                  placeholder={pricePlaceholder(market)}
-                  align="right"
-                  onOpen={() => setPad("price")}
-                />
-              </div>
-              <div className="field" style={{ flex: 1 }}>
-                <label>수량</label>
-                <div className="qty-box">
-                  <button type="button" className="qty-pm" onClick={() => setDraft({ ...draft, qty: bumpQty(draft.qty, -1) })}>
-                    -
-                  </button>
-                  <button className="pad-value qty-num" type="button" onClick={() => setPad("qty")}>
-                    {draft.qty || "0"}주
-                  </button>
-                  <button type="button" className="qty-pm" onClick={() => setDraft({ ...draft, qty: bumpQty(draft.qty, 1) })}>
-                    +
-                  </button>
-                </div>
+      {step === 1 ? (
+        <div className="scroll">
+          <h1 className="step-title">어떤 {side}였나요?</h1>
+          <p className="step-kicker">종목명</p>
+          <p className="stock-line">
+            <b>{draft.stock?.name} </b>
+            <span>
+              ({draft.stock?.code} · {draft.stock?.marketName})
+            </span>
+          </p>
+          <div className="field-row">
+            <div style={{ flex: 1 }}>
+              <PadField
+                label={priceLabel}
+                value={displayPriceValue(draft.price, market)}
+                placeholder={pricePlaceholder(market)}
+                align="right"
+                onOpen={() => setPad("price")}
+              />
+            </div>
+            <div className="field" style={{ flex: 1 }}>
+              <label>수량</label>
+              <div className="qty-box">
+                <button type="button" className="qty-pm" onClick={() => setDraft({ ...draft, qty: bumpQty(draft.qty, -1) })}>
+                  -
+                </button>
+                <button className="pad-value qty-num" type="button" onClick={() => setPad("qty")}>
+                  {draft.qty || "0"}주
+                </button>
+                <button type="button" className="qty-pm" onClick={() => setDraft({ ...draft, qty: bumpQty(draft.qty, 1) })}>
+                  +
+                </button>
               </div>
             </div>
-            <div className="field-row">
-              <div style={{ flex: 1 }}>
-                <PadField label="매매일자" value={draft.tradedAt} align="right" onOpen={() => setPad("date")} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <PadField label="시간 (선택)" value={draft.tradedTime} placeholder="00:00" align="right" onOpen={() => setPad("time")} />
-              </div>
+          </div>
+          <div className="field-row">
+            <div style={{ flex: 1 }}>
+              <PadField label="매매일자" value={draft.tradedAt} align="right" onOpen={() => setPad("date")} />
             </div>
-          </>
-        )}
-        {step === 2 && (
-          <>
-            <h1 className="step-title">이번 {side}는 무엇을 보고 결정하셨어요?</h1>
-            <p className="sub">
-              {draft.side === "buy" ? (
-                <>
-                  매수할 때 참고한 내용을 선택해 주세요.
-                  <br />
-                </>
-              ) : null}
-              최대 3개까지 고를 수 있어요. ({draft.reasons.length}/3)
-            </p>
-            <div className="acc" style={{ marginTop: 16 }}>
-              {groups.map((g) => {
-                const picked = draft.reasons.some((r) => r.group === g.group);
-                const shown = open.has(g.group) || picked;
-                return (
-                <div className={`acc-item ${shown ? "has" : ""}`} key={g.group}>
-                  <button
-                    className={shown ? "acc-h open" : "acc-h"}
-                    type="button"
-                    onClick={() => {
-                      setOpen((prev) => {
-                        const next = new Set<string>();
-                        if (!prev.has(g.group)) next.add(g.group);
-                        return next;
-                      });
-                    }}
-                  >
-                    {g.group}
-                    <span>{shown ? "▾" : "▸"}</span>
-                  </button>
-                  {shown && (
-                    <div className="acc-body">
-                      {g.items.map((item) => {
-                        const on = draft.reasons.some((r) => r.label === item.label);
-                        return (
-                          <button key={item.label} type="button" className={on ? "chip on" : "chip"} onClick={() => pickReason(toPick(item))}>
-                            {item.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-                );
-              })}
+            <div style={{ flex: 1 }}>
+              <PadField label="시간 (선택)" value={draft.tradedTime} placeholder="00:00" align="right" onOpen={() => setPad("time")} />
             </div>
-          </>
-        )}
-        {step === 3 && (
-          <>
+          </div>
+        </div>
+      ) : null}
+      {step === 2 ? (
+        <div className="reason-step">
+          <ReasonPicker selected={draft.reasons} onChange={setReasons} onComplete={() => setStep(3)} />
+        </div>
+      ) : null}
+      {step === 3 ? (
+        <>
+          <div className="scroll reason-mood-scroll">
             <h1 className="step-title">그때 마음은 어떠셨어요?</h1>
             <p className="sub">가장 가까운 마음을 골라주세요. (최대 2개)</p>
-            <div className="mood-list" style={{ marginTop: 16 }}>
-              {moods.map((m) => {
-                const on = draft.moods.some((x) => x.label === m.label);
-                return (
-                  <button key={m.label} type="button" className={on ? "mood on" : "mood"} onClick={() => pickMood(toPick(m))}>
-                    {m.label}
+            <MoodPicker items={moods} selected={draft.moods} onChange={setMoods} />
+          </div>
+          <div className="reason-bar">
+            <div className="reason-chips">
+              {draft.moods.map((item) => (
+                <span key={item.meta || item.label} className="reason-chip">
+                  <em>{item.label}</em>
+                  <button
+                    type="button"
+                    aria-label={`${item.label} 삭제`}
+                    onClick={() => setMoods(draft.moods.filter((m) => (m.meta || m.label) !== (item.meta || item.label)))}
+                  >
+                    ×
                   </button>
-                );
-              })}
+                </span>
+              ))}
             </div>
-          </>
-        )}
-      </div>
-      <div className="footer-cta">
-        {mode === "edit" && step === 1 ? (
-          <button className="btn btn-primary" type="button" disabled={!canInfo} onClick={onSave}>
-            {savingLabel}
-          </button>
-        ) : step < 3 ? (
-          <button
-            className="btn btn-primary"
-            type="button"
-            disabled={step === 1 ? !canInfo : draft.reasons.length === 0}
-            onClick={() => setStep((s) => s + 1)}
-          >
-            다음
-          </button>
-        ) : (
-          <button className="btn btn-primary" type="button" disabled={draft.moods.length === 0} onClick={() => setAsk(true)}>
-            {savingLabel}
-          </button>
-        )}
-      </div>
+            <div className="reason-bar-row">
+              <span className="reason-count">{draft.moods.length}개 선택</span>
+              <button className="btn btn-primary reason-done" type="button" disabled={draft.moods.length === 0} onClick={() => setAsk(true)}>
+                {savingLabel}
+              </button>
+            </div>
+          </div>
+        </>
+      ) : null}
+      {step === 1 ? (
+        <div className="footer-cta">
+          {mode === "edit" ? (
+            <button className="btn btn-primary" type="button" disabled={!canInfo} onClick={onSave}>
+              {savingLabel}
+            </button>
+          ) : (
+            <button className="btn btn-primary" type="button" disabled={!canInfo} onClick={() => setStep(2)}>
+              다음
+            </button>
+          )}
+        </div>
+      ) : null}
       {ask ? (
         <div className="modal-back">
           <div className="modal">
             <h3>이대로 저장할까요?</h3>
             <p>매매 이유와 그때 마음은 저장 후 수정이 어려워요.</p>
             <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={onSave}>
-              네
+              {savingLabel === "저장하기" ? "네" : savingLabel}
             </button>
             <button className="btn btn-ghost" type="button" onClick={() => setAsk(false)}>
               아니오

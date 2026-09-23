@@ -9,6 +9,8 @@ import { isOverseas, sameStockCode } from "@/lib/markets";
 import { displayPriceValue, parseNum, sanitizePrice } from "@/lib/money";
 import { NumPad, PadField } from "@/components/NumPad";
 import { findPlan } from "@/lib/plans";
+import { rememberNext } from "@/lib/next-path";
+import { setPendingPlan } from "@/lib/pending";
 import { findStock } from "@/lib/stocks";
 import { useStore } from "@/lib/store";
 import { ensurePlanSession, planSessionId, track } from "@/lib/analytics";
@@ -20,7 +22,7 @@ function NewPlanInner() {
   const params = useSearchParams();
   const returnTo = params.get("return");
   const lockSide = params.get("side") === "sell" ? "sell" : params.get("side") === "buy" ? "buy" : null;
-  const { plans, addPlan, updatePlan, showToast, attachPlanToTrade } = useStore();
+  const { plans, addPlan, updatePlan, showToast, attachPlanToTrade, loggedIn } = useStore();
   const [stock, setStock] = useState<Stock | null>(null);
   const [side, setSide] = useState<Side | null>(lockSide);
   const [askType, setAskType] = useState(false);
@@ -146,7 +148,12 @@ function NewPlanInner() {
         memo: "",
       };
       if (editingId) updatePlan(editingId, payload);
-      else addPlan(payload);
+      else if (!loggedIn) {
+        setPendingPlan(payload);
+        rememberNext("/plan");
+        router.push("/login");
+        return;
+      } else addPlan(payload);
       piece = { buy: { min, max } };
     } else {
       const stop = parseNum(stopLoss);
@@ -172,7 +179,12 @@ function NewPlanInner() {
         memo: "",
       };
       if (editingId) updatePlan(editingId, payload);
-      else addPlan(payload);
+      else if (!loggedIn) {
+        setPendingPlan(payload);
+        rememberNext("/plan");
+        router.push("/login");
+        return;
+      } else addPlan(payload);
       piece = { sell: { stopLoss: stop, takeProfit: take } };
     }
     const tradeId = returnTo?.startsWith("/records/") ? returnTo.slice("/records/".length).split("?")[0] : "";
@@ -249,7 +261,7 @@ function NewPlanInner() {
       {formReady ? (
         <div className="footer-cta">
           <button className="btn btn-primary" type="button" onClick={save}>
-            저장
+            {loggedIn || editingId ? "저장" : "로그인/회원가입하고 저장하기"}
           </button>
         </div>
       ) : null}

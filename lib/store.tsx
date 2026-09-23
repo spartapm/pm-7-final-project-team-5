@@ -29,6 +29,7 @@ import {
 } from "./insights";
 import { fallbackNarrative1, fallbackNarrative2 } from "./insight-copy";
 import { migratePlan, migrateTrade, snapshotForStock } from "./plans";
+import { migrateTradeReasons } from "./migrate";
 import {
   pairId,
   planSessionId,
@@ -77,7 +78,9 @@ function load(): AppState {
     const raw = localStorage.getItem(KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw) as AppState;
-    const trades = (parsed.trades ?? []).map((t) => migrateTrade(t as unknown as Record<string, unknown>));
+    const trades = (parsed.trades ?? [])
+      .map((t) => migrateTrade(t as unknown as Record<string, unknown>))
+      .map(migrateTradeReasons);
     const plans = (parsed.plans ?? []).map((p) => migratePlan(p as unknown as Record<string, unknown>));
     const issuedCards = Array.isArray(parsed.issuedCards) ? parsed.issuedCards : [];
     const sessionExpired = parsed.loggedIn && parsed.loginAt && Date.now() - parsed.loginAt > SESSION_MS;
@@ -228,7 +231,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       termsVersion: remote.termsVersion || s.termsVersion,
       termsAcceptedAt: remote.termsAcceptedAt ?? s.termsAcceptedAt,
       loginAt: remote.loginAt ?? s.loginAt,
-      trades: hasRemote ? remote.trades : s.trades,
+      trades: hasRemote ? remote.trades.map(migrateTradeReasons) : s.trades,
       plans: hasRemote ? remote.plans : s.plans,
       issuedCards: mergeIssuedCards(s.issuedCards, remote.issuedCards),
       issueBaseline: mergeIssueBaseline(s.issueBaseline, remote.issueBaseline),

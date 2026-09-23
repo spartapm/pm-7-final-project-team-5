@@ -1,5 +1,5 @@
 export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA4_ID || "G-NY7WWXC28E";
-export const TAXONOMY_VERSION = "v1";
+export const TAXONOMY_VERSION = "v2";
 export const RULE_VERSION = "v1";
 export const APP_VERSION = "0.1.0";
 

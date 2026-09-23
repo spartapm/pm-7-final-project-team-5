@@ -20,9 +20,6 @@ export function PhoneShell({ children }: { children: ReactNode }) {
 
 export function TabBar() {
   const path = usePathname();
-  const { issuedCards } = useStore();
-  const unread = issuedCards.some((c) => !c.read);
-  const onInsights = path.startsWith("/insights");
   useEffect(() => {
     document.querySelectorAll(".scroll").forEach((el) => {
       (el as HTMLElement).scrollTop = 0;
@@ -39,15 +36,12 @@ export function TabBar() {
       {tabs.map((t) => {
         const on = path === t.href || path.startsWith(t.href + "/");
         const Icon = t.icon;
-        const showBadge = t.href === "/insights" && unread && !onInsights;
         return (
           <Link key={t.href} href={t.href} className={on ? "on" : ""}>
             <span className="tab-ico">
               <Icon on={on} />
-              {showBadge ? <i className="tab-badge" /> : null}
             </span>
             {t.label}
-            {showBadge ? <span className="tab-tip">새로운 인사이트</span> : null}
           </Link>
         );
       })}
