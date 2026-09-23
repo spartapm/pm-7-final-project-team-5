@@ -1,27 +1,34 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { takePending } from "@/lib/pending";
+import { peekPending, takePending } from "@/lib/pending";
 import { useStore } from "@/lib/store";
 
 export function PendingFlush() {
   const router = useRouter();
   const path = usePathname();
   const { hydrated, loggedIn, querying, addTrade, addPlan } = useStore();
+  const tried = useRef(false);
 
   useEffect(() => {
     if (!hydrated || !loggedIn || querying) return;
     if (path.startsWith("/signup") || path.startsWith("/welcome") || path.startsWith("/legal")) return;
-    const pending = takePending();
+    if (tried.current) return;
+    const pending = peekPending();
     if (!pending) return;
+    tried.current = true;
     if (pending.kind === "trade") {
       const saved = addTrade(pending.draft);
-      if (saved) router.replace(`/records/${saved.id}`);
+      if (saved) {
+        takePending();
+        router.replace(`/records/${saved.id}`);
+      }
       return;
     }
-    addPlan(pending.payload);
-    router.replace("/plan");
+    const saved = addPlan(pending.payload);
+    takePending();
+    router.replace(`/plan/${saved.id}`);
   }, [hydrated, loggedIn, querying, path, addTrade, addPlan, router]);
 
   return null;

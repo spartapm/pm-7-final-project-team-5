@@ -30,7 +30,8 @@ export default function RecordPage() {
         <TradeWizard
           draft={draft}
           setDraft={setDraft}
-          savingLabel={loggedIn ? "저장하기" : "로그인/회원가입하고 저장하기"}
+          savingLabel="저장하기"
+          guest={!loggedIn}
           onClose={() => setDraft(emptyDraft("buy", null, false))}
           onSave={() => {
             if (!loggedIn) {

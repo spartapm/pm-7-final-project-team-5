@@ -125,6 +125,12 @@ export function OnboardingGuide() {
         </div>
         {last ? (
           <>
+            <div className="modal-split" style={{ marginBottom: 8 }}>
+              <button className="btn btn-ghost" type="button" onClick={() => setStep(2)}>
+                이전
+              </button>
+              <span />
+            </div>
             <button
               className="btn btn-primary"
               type="button"

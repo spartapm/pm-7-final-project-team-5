@@ -19,6 +19,7 @@ export function TradeWizard({
   savingLabel,
   onClose,
   mode = "create",
+  guest = false,
 }: {
   draft: DraftTrade;
   setDraft: (next: DraftTrade) => void;
@@ -26,6 +27,7 @@ export function TradeWizard({
   savingLabel: string;
   onClose?: () => void;
   mode?: "create" | "edit";
+  guest?: boolean;
 }) {
   const { showToast } = useStore();
   const [step, setStep] = useState(1);
@@ -190,15 +192,26 @@ export function TradeWizard({
       ) : null}
       {ask ? (
         <div className="modal-back">
-          <div className="modal">
-            <h3>이대로 저장할까요?</h3>
-            <p>매매 이유와 그때 마음은 저장 후 수정이 어려워요.</p>
+          <div className={guest ? "modal save-confirm" : "modal"}>
+            {guest ? (
+              <button className="sheet-x" type="button" onClick={() => setAsk(false)} aria-label="닫기">
+                ✕
+              </button>
+            ) : null}
+            <h3>{guest ? "저장하시겠어요?" : "이대로 저장할까요?"}</h3>
+            <p>
+              {guest
+                ? "로그인하면 매매 기록을 저장하고 계속 쌓아볼 수 있어요."
+                : "매매 이유와 그때 마음은 저장 후 수정이 어려워요."}
+            </p>
             <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={onSave}>
-              {savingLabel === "저장하기" ? "네" : savingLabel}
+              {guest ? "로그인/회원가입하고 저장하기" : "네"}
             </button>
-            <button className="btn btn-ghost" type="button" onClick={() => setAsk(false)}>
-              아니오
-            </button>
+            {guest ? null : (
+              <button className="btn btn-ghost" type="button" onClick={() => setAsk(false)}>
+                아니오
+              </button>
+            )}
           </div>
         </div>
       ) : null}

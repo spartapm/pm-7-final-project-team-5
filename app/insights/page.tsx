@@ -6,8 +6,8 @@ import { PieChart, PieLegend } from "@/components/PieChart";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
 import { startRecordSession, track, trackOnce } from "@/lib/analytics";
 import { reasonGroups } from "@/lib/categories";
-import { comboTop3, moodDistribution, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
-import { buyCaption, sellCaption } from "@/lib/plans";
+import { comboTop3, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
+import { planFollowStats } from "@/lib/plans";
 import { useStore } from "@/lib/store";
 import type { Side, Trade } from "@/lib/types";
 
@@ -18,8 +18,6 @@ const EMPTY_PREVIEWS = [
   { src: "/figma/preview/reason-detail.png", alt: "판단 이유 자세히 보기 예시" },
   { src: "/figma/preview/combo.png", alt: "자주 겹치는 조합 TOP 3 예시" },
 ];
-const BUY_PIE = ["#476B9E", "#6382AD", "#8098BC", "#9CAFCB", "#B8C5DA", "#D4DCE8", "#F0F2F7"];
-const SELL_PIE = ["#C99A3D", "#D5AE60", "#DFC382", "#E9D6A6", "#F3E9CC"];
 const CHART_BUY = "#476B9E";
 const CHART_SELL = "#C99A3D";
 
@@ -30,8 +28,6 @@ export default function InsightsPage() {
   const buyCount = sideTrades(trades, "buy").length;
   const sellCount = sideTrades(trades, "sell").length;
   const reasons = reasonDistribution(real);
-  const buyMoods = moodDistribution(real.filter((t) => t.side === "buy"));
-  const sellMoods = moodDistribution(real.filter((t) => t.side === "sell"));
   const top3 = comboTop3(trades);
 
   useEffect(() => {
@@ -40,7 +36,7 @@ export default function InsightsPage() {
     trackOnce(`dashboard_view:${dashboardState}`, "dashboard_view", {
       dashboard_state: dashboardState,
       record_count: real.length,
-      available_chart_ids: real.length === 0 ? [] : ["trade_trend", "plan_follow", "reason_pie", "mood_pie", "combo_top3"],
+      available_chart_ids: real.length === 0 ? [] : ["trade_trend", "combo_top3", "reason_pie", "reason_detail", "plan_follow"],
       insight_available: false,
       screen_id: "4-1",
       screen_name: "insight_dashboard",
@@ -70,15 +66,7 @@ export default function InsightsPage() {
         {real.length === 0 ? (
           <EmptyDash />
         ) : (
-          <Dashboard
-            real={real}
-            buyCount={buyCount}
-            sellCount={sellCount}
-            reasons={reasons}
-            buyMoods={buyMoods}
-            sellMoods={sellMoods}
-            top3={top3}
-          />
+          <Dashboard real={real} buyCount={buyCount} sellCount={sellCount} reasons={reasons} top3={top3} />
         )}
         <LegalFooter />
       </div>
@@ -150,83 +138,112 @@ function Dashboard({
   buyCount,
   sellCount,
   reasons,
-  buyMoods,
-  sellMoods,
   top3,
 }: {
   real: Trade[];
   buyCount: number;
   sellCount: number;
   reasons: [string, number][];
-  buyMoods: [string, number][];
-  sellMoods: [string, number][];
   top3: [string, number][];
 }) {
   const [openCount, setOpenCount] = useState(false);
   return (
     <>
       <div className="card chart-card">
-        <button className={openCount ? "acc-h open" : "acc-h"} type="button" onClick={() => setOpenCount((v) => !v)}>
-          매매개요
-          <span>{openCount ? "▾" : "▸"}</span>
+        <button className={openCount ? "acc-h open stack" : "acc-h stack"} type="button" onClick={() => setOpenCount((v) => !v)}>
+          <span className="acc-copy">
+            <b>📌 매매 개요</b>
+            {!openCount ? <span>총 기록 건수 및 일별 매매 추이</span> : null}
+          </span>
+          <span>{openCount ? "⌃" : "⌄"}</span>
         </button>
         {openCount ? (
           <>
             <div className="stat-num">{real.length}건</div>
             <div className="sub">지금까지 기록한 매매</div>
             <div className="stat-split">매수 {buyCount}건 · 매도 {sellCount}건</div>
-            <h2 className="chart-title">📈 매매 추이 · 주간</h2>
+            <h2 className="chart-title">📈 매매 추이 · 매매 유형별 (일자별)</h2>
             <LineChart trades={real} />
           </>
-        ) : (
-          <p className="sub">매매 건수와 주간 추이를 접어 두었어요</p>
-        )}
-      </div>
-      <PlanFollowCard trades={real} />
-      <div className="card chart-card">
-        <ReasonToggle real={real} reasons={reasons} />
-      </div>
-      <div className="card chart-card">
-        <h2 className="chart-title">🧭 매매 당시 마음 상태</h2>
-        <div className="pie-pair">
-          <div>
-            <b className="chart-group">매수 · {buyCount}건</b>
-            <PieChart slices={buyMoods} emptyLabel="아직 기록 없음" palette={BUY_PIE} size={64} />
-            <PieLegend slices={buyMoods} palette={BUY_PIE} compact />
-          </div>
-          <div>
-            <b className="chart-group">매도 · {sellCount}건</b>
-            <PieChart slices={sellMoods} emptyLabel="아직 기록 없음" palette={SELL_PIE} size={64} />
-            <PieLegend slices={sellMoods} palette={SELL_PIE} compact />
-          </div>
-        </div>
+        ) : null}
       </div>
       <div className="card chart-card">
         <h2 className="chart-title">🔗 자주 겹치는 조합 · TOP 3</h2>
-        {top3.length === 0 ? <p className="sub">조합이 아직 없어요.</p> : top3.map(([name, n], i) => (
-          <HBar key={name} rank={i + 1} label={name} value={n} max={top3[0]![1]} tone="default" />
-        ))}
+        {top3.length === 0 ? (
+          <p className="sub">아직 겹치는 조합이 없어요</p>
+        ) : (
+          top3.map(([name, n], i) => <HBar key={name} rank={i + 1} label={name} value={n} max={top3[0]![1]} tone="default" />)
+        )}
       </div>
+      <div className="card chart-card">
+        <h2 className="chart-title">📊 판단 이유 한눈에 보기</h2>
+        {reasons.length === 0 ? (
+          <p className="sub">판단 근거를 고른 기록이 아직 없어요.</p>
+        ) : (
+          <div className="pie-wrap overview">
+            <PieChart slices={reasons} size={120} />
+            <PieLegend slices={reasons} />
+          </div>
+        )}
+      </div>
+      <ReasonDetail real={real} />
+      <PlanFollowCard trades={real} />
     </>
   );
 }
 
-function PlanFollowCard({ trades }: { trades: Trade[] }) {
-  const withPlan = trades.filter((t) => (t.side === "buy" ? t.planSnapshot?.buy : t.planSnapshot?.sell));
-  const followed = withPlan.filter((t) =>
-    t.side === "buy" && t.planSnapshot?.buy
-      ? buyCaption(t.price, t.planSnapshot.buy.min, t.planSnapshot.buy.max).inRange
-      : t.planSnapshot?.sell
-        ? sellCaption(t.price, t.planSnapshot.sell.stopLoss, t.planSnapshot.sell.takeProfit).inRange
-        : false
+function ReasonDetail({ real }: { real: Trade[] }) {
+  const [open, setOpen] = useState(false);
+  const groups = reasonGroups()
+    .map((g) => {
+      const slices = reasonSubDistribution(real, g.group);
+      if (!slices.length) return null;
+      const count = slices.reduce((s, x) => s + x[1], 0);
+      const latest = Math.max(
+        0,
+        ...real.filter((t) => t.reasons.some((r) => (r.group || "기타") === g.group)).map((t) => t.createdAt)
+      );
+      return { group: g.group, slices, count, latest };
+    })
+    .filter((x): x is { group: string; slices: [string, number][]; count: number; latest: number } => Boolean(x))
+    .sort((a, b) => (b.count !== a.count ? b.count - a.count : b.latest - a.latest));
+  const shown = open ? groups : groups.slice(0, 1);
+  return (
+    <div className="card chart-card">
+      <button className={open ? "acc-h open" : "acc-h"} type="button" onClick={() => setOpen((v) => !v)}>
+        📊 판단 이유 자세히 보기
+        <span>{open ? "⌃" : "⌄"}</span>
+      </button>
+      {groups.length === 0 ? (
+        <p className="sub">판단 근거를 고른 기록이 아직 없어요.</p>
+      ) : (
+        <div className="pie-detail-rows">
+          {shown.map((g) => (
+            <div key={g.group} className="pie-row">
+              <PieChart slices={g.slices} size={64} />
+              <div>
+                <b className="chart-group">
+                  {g.group} · {g.count}건
+                </b>
+                <PieLegend slices={g.slices} compact />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
-  const total = Math.max(1, trades.length);
+}
+
+function PlanFollowCard({ trades }: { trades: Trade[] }) {
+  const { total, withPlan, followed } = planFollowStats(trades);
+  const denom = Math.max(1, total);
   return (
     <div className="card chart-card">
       <h2 className="chart-title">🎯 계획 이행 현황</h2>
-      <PlanBar label={`전체 기록 · ${trades.length}건`} pct={100} tone="default" />
-      <PlanBar label={`계획이 있었던 기록 · ${withPlan.length}건`} pct={Math.round((withPlan.length / total) * 100)} tone="default" />
-      <PlanBar label={`계획대로 이행한 기록 · ${followed.length}건`} pct={Math.round((followed.length / total) * 100)} tone="strong" />
+      <PlanBar label={`전체 기록 · ${total}건`} pct={100} tone="default" />
+      <PlanBar label={`계획이 있었던 기록 · ${withPlan}건`} pct={Math.round((withPlan / denom) * 100)} tone="default" />
+      <PlanBar label={`계획대로 이행한 기록 · ${followed}건`} pct={Math.round((followed / denom) * 100)} tone="strong" />
     </div>
   );
 }
@@ -300,6 +317,15 @@ function LineChart({ trades }: { trades: Trade[] }) {
   const to = slice[slice.length - 1]?.slice(5).replace("-", ".") || "";
   const range = `${from} ~ ${to}`;
   const ticks = max <= 2 ? [0, max] : [0, Math.round(max / 2), max];
+  const dated = trades.map((t) => t.tradedAt).filter(Boolean).sort();
+  const first = dated[0];
+  const last = dated[dated.length - 1];
+  const weekStart = slice[0];
+  const weekEnd = slice[slice.length - 1];
+  const canPrev = Boolean(first && weekStart && first < weekStart);
+  const canNext = shift > 0;
+  const singleWeek = Boolean(first && last && weekStart && weekEnd && first >= weekStart && last <= weekEnd && shift === 0);
+  const showNav = !singleWeek && (canPrev || canNext);
   return (
     <>
       <div className="chart-nav">
@@ -308,13 +334,17 @@ function LineChart({ trades }: { trades: Trade[] }) {
           <span className="sell"><i />매도</span>
         </div>
         <span className="chart-range">
-          <button type="button" onClick={() => setShift((s) => s + 1)}>
-            ‹
-          </button>
+          {showNav ? (
+            <button type="button" disabled={!canPrev} onClick={() => setShift((s) => s + 1)}>
+              ‹
+            </button>
+          ) : null}
           <b>{range || "매매일자"}</b>
-          <button type="button" disabled={shift <= 0} onClick={() => setShift((s) => Math.max(0, s - 1))}>
-            ›
-          </button>
+          {showNav ? (
+            <button type="button" disabled={!canNext} onClick={() => setShift((s) => Math.max(0, s - 1))}>
+              ›
+            </button>
+          ) : null}
         </span>
       </div>
       {slice.length === 0 ? (
@@ -355,52 +385,6 @@ function LineChart({ trades }: { trades: Trade[] }) {
             );
           })}
         </svg>
-      )}
-    </>
-  );
-}
-
-function ReasonToggle({ real, reasons }: { real: Trade[]; reasons: [string, number][] }) {
-  const [detail, setDetail] = useState(false);
-  return (
-    <>
-      <div className="section-head" style={{ margin: "0 0 12px" }}>
-        <h2 className="chart-title" style={{ margin: 0 }}>{detail ? "📊 판단 이유 자세히 보기" : "📊 판단 이유 한눈에 보기"}</h2>
-        {reasons.length > 0 ? (
-          <button className="chart-link" type="button" onClick={() => setDetail((v) => !v)}>
-            {detail ? "한눈에 보기" : "자세히 보기"}
-          </button>
-        ) : null}
-      </div>
-      {reasons.length === 0 ? (
-        <p className="sub">판단 근거를 고른 기록이 아직 없어요.</p>
-      ) : detail ? (
-        <div className="pie-detail">
-          {reasonGroups()
-            .map((g) => {
-              const slices = reasonSubDistribution(real, g.group);
-              if (!slices.length) return null;
-              const count = slices.reduce((s, x) => s + x[1], 0);
-              return { group: g.group, slices, count };
-            })
-            .filter((x): x is { group: string; slices: [string, number][]; count: number } => Boolean(x))
-            .map((g, i) => (
-              <div key={g.group} className={`pie-block ${i === 0 ? "lead" : ""}`}>
-                <b className="chart-group">
-                  {g.group} · {g.count}건
-                </b>
-                <div className={i === 0 ? "pie-wrap compact" : "pie-mini"}>
-                  <PieChart slices={g.slices} size={i === 0 ? 90 : 56} />
-                  <PieLegend slices={g.slices} compact />
-                </div>
-              </div>
-            ))}
-        </div>
-      ) : (
-        <div className="pie-wrap overview">
-          <PieChart slices={reasons} size={120} />
-          <PieLegend slices={reasons} />
-        </div>
       )}
     </>
   );

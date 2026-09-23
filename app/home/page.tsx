@@ -8,6 +8,8 @@ import { OnboardingGuide } from "@/components/OnboardingGuide";
 import { TradeRow } from "@/components/TradeRow";
 import { LegalFooter, Modal, PhoneShell, TabBar } from "@/components/ui";
 import { thisMonth } from "@/lib/format";
+import { comboTop3 } from "@/lib/insights";
+import { planFollowStats } from "@/lib/plans";
 import { startPlanSession, startRecordSession, track } from "@/lib/analytics";
 import { useStore } from "@/lib/store";
 
@@ -19,8 +21,8 @@ export default function HomePage() {
   const real = trades.filter((t) => !t.isPractice);
   const month = thisMonth();
   const monthTrades = real.filter((t) => t.tradedAt.slice(0, 7) === month);
-  const monthBuy = monthTrades.filter((t) => t.side === "buy").length;
-  const monthSell = monthTrades.filter((t) => t.side === "sell").length;
+  const follow = planFollowStats(trades);
+  const topCombo = comboTop3(trades)[0];
   const recent = [...real]
     .sort((a, b) => (a.tradedAt === b.tradedAt ? b.createdAt - a.createdAt : a.tradedAt < b.tradedAt ? 1 : -1))
     .slice(0, 5);
@@ -36,18 +38,33 @@ export default function HomePage() {
           </button>
           <div className="brand-kicker">인플롯</div>
         </div>
-        <h1 className="hello">{loggedIn ? `안녕하세요, ${nickname}님` : "안녕하세요"}</h1>
+        {loggedIn ? <h1 className="hello">안녕하세요, {nickname}님</h1> : null}
 
-        <div className="month-card">
-          <div>
+        <div className="month-card summary-card">
+          <div className="month-card-head">
             <div className="label">나의 매매 요약</div>
-            <div className="num">{monthTrades.length}건</div>
-            <div className="split">
-              이번 달 매수 {monthBuy} · 매도 {monthSell}
+            <Link href="/insights">인사이트 보기 →</Link>
+          </div>
+          <div className="summary-metrics">
+            <div>
+              <div className="label">총 기록</div>
+              <div className="num">{real.length}건</div>
+            </div>
+            <div>
+              <div className="label">계획 이행률</div>
+              <div className="num">{follow.rate}%</div>
+            </div>
+            <div>
+              <div className="label">이번 달 기록</div>
+              <div className="num">{monthTrades.length}건</div>
             </div>
           </div>
-          <div className="month-side">
-            <Link href="/insights">인사이트 보기 →</Link>
+          <div className="summary-combo">
+            <div>
+              <div className="label">최다 매매 이유 조합</div>
+              <div className="combo-name">{topCombo ? topCombo[0] : "아직 기록한 매매가 없어요"}</div>
+            </div>
+            <div className="num">{topCombo ? `${topCombo[1]}건` : "0건"}</div>
           </div>
         </div>
 

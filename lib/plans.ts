@@ -50,6 +50,20 @@ export function sellCaption(actual: number, stop: number, take: number) {
   return { inRange: true, caption, pct };
 }
 
+export function planFollowStats(trades: Trade[]) {
+  const real = trades.filter((t) => !t.isPractice);
+  const withPlan = real.filter((t) => (t.side === "buy" ? t.planSnapshot?.buy : t.planSnapshot?.sell));
+  const followed = withPlan.filter((t) =>
+    t.side === "buy" && t.planSnapshot?.buy
+      ? buyCaption(t.price, t.planSnapshot.buy.min, t.planSnapshot.buy.max).inRange
+      : t.planSnapshot?.sell
+        ? sellCaption(t.price, t.planSnapshot.sell.stopLoss, t.planSnapshot.sell.takeProfit).inRange
+        : false
+  );
+  const rate = real.length === 0 ? 0 : Math.round((followed.length / real.length) * 100);
+  return { total: real.length, withPlan: withPlan.length, followed: followed.length, rate };
+}
+
 export function migratePlan(raw: Record<string, unknown>): Plan {
   const side: Side = raw.side === "sell" || raw.takeProfit != null && raw.targetBuy == null && raw.buyMin == null ? "sell" : "buy";
   const targetBuy = raw.targetBuy == null ? null : Number(raw.targetBuy);
