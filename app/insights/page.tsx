@@ -15,7 +15,6 @@ const EMPTY_PREVIEWS = [
   { src: "/figma/preview/trend.png", alt: "매매 추이 예시" },
   { src: "/figma/preview/plan.png", alt: "계획 이행 현황 예시" },
   { src: "/figma/preview/reason-overview.png", alt: "판단 이유 한눈에 보기 예시" },
-  { src: "/figma/preview/reason-detail.png", alt: "판단 이유 자세히 보기 예시" },
   { src: "/figma/preview/combo.png", alt: "자주 겹치는 조합 TOP 3 예시" },
 ];
 const CHART_BUY = "#476B9E";
@@ -93,14 +92,14 @@ function EmptyDash() {
   const [dot, setDot] = useState(0);
   const prev = useRef(0);
   function moveTo(next: number, method: "swipe" | "button") {
-    const to = Math.min(4, Math.max(0, next));
+    const to = Math.min(3, Math.max(0, next));
     const from = prev.current;
     if (to === from) return;
     track("insight_preview_carousel_change", {
       from_slide_index: from,
       to_slide_index: to,
       change_method: method,
-      total_slide_count: 5,
+      total_slide_count: 4,
       screen_name: "insight_dashboard",
     });
     prev.current = to;
@@ -115,7 +114,7 @@ function EmptyDash() {
         onScroll={(e) => {
           const el = e.currentTarget;
           const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth * 0.78));
-          moveTo(Math.min(4, Math.max(0, i)), "swipe");
+          moveTo(Math.min(3, Math.max(0, i)), "swipe");
         }}
       >
         {EMPTY_PREVIEWS.map((card) => (
@@ -125,7 +124,7 @@ function EmptyDash() {
         ))}
       </div>
       <div className="dots">
-        {[0, 1, 2, 3, 4].map((i) => (
+        {[0, 1, 2, 3].map((i) => (
           <i key={i} className={dot === i ? "on" : ""} />
         ))}
       </div>
@@ -153,7 +152,7 @@ function Dashboard({
         <button className={openCount ? "acc-h open stack" : "acc-h stack"} type="button" onClick={() => setOpenCount((v) => !v)}>
           <span className="acc-copy">
             <b>📌 매매 개요</b>
-            {!openCount ? <span>총 기록 건수 및 일별 매매 추이</span> : null}
+            <span>총 기록 건수 및 일별 매매 추이</span>
           </span>
           <span>{openCount ? "⌃" : "⌄"}</span>
         </button>

@@ -191,7 +191,7 @@ export function TradeWizard({
         </div>
       ) : null}
       {ask ? (
-        <div className="modal-back">
+        <div className={guest ? "modal-back center" : "modal-back"}>
           <div className={guest ? "modal save-confirm" : "modal"}>
             {guest ? (
               <button className="sheet-x" type="button" onClick={() => setAsk(false)} aria-label="닫기">

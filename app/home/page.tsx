@@ -50,21 +50,23 @@ export default function HomePage() {
               <div className="label">총 기록</div>
               <div className="num">{real.length}건</div>
             </div>
+            <i />
             <div>
               <div className="label">계획 이행률</div>
               <div className="num">{follow.rate}%</div>
             </div>
+            <i />
             <div>
               <div className="label">이번 달 기록</div>
               <div className="num">{monthTrades.length}건</div>
             </div>
           </div>
           <div className="summary-combo">
-            <div>
-              <div className="label">최다 매매 이유 조합</div>
+            <div className="label">최다 매매 이유 조합</div>
+            <div className="summary-combo-row">
               <div className="combo-name">{topCombo ? topCombo[0] : "아직 기록한 매매가 없어요"}</div>
+              <div className="combo-count">{topCombo ? `${topCombo[1]}건` : "0건"}</div>
             </div>
-            <div className="num">{topCombo ? `${topCombo[1]}건` : "0건"}</div>
           </div>
         </div>
 

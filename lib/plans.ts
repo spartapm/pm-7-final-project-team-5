@@ -60,7 +60,7 @@ export function planFollowStats(trades: Trade[]) {
         ? sellCaption(t.price, t.planSnapshot.sell.stopLoss, t.planSnapshot.sell.takeProfit).inRange
         : false
   );
-  const rate = real.length === 0 ? 0 : Math.round((followed.length / real.length) * 100);
+  const rate = withPlan.length === 0 ? 0 : Math.round((followed.length / withPlan.length) * 100);
   return { total: real.length, withPlan: withPlan.length, followed: followed.length, rate };
 }
 
