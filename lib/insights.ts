@@ -269,14 +269,6 @@ export function dateGroupLatest(cards: IssuedCard[]) {
   return [buy, sell].filter(Boolean) as IssuedCard[];
 }
 
-export function insightHref(cardId: string) {
-  return `/insights/related?id=${encodeURIComponent(cardId)}`;
-}
-
-export function dateHref(dateKey: string) {
-  return `/insights/date?date=${encodeURIComponent(dateKey)}`;
-}
-
 export function reasonDistribution(trades: Trade[]) {
   const counts = new Map<string, number>();
   for (const t of trades) {
@@ -328,10 +320,6 @@ export function comboTop3(trades: Trade[]) {
     .sort((a, b) => (b[1].n !== a[1].n ? b[1].n - a[1].n : b[1].latest - a[1].latest))
     .slice(0, 3)
     .map(([name, v]) => [name, v.n] as [string, number]);
-}
-
-export function reasonChip(card: IssuedCard) {
-  return `${sideLabel(card.side)} · ${card.reasonMeta} · ${card.count}건`;
 }
 
 export { endingFor };
