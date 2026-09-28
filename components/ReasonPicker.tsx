@@ -273,17 +273,31 @@ function ItemCard({
   on,
   dim,
   onClick,
+  radio = false,
 }: {
   title: string;
   subtitle: string;
   on: boolean;
   dim: boolean;
   onClick: () => void;
+  radio?: boolean;
 }) {
   return (
-    <button type="button" className={`reason-item ${on ? "on" : ""} ${dim ? "dim" : ""}`} disabled={dim} onClick={onClick}>
-      <b>{title}</b>
-      <span>{subtitle}</span>
+    <button
+      type="button"
+      className={`reason-item ${on ? "on" : ""} ${dim ? "dim" : ""} ${radio ? "radio" : ""}`}
+      disabled={dim}
+      onClick={onClick}
+    >
+      <span className="reason-item-copy">
+        <b>{title}</b>
+        <span>{subtitle}</span>
+      </span>
+      {radio ? (
+        <i className={`reason-radio ${on ? "on" : ""}`} aria-hidden>
+          {on ? "✓" : ""}
+        </i>
+      ) : null}
     </button>
   );
 }
@@ -315,6 +329,7 @@ export function MoodPicker({
             subtitle={m.subtitle || ""}
             on={on}
             dim={maxed && !on}
+            radio
             onClick={() => toggle(pick)}
           />
         );

@@ -149,8 +149,8 @@ export function TradeWizard({
       {step === 3 ? (
         <>
           <div className="scroll reason-mood-scroll">
-            <h1 className="step-title">그때 마음은 어떠셨어요?</h1>
-            <p className="sub">가장 가까운 마음을 골라주세요. (최대 2개)</p>
+            <h1 className="step-title">매매 당시 상태 선택 ({side})</h1>
+            <p className="sub">최대 2개까지 고를 수 있어요</p>
             <MoodPicker items={moods} selected={draft.moods} onChange={setMoods} />
           </div>
           <div className="reason-bar">
@@ -169,7 +169,7 @@ export function TradeWizard({
               ))}
             </div>
             <div className="reason-bar-row">
-              <span className="reason-count">선택 {draft.moods.length}/2</span>
+              <span className="reason-count">선택됨 {draft.moods.length}/2</span>
               <button className="btn btn-primary reason-done" type="button" disabled={draft.moods.length === 0} onClick={() => setAsk(true)}>
                 {savingLabel}
               </button>
@@ -198,10 +198,10 @@ export function TradeWizard({
                 ✕
               </button>
             ) : null}
-            <h3>{guest ? "잠깐! 기록이 저장되지 않아요" : "이대로 저장할까요?"}</h3>
+            <h3>{guest ? "저장하시겠어요?" : "이대로 저장할까요?"}</h3>
             <p>
               {guest
-                ? "저장하려면 로그인 또는 회원가입이 필요해요"
+                ? "로그인하면 매매 기록을 저장하고 계속 쌓아볼 수 있어요."
                 : "매매 이유와 그때 마음은 저장 후 수정이 어려워요."}
             </p>
             <button className="btn btn-primary" type="button" style={{ marginBottom: 8 }} onClick={onSave}>

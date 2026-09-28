@@ -1006,7 +1006,14 @@ img { display: block; max-width: 100%; }
 .reason-group-sub { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.4; }
 .reason-group-meta { display: block; margin-top: 8px; font-size: 11px; color: var(--color-text-tertiary); }
 .reason-item b { display: block; font-size: 14px; font-weight: 700; }
-.reason-item span { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.4; font-weight: 400; }
+.reason-item-copy > span { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.4; font-weight: 400; }
+.reason-item.radio { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.reason-item-copy { min-width: 0; }
+.reason-radio {
+  flex: none; width: 18px; height: 18px; border: 1.5px solid #E7E7E4; border-radius: 50%;
+  display: grid; place-items: center; font-size: 10px; font-style: normal; color: #fff; line-height: 1;
+}
+.reason-radio.on { background: #2F5FDB; border-color: #2F5FDB; }
 .reason-item.on { background: #EEF2FA; border-color: var(--navy); }
 .reason-item.dim { opacity: 0.4; }
 .reason-sec { font-size: 13px; font-weight: 700; margin: 16px 0 8px; }
