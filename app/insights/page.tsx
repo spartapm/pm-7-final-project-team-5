@@ -209,8 +209,11 @@ function ReasonDetail({ real }: { real: Trade[] }) {
   const shown = open ? groups : groups.slice(0, 1);
   return (
     <div className="card chart-card">
-      <button className={open ? "acc-h open" : "acc-h"} type="button" onClick={() => setOpen((v) => !v)}>
-        📊 판단 이유 자세히 보기
+      <button className={open ? "acc-h open stack" : "acc-h stack"} type="button" onClick={() => setOpen((v) => !v)}>
+        <span className="acc-copy">
+          <b>📊 판단 이유 자세히 보기</b>
+          <span>카테고리별 판단 이유 분포</span>
+        </span>
         <span>{open ? "⌃" : "⌄"}</span>
       </button>
       {groups.length === 0 ? (

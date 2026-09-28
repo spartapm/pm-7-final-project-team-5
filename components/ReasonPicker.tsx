@@ -8,6 +8,14 @@ function pickId(item: CategoryPick) {
   return item.meta || item.label;
 }
 
+function roParticle(word: string) {
+  const ch = [...word].at(-1);
+  if (!ch) return "로";
+  const code = ch.charCodeAt(0);
+  if (code < 0xac00 || code > 0xd7a3) return "로";
+  return (code - 0xac00) % 28 === 0 ? "로" : "으로";
+}
+
 export function ReasonPicker({
   selected,
   onChange,
@@ -64,13 +72,14 @@ export function ReasonPicker({
 
   const catCount = result.categories.length;
   const itemCount = result.items.length;
+  const q = query.trim();
   const summary =
     catCount && itemCount
-      ? `'${query.trim()}'로 카테고리 ${catCount}개 · 항목 ${itemCount}개를 찾았어요`
+      ? `'${q}'${roParticle(q)} 카테고리 ${catCount}개 · 항목 ${itemCount}개를 찾았어요`
       : catCount
-        ? `'${query.trim()}'로 카테고리 ${catCount}개를 찾았어요`
+        ? `'${q}'${roParticle(q)} 카테고리 ${catCount}개를 찾았어요`
         : itemCount
-          ? `'${query.trim()}'로 항목 ${itemCount}개를 찾았어요`
+          ? `'${q}'${roParticle(q)} 항목 ${itemCount}개를 찾았어요`
           : "";
 
   return (
@@ -83,6 +92,8 @@ export function ReasonPicker({
               ref={searchRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setKbOpen(true)}
+              onBlur={() => setKbOpen(false)}
               placeholder="키워드로 찾아보세요"
               aria-label="매매 이유 검색"
             />
@@ -95,7 +106,7 @@ export function ReasonPicker({
         <>
           <h1 className="step-title">매매 이유 선택</h1>
           <p className="sub">최대 3개까지 고를 수 있어요</p>
-          <button className="reason-search-entry" type="button" onClick={() => setSearching(true)}>
+          <button className="reason-search-entry" type="button" onClick={() => { setSearching(true); setKbOpen(true); }}>
             <span aria-hidden>⌕</span>
             키워드로 찾아보세요
           </button>
@@ -108,9 +119,11 @@ export function ReasonPicker({
             <p className="reason-empty">검색어를 입력하면 카테고리와 항목을 찾아드려요</p>
           ) : catCount + itemCount === 0 ? (
             <div className="reason-empty">
-              <p>검색 결과가 없어요</p>
-              <button className="btn btn-ghost" type="button" onClick={closeSearch}>
-                전체 카테고리 둘러보기
+              <p className="reason-empty-title">검색 결과가 없어요</p>
+              <p>다른 키워드로 검색하거나</p>
+              <p>찾는 이유가 여기 없다면?</p>
+              <button className="reason-empty-link" type="button" onClick={closeSearch}>
+                전체 카테고리 둘러보기 →
               </button>
             </div>
           ) : (
@@ -168,7 +181,7 @@ export function ReasonPicker({
         )}
       </div>
 
-      {!kbOpen ? (
+      {!kbOpen && !sheet ? (
         <SelectBar selected={selected} onRemove={toggle} disabled={selected.length === 0} onComplete={onComplete} completeLabel={completeLabel} />
       ) : null}
 
@@ -181,6 +194,7 @@ export function ReasonPicker({
             className={`reason-sheet ${sheetFull ? "full" : ""}`}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => {
+              if ((e.target as HTMLElement).closest(".reason-bar")) return;
               drag.current = { y: e.clientY, full: sheetFull };
             }}
             onPointerMove={(e) => {
@@ -219,6 +233,7 @@ export function ReasonPicker({
                 );
               })}
             </div>
+            <SelectBar selected={selected} onRemove={toggle} disabled={selected.length === 0} onComplete={onComplete} completeLabel={completeLabel} />
           </div>
         </div>
       ) : null}
@@ -238,10 +253,15 @@ function GroupCard({
   const n = selected.filter((r) => r.group === group.group).length;
   return (
     <button className={`reason-group ${n ? "has" : ""}`} type="button" onClick={onOpen}>
-      <span className="reason-group-title">{group.group}</span>
-      <span className="reason-group-sub">{group.subtitle}</span>
-      <span className="reason-group-meta">
-        {group.items.length}개 항목{n ? ` · ${n}개 선택` : ""}
+      <span className="reason-group-copy">
+        <span className="reason-group-title">{group.group}</span>
+        <span className="reason-group-sub">{group.subtitle}</span>
+        <span className="reason-group-meta">
+          {group.items.length}개 항목{n ? ` · ${n}개 선택` : ""}
+        </span>
+      </span>
+      <span className="reason-group-chev" aria-hidden>
+        ›
       </span>
     </button>
   );
@@ -329,7 +349,7 @@ export function SelectBar({
         ))}
       </div>
       <div className="reason-bar-row">
-        <span className="reason-count">{selected.length}개 선택</span>
+        <span className="reason-count">선택 {selected.length}/3</span>
         <button className="btn btn-primary reason-done" type="button" disabled={disabled} onClick={onComplete}>
           {completeLabel}
         </button>
