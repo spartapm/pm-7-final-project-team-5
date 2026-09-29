@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     headers: { "Content-Type": "application/x-www-form-urlencoded;charset=utf-8" },
     body,
   });
-  const token = (await tokenRes.json()) as { access_token?: string; error_description?: string };
+  const token = (await tokenRes.json()) as { access_token?: string; refresh_token?: string; error_description?: string };
   if (!token.access_token) {
     return NextResponse.json({ ok: false, error: token.error_description || "토큰 발급 실패" }, { status: 400 });
   }
@@ -62,5 +62,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     kakaoId: String(me.id),
+    accessToken: token.access_token,
+    refreshToken: token.refresh_token || "",
   });
 }

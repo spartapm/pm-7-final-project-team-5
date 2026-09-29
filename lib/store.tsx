@@ -391,6 +391,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const withdraw = useCallback(() => {
     const cur = stateRef.current;
+    if (cur.kakaoId && typeof window !== "undefined") {
+      const accessToken = sessionStorage.getItem("kakao_access_token") || "";
+      const refreshToken = sessionStorage.getItem("kakao_refresh_token") || "";
+      void fetch("/api/kakao/unlink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kakaoId: cur.kakaoId, accessToken, refreshToken }),
+        keepalive: true,
+      });
+      sessionStorage.removeItem("kakao_access_token");
+      sessionStorage.removeItem("kakao_refresh_token");
+    }
     removeRegistry({ id: cur.accountId, email: cur.email, kakaoId: cur.kakaoId });
     void deleteAccount(cur.accountId);
     touch();

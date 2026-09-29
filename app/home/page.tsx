@@ -31,14 +31,16 @@ export default function HomePage() {
 
   return (
     <PhoneShell>
-      <div className="scroll tabbed">
+      <header className="page-fixed-head">
         <div className="home-head">
           <button className="brand-btn" type="button" onClick={() => setProfile(true)} aria-label="프로필">
             <BrandMark size={22} />
           </button>
           <div className="brand-kicker">인플롯</div>
         </div>
-        {loggedIn ? <h1 className="hello">안녕하세요, {nickname}님</h1> : null}
+      </header>
+      <div className="scroll tabbed under-head">
+        {loggedIn ? <h1 className="hello home-hello-title">안녕하세요, {nickname}님</h1> : null}
 
         <div className="month-card summary-card">
           <div className="month-card-head">
@@ -162,7 +164,7 @@ export default function HomePage() {
       {askWithdraw ? (
         <Modal
           title="정말 탈퇴하시겠어요?"
-          body="탈퇴 시 계정 정보와 모든 매매 계획과 기록이 삭제되며 재가입하더라도 복구할 수 없어요."
+          body="탈퇴 시 계정 정보와 모든 매매 계획, 매매 기록 및 인사이트가 삭제되며 재가입하더라도 복구할 수 없어요."
           cancel="아니요"
           confirm="네"
           split

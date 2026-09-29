@@ -74,7 +74,7 @@ export function PieLegend({
             <i className="swatch" style={{ background: palette[i % palette.length] }} />
             {compact ? (
               <span className="legend-flat">
-                {name} {n}건·{pct}%
+                {name} {n}건 · {pct}%
               </span>
             ) : (
               <span className="legend-copy row">

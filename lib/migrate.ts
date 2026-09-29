@@ -98,3 +98,40 @@ export function migrateTradeReasons(trade: Trade): Trade {
     moods: uniquePicks(trade.moods.map((m) => migrateMood(m, trade.side))),
   };
 }
+
+export type CanonPick = { group: string; label: string; legacy: boolean };
+
+export function canonReason(pick: CategoryPick): CanonPick {
+  const keys = [pick.meta, pick.label].filter(Boolean);
+  for (const key of keys) {
+    if (!(key in REASON_MAP)) continue;
+    const target = REASON_MAP[key];
+    if (!target) return { group: pick.group || "", label: pick.label, legacy: true };
+    const row = findReasonByMeta(target);
+    if (row) return { group: row.group || "", label: row.label, legacy: false };
+  }
+  for (const key of keys) {
+    const row = findReasonByMeta(key);
+    if (row?.group) return { group: row.group, label: row.label, legacy: false };
+  }
+  return { group: pick.group || pick.label, label: pick.label, legacy: true };
+}
+
+export function canonMood(pick: CategoryPick, side: Side): CanonPick {
+  const table = MOOD_MAP[side];
+  const keys = [pick.meta, pick.label].filter(Boolean);
+  if (table) {
+    for (const key of keys) {
+      if (!(key in table)) continue;
+      const target = table[key];
+      if (!target) return { group: "", label: pick.label, legacy: true };
+      const row = findMoodByMeta(target);
+      if (row) return { group: "", label: row.label, legacy: false };
+    }
+  }
+  for (const key of keys) {
+    const row = findMoodByMeta(key);
+    if (row) return { group: "", label: row.label, legacy: false };
+  }
+  return { group: "", label: pick.label, legacy: true };
+}

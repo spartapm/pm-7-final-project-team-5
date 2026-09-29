@@ -84,36 +84,38 @@ export function ReasonPicker({
 
   return (
     <>
-      {searching ? (
-        <div className="reason-search-head">
-          <div className="reason-search-box">
-            <span aria-hidden>⌕</span>
-            <input
-              ref={searchRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => setKbOpen(true)}
-              onBlur={() => setKbOpen(false)}
-              placeholder="키워드로 찾아보세요"
-              aria-label="매매 이유 검색"
-            />
-          </div>
-          <button className="reason-cancel" type="button" onClick={closeSearch}>
-            취소
-          </button>
-        </div>
-      ) : (
+      {searching ? null : (
         <>
           <h1 className="step-title">매매 이유 선택</h1>
           <p className="sub">최대 3개까지 고를 수 있어요</p>
-          <button className="reason-search-entry" type="button" onClick={() => { setSearching(true); setKbOpen(true); }}>
-            <span aria-hidden>⌕</span>
-            키워드로 찾아보세요
-          </button>
         </>
       )}
 
       <div className={`reason-scroll ${searching ? "searching" : ""}`}>
+        {searching ? (
+          <div className="reason-search-head">
+            <div className="reason-search-box">
+              <span aria-hidden>⌕</span>
+              <input
+                ref={searchRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setKbOpen(true)}
+                onBlur={() => setKbOpen(false)}
+                placeholder="키워드로 검색 (예: 실적, 손절, 지인)"
+                aria-label="매매 이유 검색"
+              />
+            </div>
+            <button className="reason-cancel" type="button" onClick={closeSearch}>
+              취소
+            </button>
+          </div>
+        ) : (
+          <button className="reason-search-entry" type="button" onClick={() => { setSearching(true); setKbOpen(true); }}>
+            <span aria-hidden>⌕</span>
+            키워드로 검색 (예: 실적, 손절, 지인)
+          </button>
+        )}
         {searching ? (
           !canSearch ? (
             <p className="reason-empty">검색어를 입력하면 카테고리와 항목을 찾아드려요</p>
@@ -136,6 +138,7 @@ export function ReasonPicker({
                     <GroupCard
                       key={group.group}
                       group={group}
+                      index={groups.findIndex((g) => g.group === group.group)}
                       selected={selected}
                       onOpen={() => {
                         setSheet(group);
@@ -167,10 +170,11 @@ export function ReasonPicker({
             </>
           )
         ) : (
-          groups.map((group) => (
+          groups.map((group, index) => (
             <GroupCard
               key={group.group}
               group={group}
+              index={index}
               selected={selected}
               onOpen={() => {
                 setSheet(group);
@@ -241,23 +245,27 @@ export function ReasonPicker({
   );
 }
 
+const GROUP_SWATCH = ["#F4E6D4", "#D7E3F6", "#E3DDF6", "#D7EBD8", "#F6DDD8", "#E4E7ED"];
+
 function GroupCard({
   group,
+  index,
   selected,
   onOpen,
 }: {
   group: ReasonGroup;
+  index: number;
   selected: CategoryPick[];
   onOpen: () => void;
 }) {
   const n = selected.filter((r) => r.group === group.group).length;
   return (
     <button className={`reason-group ${n ? "has" : ""}`} type="button" onClick={onOpen}>
+      <i className="reason-swatch" style={{ background: GROUP_SWATCH[index] || GROUP_SWATCH[0] }} aria-hidden />
       <span className="reason-group-copy">
         <span className="reason-group-title">{group.group}</span>
-        <span className="reason-group-sub">{group.subtitle}</span>
-        <span className="reason-group-meta">
-          {group.items.length}개 항목{n ? ` · ${n}개 선택` : ""}
+        <span className="reason-group-sub">
+          {group.subtitle} · {group.items.length}개{n ? ` · ${n}개 선택` : ""}
         </span>
       </span>
       <span className="reason-group-chev" aria-hidden>

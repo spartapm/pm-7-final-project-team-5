@@ -53,7 +53,9 @@ function CallbackInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, redirectUri }),
       });
-      const data = (await res.json()) as { ok?: boolean; kakaoId?: string; error?: string };
+      const data = (await res.json()) as { ok?: boolean; kakaoId?: string; accessToken?: string; refreshToken?: string; error?: string };
+      if (data.accessToken) sessionStorage.setItem("kakao_access_token", data.accessToken);
+      if (data.refreshToken) sessionStorage.setItem("kakao_refresh_token", data.refreshToken);
       sessionStorage.removeItem("kakao_oauth_state");
       sessionStorage.removeItem("kakao_oauth_redirect");
       if (!res.ok || !data.ok || !data.kakaoId) {

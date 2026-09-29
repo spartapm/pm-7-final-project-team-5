@@ -6,6 +6,7 @@ import { PieChart, PieLegend } from "@/components/PieChart";
 import { LegalFooter, PhoneShell, TabBar } from "@/components/ui";
 import { startRecordSession, track, trackOnce } from "@/lib/analytics";
 import { reasonGroups } from "@/lib/categories";
+import { canonReason } from "@/lib/migrate";
 import { comboTop3, reasonDistribution, reasonSubDistribution, sideTrades } from "@/lib/insights";
 import { planFollowStats } from "@/lib/plans";
 import { useStore } from "@/lib/store";
@@ -46,11 +47,12 @@ export default function InsightsPage() {
 
   return (
     <PhoneShell>
-      <div className="scroll tabbed">
+      <header className="page-fixed-head">
         <div className="brand-kicker insight-kicker">인사이트</div>
         <h1 className="hello insight-hello">나의 기록 통계</h1>
         <p className="sub dash-lead">전체 매매 기록을 기준으로 정리했어요</p>
-
+      </header>
+      <div className="scroll tabbed under-head">
         {real.length >= 3 ? (
           <a
             className="survey-banner"
@@ -67,7 +69,7 @@ export default function InsightsPage() {
         ) : (
           <Dashboard real={real} buyCount={buyCount} sellCount={sellCount} reasons={reasons} top3={top3} />
         )}
-        <LegalFooter />
+        {real.length === 0 ? null : <LegalFooter />}
       </div>
       {real.length === 0 ? (
         <div className="footer-cta over-tabs">
@@ -106,7 +108,10 @@ function EmptyDash() {
     setDot(to);
   }
   return (
-    <>
+    <div className="insight-empty">
+      <div className="insight-spark" aria-hidden>
+        ✦
+      </div>
       <h3>아직 기록이 없어요</h3>
       <p className="sub">매매를 기록하면 나만의 통계가 이렇게 채워져요</p>
       <div
@@ -128,7 +133,7 @@ function EmptyDash() {
           <i key={i} className={dot === i ? "on" : ""} />
         ))}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -200,7 +205,14 @@ function ReasonDetail({ real }: { real: Trade[] }) {
       const count = slices.reduce((s, x) => s + x[1], 0);
       const latest = Math.max(
         0,
-        ...real.filter((t) => t.reasons.some((r) => (r.group || "기타") === g.group)).map((t) => t.createdAt)
+        ...real
+          .filter((t) =>
+            t.reasons.some((r) => {
+              const canon = canonReason(r);
+              return !canon.legacy && canon.group === g.group;
+            })
+          )
+          .map((t) => t.createdAt)
       );
       return { group: g.group, slices, count, latest };
     })

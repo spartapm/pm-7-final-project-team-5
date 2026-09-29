@@ -1,4 +1,5 @@
-import { isActiveMood, isActiveReason } from "./categories";
+import { isActiveMood } from "./categories";
+import { canonMood, canonReason } from "./migrate";
 import { comboKey, comboLabel, reasonGroups } from "./categories";
 import { sideLabel, todayKey, uid } from "./format";
 import { endingFor, fallbackNarrative1, fallbackNarrative2, isExcludedMood, moodChartOf, moodMetaOf } from "./insight-copy";
@@ -273,9 +274,9 @@ export function reasonDistribution(trades: Trade[]) {
   const counts = new Map<string, number>();
   for (const t of trades) {
     for (const r of t.reasons) {
-      if (!isActiveReason(r)) continue;
-      const key = r.group || r.meta;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      const canon = canonReason(r);
+      if (canon.legacy || !canon.group) continue;
+      counts.set(canon.group, (counts.get(canon.group) ?? 0) + 1);
     }
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
@@ -285,8 +286,11 @@ export function moodDistribution(trades: Trade[]) {
   const counts = new Map<string, number>();
   for (const t of trades) {
     for (const m of t.moods) {
-      if (isExcludedMood(m) || !isActiveMood(m)) continue;
-      const key = moodChartOf(m);
+      const canon = canonMood(m, t.side);
+      if (canon.legacy) continue;
+      const pick = { group: null, label: canon.label, meta: canon.label };
+      if (isExcludedMood(pick) || !isActiveMood(pick)) continue;
+      const key = moodChartOf(pick);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
@@ -297,10 +301,9 @@ export function reasonSubDistribution(trades: Trade[], group: string) {
   const counts = new Map<string, number>();
   for (const t of trades) {
     for (const r of t.reasons) {
-      if (!isActiveReason(r)) continue;
-      if ((r.group || "기타") !== group) continue;
-      const key = r.label || r.meta;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      const canon = canonReason(r);
+      if (canon.legacy || canon.group !== group) continue;
+      counts.set(canon.label, (counts.get(canon.label) ?? 0) + 1);
     }
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
@@ -309,8 +312,8 @@ export function reasonSubDistribution(trades: Trade[], group: string) {
 export function comboTop3(trades: Trade[]) {
   const map = new Map<string, { n: number; latest: number }>();
   for (const t of realOf(trades)) {
-    const reason = t.reasons.find(isActiveReason);
-    const mood = t.moods.find((m) => isActiveMood(m) && !isExcludedMood(m));
+    const reason = t.reasons.map(canonReason).find((r) => !r.legacy && r.label);
+    const mood = t.moods.map((m) => canonMood(m, t.side)).find((m) => !m.legacy && m.label && !isExcludedMood({ group: null, label: m.label, meta: m.label }));
     if (!reason || !mood) continue;
     const key = `${reason.label} · ${mood.label}`;
     const prev = map.get(key);
