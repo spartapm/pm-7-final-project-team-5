@@ -234,7 +234,7 @@ function ReasonDetail({ real }: { real: Trade[] }) {
         <div className="pie-detail-rows">
           {shown.map((g) => (
             <div key={g.group} className="pie-row">
-              <PieChart slices={g.slices} size={64} />
+              <PieChart slices={g.slices} size={84} />
               <div>
                 <b className="chart-group">
                   {g.group} · {g.count}건
